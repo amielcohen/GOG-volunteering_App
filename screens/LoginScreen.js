@@ -20,21 +20,30 @@ export default function LoginScreen({ navigation }) {
     setPassword(enteredText);
   }
 
-  function loginHandler() {
-    const user = users.find(
-      user => user.username === username && user.password === password
-    );
+  function loginHandler(){
+  // חיפוש המשתמש על פי שם המשתמש והסיסמה
+  const user = users.find(
+    user => user.username === username && user.password === password
+  );
 
-    if (user) {
-      if (user.role === 'admin') {
+  if (user) {
+    // ניווט בהתאם לתפקיד המשתמש
+    switch (user.role) {
+      case 'admin':
         navigation.navigate('AdminHomeScreen');
-      } else {
+        break;
+      case 'user':
         navigation.navigate('UserHomeScreen');
-      }
-    } else {
-      alert('שם המשתמש או הסיסמה שגויים');
+        break;
+      default:
+        // במקרה שיש תפקיד לא מוכר, אפשר להציג הודעה מתאימה
+        alert('תפקיד לא ידוע. נא לפנות למנהל המערכת.');
     }
+  } else {
+    // במקרה של שם משתמש או סיסמה שגויים
+    alert('שם המשתמש או הסיסמה שגויים');
   }
+}
 
   return (
     
