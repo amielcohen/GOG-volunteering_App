@@ -11,6 +11,7 @@ import UserHomeScreen from './screens/User/userHomeScreen';
 import CommunityRepHomeScreen from './screens/CommunityRep/CommunityRepHomeScreen'
 import LoginScreen from './screens/LoginScreen';
 import GiftShop from './screens/User/GiftShop';
+import RegisterScreen from './screens/RegisterScreen'; 
 
 
 const Stack = createStackNavigator();
@@ -43,6 +44,14 @@ export default function App() {
                 },
               }}
             />
+            <Stack.Screen 
+                name="Register" 
+                component={RegisterScreen} 
+                options={{
+                  headerTitle: "הרשמה",
+                  headerTitleAlign: 'center',
+                }}
+              />
             <Stack.Screen name="AdminHomeScreen" component={AdminHomeScreen} />
             <Stack.Screen name="UserHomeScreen" component={UserHomeScreen} 
             options={{

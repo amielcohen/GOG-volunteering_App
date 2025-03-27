@@ -25,9 +25,11 @@ mongoose.connect(process.env.MONGO_URI)
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
 
-// אם יש לך ראוטים נוספים, למשל ליצירת משתמש
-// app.use('/users', require('./routes/users'));
+// ראוט בדיקה בסיסי
+app.get('/', (req, res) => {
+  res.send('Server is running!');
+});
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`Server is running on port: ${port}`);
 });
