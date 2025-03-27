@@ -20,30 +20,35 @@ export default function LoginScreen({ navigation }) {
     setPassword(enteredText);
   }
 
-  function loginHandler(){
-  // חיפוש המשתמש על פי שם המשתמש והסיסמה
-  const user = users.find(
-    user => user.username === username && user.password === password
-  );
-
-  if (user) {
-    // ניווט בהתאם לתפקיד המשתמש
-    switch (user.role) {
-      case 'admin':
-        navigation.navigate('AdminHomeScreen');
-        break;
-      case 'user':
-        navigation.navigate('UserHomeScreen');
-        break;
-      default:
-        // במקרה שיש תפקיד לא מוכר, אפשר להציג הודעה מתאימה
-        alert('תפקיד לא ידוע. נא לפנות למנהל המערכת.');
+  async function loginHandler() {
+    console.log('loginHandler started', username, password);
+    try {
+      const response = await fetch('http://10.100.102.16:5000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      console.log('Response status:', response.status);
+      
+      if (response.ok) {
+        const user = await response.json();
+        console.log('User received:', user);
+        if (user.role === 'admin') {
+          navigation.navigate('AdminHomeScreen');
+        } else {
+          navigation.navigate('UserHomeScreen');
+        }
+      } else {
+        const errorData = await response.json();
+        console.log('Error data:', errorData);
+        alert(errorData.message || 'שם המשתמש או הסיסמה שגויים');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('אירעה שגיאה במהלך ההתחברות');
     }
-  } else {
-    // במקרה של שם משתמש או סיסמה שגויים
-    alert('שם המשתמש או הסיסמה שגויים');
   }
-}
+  
 
   return (
     
@@ -87,9 +92,9 @@ export default function LoginScreen({ navigation }) {
         </View>
       </View>
       <View style={styles.newaccount}>
-        <Pressable>
-          <Text>צור חשבון חדש</Text>
-        </Pressable>
+      <Pressable onPress={() => navigation.navigate('Register')}>
+            <Text>צור חשבון חדש</Text>
+      </Pressable>
       </View>
     </View>
         </ImageBackground>
