@@ -36,7 +36,10 @@ export default function LoginScreen({ navigation }) {
         if (user.role === 'admin') {
           navigation.navigate('AdminHomeScreen');
         } else {
-          navigation.navigate('UserHomeScreen');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'UserHomeScreen', params: { user } }],
+          });
         }
       } else {
         const errorData = await response.json();
