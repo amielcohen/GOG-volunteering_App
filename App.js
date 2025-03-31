@@ -53,12 +53,38 @@ export default function App() {
                 }}
               />
             <Stack.Screen name="AdminHomeScreen" component={AdminHomeScreen} />
-            <Stack.Screen name="UserHomeScreen" component={UserHomeScreen} 
-            options={{
-              headerTransparent: true, 
-              headerTitleAlign: 'center',
-              headerTintColor: 'white',
-              headerTitle: "",}}/>
+            <Stack.Screen
+              name="UserHomeScreen"
+              component={UserHomeScreen}
+              options={({ navigation }) => ({
+                headerTitle: "מסך הבית",
+                headerStyle: {
+                  backgroundColor: '#6200EE', // צבע רקע הכותרת
+                },
+                headerTitleStyle: {
+                  color: '#fff',      // צבע טקסט
+                  fontWeight: 'bold', // עובי טקסט
+                  fontSize: 20,       // גודל טקסט
+                },
+                headerTitleAlign: 'center',
+                // כפתור Logout במקום חץ אחורה
+                headerLeft: () => (
+                  <Pressable
+                    onPress={() => {
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: 'Login' }],
+                      });
+                    }}
+                    style={{ marginLeft: 15 }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 16 }}>Logout</Text>
+                  </Pressable>
+                ),
+              })}
+            />
+
+
           </Stack.Navigator>
         </NavigationContainer>
    

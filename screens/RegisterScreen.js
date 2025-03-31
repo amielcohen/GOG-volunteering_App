@@ -41,7 +41,10 @@ export default function RegisterScreen({ navigation }) {
       if (response.ok) {
         const data = await response.json();
         console.log('Registration successful:', data);
-        navigation.navigate('Login');
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'Login' }],
+          });
       } else {
         const errorData = await response.json();
         alert(errorData.message || 'הרשמה נכשלה');

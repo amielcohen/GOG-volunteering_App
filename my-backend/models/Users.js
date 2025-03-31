@@ -8,7 +8,11 @@ const UserSchema = new mongoose.Schema({
   dateOfBirth: { type: Date }, // ניתן גם לשמור כמחרוזת אם נדרש
   city:        { type: String },
   street:      { type: String },
-  houseNumber: { type: String }
+  houseNumber: { type: String },
+  GoGs: {type:Number, default: 0 },
+  level: {type:Number, default: 1 },
+  exp: {type:Number, default: 0 },
+  profilePic:  { type: String, default: '' }
 }, {
   timestamps: true  // מוסיף createdAt ו-updatedAt אוטומטית
 });
