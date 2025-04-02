@@ -20,26 +20,102 @@ router.post('/login', async (req, res) => {
 
 // ראוט הרשמה
 router.post('/register', async (req, res) => {
-    const { username, password, email, dateOfBirth, city, street, houseNumber } = req.body;
-    console.log('Registration request:', req.body);
-    try {
-      const newUser = new User({
-        username,
-        password,
+  const {
+    username,
+    password,
+    email,
+    dateOfBirth,
+    city,
+    street,
+    houseNumber,
+    gender,
+  } = req.body;
+  console.log('Registration request:', req.body);
+
+  try {
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: 'שם המשתמש כבר קיים' });
+    }
+
+    const newUser = new User({
+      username,
+      password,
+      email,
+      dateOfBirth,
+      city,
+      street,
+      houseNumber,
+      gender,
+    });
+
+    await newUser.save();
+    console.log('User saved:', newUser);
+    res.status(201).json({ message: 'משתמש נרשם בהצלחה' });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ראוט לעדכון פרופיל המשתמש
+router.put('/updateProfile', async (req, res) => {
+  try {
+    // קבלת הנתונים מהבקשה
+    const {
+      _id,
+      email,
+      dateOfBirth,
+      city,
+      street,
+      houseNumber,
+      gender,
+      password,
+      profilePic,
+    } = req.body;
+
+    if (!_id) {
+      return res.status(400).json({ message: 'User id is required' });
+    }
+
+    // עדכון המשתמש במסד
+    const updatedUser = await User.findByIdAndUpdate(
+      _id,
+      {
         email,
         dateOfBirth,
         city,
         street,
-        houseNumber
-      });
-      await newUser.save();
-      console.log('User saved:', newUser);
-      res.status(201).json({ message: 'משתמש נרשם בהצלחה' });
-    } catch (error) {
-      console.error('Registration error:', error);
-      res.status(500).json({ message: error.message });
+        houseNumber,
+        gender,
+        password,
+        profilePic,
+      },
+      { new: true } // מחזיר את המסמך המעודכן
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  });
-  
+
+    res
+      .status(200)
+      .json({ message: 'Profile updated successfully', user: updatedUser });
+  } catch (err) {
+    console.error('Profile update error:', err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ראוט לקבלת פרטי המשתמש לפי מזהה
+router.get('/profile/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = router;

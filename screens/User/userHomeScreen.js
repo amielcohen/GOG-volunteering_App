@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  Alert, 
-  Pressable, 
-  BackHandler, 
-  Image 
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  Pressable,
+  BackHandler,
+  Image,
 } from 'react-native';
 import CustomCoinIcon from '../../components/CustomCoinIcon'; // עדכן את הנתיב לפי מיקום הקובץ
 import { Button } from 'react-native-paper';
@@ -15,7 +15,10 @@ export default function UserHomeScreen({ navigation, route }) {
   // חסימת לחיצת כפתור החזרה הפיזי
   useEffect(() => {
     const backAction = () => true;
-    const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction
+    );
     return () => backHandler.remove();
   }, []);
 
@@ -29,18 +32,25 @@ export default function UserHomeScreen({ navigation, route }) {
     navigation.navigate('giftshop');
   };
 
+  const editProfile_nav = () => {
+    navigation.navigate('EditProfile', { user });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         {/* תמונת פרופיל עגולה */}
-        <Image 
-  source={user.profilePic ? { uri: user.profilePic } : require('../../images/defaultProfile.png')}
-  style={styles.profileImage}
-/>
-
+        <Image
+          source={
+            user.profilePic
+              ? { uri: user.profilePic }
+              : require('../../images/defaultProfile.png')
+          }
+          style={styles.profileImage}
+        />
 
         <Text style={styles.welcomeText}>שלום, {user.username}!</Text>
-        
+
         <View style={styles.coinContainer}>
           <Text style={styles.coinLabel}>גוגואים:</Text>
           <Text style={styles.coinNumber}>{user.GoGs}</Text>
@@ -57,6 +67,10 @@ export default function UserHomeScreen({ navigation, route }) {
 
         <Pressable style={styles.button} onPress={giftshopnav}>
           <Text style={styles.buttonText}>חנות המתנות</Text>
+        </Pressable>
+
+        <Pressable style={styles.button} onPress={editProfile_nav}>
+          <Text style={styles.buttonText}>עריכת פרטים אישיים</Text>
         </Pressable>
       </View>
     </View>
@@ -75,8 +89,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   profileImage: {
-    width: 100,      // גודל הרוחב
-    height: 100,     // גודל הגובה
+    width: 100, // גודל הרוחב
+    height: 100, // גודל הגובה
     borderRadius: 50, // הופך את התמונה לעגולה (חצי מהגודל)
     marginBottom: 15,
   },
