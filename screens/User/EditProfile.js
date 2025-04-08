@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,13 +19,12 @@ import { useFocusEffect } from '@react-navigation/native';
 
 export default function EditProfile({ navigation, route }) {
   const { user } = route.params;
-
-  // state חדש לאחסון נתוני המשתמש המעודכנים
   const [userData, setUserData] = useState(user);
 
-  // State עבור שדות עריכה נפרדים
+  // שדות עריכה – מתחילים כריקים (למעט נתונים שמוצגים כ- placeholder)
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [newDateOfBirth, setNewDateOfBirth] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [newCity, setNewCity] = useState('');
@@ -33,8 +32,22 @@ export default function EditProfile({ navigation, route }) {
   const [newHouseNumber, setNewHouseNumber] = useState('');
   const [newProfilePic, setNewProfilePic] = useState(null);
   const [gender, setGender] = useState(userData.gender || '');
+  const [isUploading, setIsUploading] = useState(false);
 
-  // פונקציה לטיפול בשינוי תאריך
+  // בקשת הרשאות לגלריה בעת טעינת הקומפוננטה
+  useEffect(() => {
+    (async () => {
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'מצטער',
+          'האפליקציה דורשת הרשאה לגישה לגלריה כדי לבחור תמונות'
+        );
+      }
+    })();
+  }, []);
+
   const onDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
@@ -42,31 +55,140 @@ export default function EditProfile({ navigation, route }) {
     }
   };
 
-  // פונקציה לבחירת תמונה
+  // פונקציה לבחירת תמונה מהגלריה (תואמת את גרסת expo-image-picker ~16.0.6)
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-    if (!result.cancelled) {
-      setNewProfilePic(result.uri);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // שימוש במאפיין הנכון
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+      console.log('ImagePicker result:', result);
+
+      if (!result.canceled) {
+        // במבנה החדש: result.assets הוא מערך, אנו לוקחים את הנכס הראשון
+        if (result.assets && result.assets.length > 0) {
+          console.log('Selected image URI:', result.assets[0].uri);
+          return result.assets[0].uri;
+        }
+        // תמיכה גם במבנה ישן (אם קיים)
+        if (result.uri) {
+          console.log('Selected image URI (old structure):', result.uri);
+          return result.uri;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error in pickImage:', error);
+      return null;
     }
   };
 
-  // פונקציה לעדכון הפרופיל בשרת
+  // פונקציה להעלאת תמונה ל-Cloudinary
+  const uploadImageToCloudinary = async (imageUri) => {
+    // חילוץ שם הקובץ מה-URI
+    let filename = imageUri.split('/').pop();
+    // קביעת סוג הקובץ
+    let match = /\.(\w+)$/.exec(filename);
+    let type = match ? `image/${match[1]}` : 'image';
+
+    let formData = new FormData();
+    formData.append('file', { uri: imageUri, name: filename, type });
+    // עדכון: יש להשתמש ב-upload preset שהגדרת ב-Cloudinary (כאן: GOG-ProfilesIMG)
+    formData.append('upload_preset', 'GOG-ProfilesIMG');
+
+    try {
+      let response = await fetch(
+        'https://api.cloudinary.com/v1_1/drlrtt5dz/image/upload',
+        {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      let data = await response.json();
+      if (data.secure_url) {
+        console.log('Upload successful, URL:', data.secure_url);
+        return data.secure_url;
+      } else {
+        console.log('Upload error:', data);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      return null;
+    }
+  };
+
+  // פונקציה שמשלבת בחירת התמונה והעלאתה
+  const handleProfilePicUpdate = async () => {
+    if (isUploading) return; // מניעה מפני לחיצות כפולות
+    setIsUploading(true);
+    console.log('handleProfilePicUpdate pressed');
+    const imageUri = await pickImage();
+    if (imageUri) {
+      const uploadedUrl = await uploadImageToCloudinary(imageUri);
+      if (uploadedUrl) {
+        setNewProfilePic(uploadedUrl);
+        Alert.alert('העלאת תמונה', 'התמונה הועלתה בהצלחה');
+      } else {
+        Alert.alert('שגיאה', 'העלאת התמונה נכשלה');
+      }
+    } else {
+      console.log('No image URI received from picker');
+    }
+    setIsUploading(false);
+  };
+
   const updateProfileHandler = async () => {
+    const finalEmail = newEmail.trim() === '' ? userData.email : newEmail;
+    const finalCity = newCity.trim() === '' ? userData.city : newCity;
+    const finalStreet = newStreet.trim() === '' ? userData.street : newStreet;
+    const finalHouseNumber =
+      newHouseNumber.trim() === '' ? userData.houseNumber : newHouseNumber;
+    const finalDateOfBirth = newDateOfBirth
+      ? newDateOfBirth.toISOString().split('T')[0]
+      : userData.dateOfBirth
+        ? new Date(userData.dateOfBirth).toISOString().split('T')[0]
+        : null;
+
+    if (!/\S+@\S+\.\S+/.test(finalEmail)) {
+      Alert.alert('Error', 'אימייל לא תקין');
+      return;
+    }
+    if (
+      !finalDateOfBirth ||
+      finalCity.trim() === '' ||
+      finalStreet.trim() === '' ||
+      finalHouseNumber.trim() === ''
+    ) {
+      Alert.alert('Error', 'יש למלא את כל השדות החיוניים');
+      return;
+    }
+    let finalPassword = userData.password;
+    if (newPassword !== '') {
+      if (newPassword.length < 6) {
+        Alert.alert('Error', 'סיסמה חייבת להכיל לפחות 6 תווים');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        Alert.alert('Error', 'סיסמה ואימות סיסמה אינם תואמים');
+        return;
+      }
+      finalPassword = newPassword;
+    }
+
     const updatedProfile = {
       _id: userData._id,
-      email: newEmail || userData.email,
-      password: newPassword || userData.password,
-      dateOfBirth: newDateOfBirth
-        ? newDateOfBirth.toISOString().split('T')[0]
-        : userData.dateOfBirth,
-      city: newCity || userData.city,
-      street: newStreet || userData.street,
-      houseNumber: newHouseNumber || userData.houseNumber,
+      email: finalEmail,
+      password: finalPassword,
+      dateOfBirth: finalDateOfBirth,
+      city: finalCity,
+      street: finalStreet,
+      houseNumber: finalHouseNumber,
       profilePic: newProfilePic || userData.profilePic,
       gender: gender,
     };
@@ -81,7 +203,6 @@ export default function EditProfile({ navigation, route }) {
           body: JSON.stringify(updatedProfile),
         }
       );
-
       const responseText = await response.text();
       let data;
       try {
@@ -89,11 +210,20 @@ export default function EditProfile({ navigation, route }) {
       } catch (e) {
         data = { message: responseText };
       }
-
       if (response.ok) {
         console.log('Profile updated successfully:', data);
-        Alert.alert('עדכון פרופיל', 'הפרופיל עודכן בהצלחה');
-        navigation.goBack();
+        Alert.alert(
+          'עדכון פרופיל',
+          'הפרופיל עודכן בהצלחה',
+          [
+            {
+              text: 'OK',
+              onPress: () =>
+                navigation.navigate('UserHomeScreen', { user: data.user }),
+            },
+          ],
+          { cancelable: false }
+        );
       } else {
         Alert.alert('Error', data.message || 'עדכון הפרופיל נכשל');
       }
@@ -103,7 +233,6 @@ export default function EditProfile({ navigation, route }) {
     }
   };
 
-  // פונקציה לקבלת נתוני המשתמש המעודכנים מהשרת
   const fetchUpdatedUserData = async () => {
     try {
       console.log('Fetching updated user data...');
@@ -122,7 +251,6 @@ export default function EditProfile({ navigation, route }) {
     }
   };
 
-  // שימוש ב-useFocusEffect לרענון הנתונים בכל פעם שהמסך מופיע
   useFocusEffect(
     useCallback(() => {
       fetchUpdatedUserData();
@@ -137,7 +265,6 @@ export default function EditProfile({ navigation, route }) {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.header}>עריכת פרופיל</Text>
 
-        {/* תמונת פרופיל */}
         <View style={styles.profilePicContainer}>
           <Image
             source={
@@ -149,31 +276,44 @@ export default function EditProfile({ navigation, route }) {
             }
             style={styles.profilePic}
           />
-          <Pressable onPress={pickImage} style={styles.changePicButton}>
+          <Pressable
+            onPress={handleProfilePicUpdate}
+            style={styles.changePicButton}
+          >
             <Text style={styles.changePicText}>שנה תמונת פרופיל</Text>
           </Pressable>
         </View>
 
-        {/* שדות עריכה – הערכים הקיימים מוצגים כ-placeholder */}
+        <Text style={styles.label}>אימייל</Text>
         <TextInput
           style={styles.input}
           placeholder={userData.email || 'אימייל'}
-          placeholderTextColor="#888"
           value={newEmail}
           onChangeText={setNewEmail}
           textAlign="right"
         />
 
+        <Text style={styles.label}>סיסמה חדשה</Text>
         <TextInput
           style={styles.input}
-          placeholder="סיסמה"
-          placeholderTextColor="#888"
+          placeholder=""
           secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}
           textAlign="right"
         />
 
+        <Text style={styles.label}>אימות סיסמה</Text>
+        <TextInput
+          style={styles.input}
+          placeholder=""
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          textAlign="right"
+        />
+
+        <Text style={styles.label}>תאריך לידה</Text>
         <Pressable
           style={[styles.input, styles.dateInput]}
           onPress={() => setShowDatePicker(true)}
@@ -183,7 +323,7 @@ export default function EditProfile({ navigation, route }) {
               ? newDateOfBirth.toLocaleDateString('he-IL')
               : userData.dateOfBirth
                 ? new Date(userData.dateOfBirth).toLocaleDateString('he-IL')
-                : 'תאריך לידה'}
+                : 'בחר תאריך'}
           </Text>
         </Pressable>
         {showDatePicker && (
@@ -196,35 +336,35 @@ export default function EditProfile({ navigation, route }) {
           />
         )}
 
+        <Text style={styles.label}>עיר</Text>
         <TextInput
           style={styles.input}
           placeholder={userData.city || 'עיר'}
-          placeholderTextColor="#888"
           value={newCity}
           onChangeText={setNewCity}
           textAlign="right"
         />
 
+        <Text style={styles.label}>רחוב</Text>
         <TextInput
           style={styles.input}
           placeholder={userData.street || 'רחוב'}
-          placeholderTextColor="#888"
           value={newStreet}
           onChangeText={setNewStreet}
           textAlign="right"
         />
 
+        <Text style={styles.label}>מספר בית</Text>
         <TextInput
           style={styles.input}
           placeholder={userData.houseNumber || 'מספר בית'}
-          placeholderTextColor="#888"
           value={newHouseNumber}
           onChangeText={setNewHouseNumber}
           textAlign="right"
         />
 
+        <Text style={styles.label}>מגדר</Text>
         <View style={styles.pickerContainer}>
-          <Text style={styles.pickerLabel}>מגדר:</Text>
           <Picker
             selectedValue={gender}
             style={styles.picker}
@@ -255,6 +395,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+  label: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+    textAlign: 'right',
+  },
   profilePicContainer: {
     alignItems: 'center',
     marginBottom: 20,
@@ -275,7 +421,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    marginBottom: 10,
+    marginBottom: 15,
     padding: 10,
     borderRadius: 5,
     color: '#000',
@@ -291,15 +437,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
-    marginBottom: 10,
+    marginBottom: 15,
     overflow: 'hidden',
     width: '100%',
-  },
-  pickerLabel: {
-    fontSize: 14,
-    textAlign: 'right',
-    paddingHorizontal: 10,
-    color: '#555',
   },
   picker: {
     height: 55,

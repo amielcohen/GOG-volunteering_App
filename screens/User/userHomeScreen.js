@@ -35,6 +35,9 @@ export default function UserHomeScreen({ navigation, route }) {
   const editProfile_nav = () => {
     navigation.navigate('EditProfile', { user });
   };
+  const tester = () => {
+    navigation.navigate('TestImagePicker');
+  };
 
   return (
     <View style={styles.container}>
