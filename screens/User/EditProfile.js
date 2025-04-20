@@ -21,7 +21,6 @@ export default function EditProfile({ navigation, route }) {
   const { user } = route.params;
   const [userData, setUserData] = useState(user);
 
-  // שדות עריכה – מתחילים כריקים (למעט נתונים שמוצגים כ- placeholder)
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -32,9 +31,10 @@ export default function EditProfile({ navigation, route }) {
   const [newHouseNumber, setNewHouseNumber] = useState('');
   const [newProfilePic, setNewProfilePic] = useState(null);
   const [gender, setGender] = useState(userData.gender || '');
+  const [newFirstName, setNewFirstName] = useState('');
+  const [newLastName, setNewLastName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
-  // בקשת הרשאות לגלריה בעת טעינת הקומפוננטה
   useEffect(() => {
     (async () => {
       const { status } =
@@ -55,26 +55,20 @@ export default function EditProfile({ navigation, route }) {
     }
   };
 
-  // פונקציה לבחירת תמונה מהגלריה (תואמת את גרסת expo-image-picker ~16.0.6)
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // שימוש במאפיין הנכון
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 1,
       });
-      console.log('ImagePicker result:', result);
 
       if (!result.canceled) {
-        // במבנה החדש: result.assets הוא מערך, אנו לוקחים את הנכס הראשון
         if (result.assets && result.assets.length > 0) {
-          console.log('Selected image URI:', result.assets[0].uri);
           return result.assets[0].uri;
         }
-        // תמיכה גם במבנה ישן (אם קיים)
         if (result.uri) {
-          console.log('Selected image URI (old structure):', result.uri);
           return result.uri;
         }
       }
@@ -85,17 +79,13 @@ export default function EditProfile({ navigation, route }) {
     }
   };
 
-  // פונקציה להעלאת תמונה ל-Cloudinary
   const uploadImageToCloudinary = async (imageUri) => {
-    // חילוץ שם הקובץ מה-URI
     let filename = imageUri.split('/').pop();
-    // קביעת סוג הקובץ
     let match = /\.(\w+)$/.exec(filename);
     let type = match ? `image/${match[1]}` : 'image';
 
     let formData = new FormData();
     formData.append('file', { uri: imageUri, name: filename, type });
-    // עדכון: יש להשתמש ב-upload preset שהגדרת ב-Cloudinary (כאן: GOG-ProfilesIMG)
     formData.append('upload_preset', 'GOG-ProfilesIMG');
 
     try {
@@ -111,10 +101,8 @@ export default function EditProfile({ navigation, route }) {
       );
       let data = await response.json();
       if (data.secure_url) {
-        console.log('Upload successful, URL:', data.secure_url);
         return data.secure_url;
       } else {
-        console.log('Upload error:', data);
         return null;
       }
     } catch (error) {
@@ -123,11 +111,9 @@ export default function EditProfile({ navigation, route }) {
     }
   };
 
-  // פונקציה שמשלבת בחירת התמונה והעלאתה
   const handleProfilePicUpdate = async () => {
-    if (isUploading) return; // מניעה מפני לחיצות כפולות
+    if (isUploading) return;
     setIsUploading(true);
-    console.log('handleProfilePicUpdate pressed');
     const imageUri = await pickImage();
     if (imageUri) {
       const uploadedUrl = await uploadImageToCloudinary(imageUri);
@@ -137,114 +123,108 @@ export default function EditProfile({ navigation, route }) {
       } else {
         Alert.alert('שגיאה', 'העלאת התמונה נכשלה');
       }
-    } else {
-      console.log('No image URI received from picker');
     }
     setIsUploading(false);
   };
 
   const updateProfileHandler = async () => {
-    const finalEmail = newEmail.trim() === '' ? userData.email : newEmail;
-    const finalCity = newCity.trim() === '' ? userData.city : newCity;
-    const finalStreet = newStreet.trim() === '' ? userData.street : newStreet;
+    const finalEmail =
+      newEmail.trim() === '' ? userData.email : newEmail.trim();
+    const finalCity = newCity.trim() === '' ? userData.city : newCity.trim();
+    const finalStreet =
+      newStreet.trim() === '' ? userData.street : newStreet.trim();
     const finalHouseNumber =
-      newHouseNumber.trim() === '' ? userData.houseNumber : newHouseNumber;
+      newHouseNumber.trim() === ''
+        ? userData.houseNumber
+        : newHouseNumber.trim();
     const finalDateOfBirth = newDateOfBirth
       ? newDateOfBirth.toISOString().split('T')[0]
       : userData.dateOfBirth
         ? new Date(userData.dateOfBirth).toISOString().split('T')[0]
         : null;
+    const finalFirstName =
+      newFirstName.trim() === '' ? userData.firstName : newFirstName.trim();
+    const finalLastName =
+      newLastName.trim() === '' ? userData.lastName : newLastName.trim();
+    const finalPassword = newPassword.trim();
+    const finalConfirmPassword = confirmPassword.trim();
 
     if (!/\S+@\S+\.\S+/.test(finalEmail)) {
       Alert.alert('Error', 'אימייל לא תקין');
       return;
     }
+
     if (
       !finalDateOfBirth ||
-      finalCity.trim() === '' ||
-      finalStreet.trim() === '' ||
-      finalHouseNumber.trim() === ''
+      finalCity === '' ||
+      finalStreet === '' ||
+      finalHouseNumber === ''
     ) {
       Alert.alert('Error', 'יש למלא את כל השדות החיוניים');
       return;
     }
-    let finalPassword = userData.password;
-    if (newPassword !== '') {
-      if (newPassword.length < 6) {
+
+    let passwordToSend = userData.password;
+    if (finalPassword !== '') {
+      if (finalPassword.length < 6) {
         Alert.alert('Error', 'סיסמה חייבת להכיל לפחות 6 תווים');
         return;
       }
-      if (newPassword !== confirmPassword) {
+      if (finalPassword !== finalConfirmPassword) {
         Alert.alert('Error', 'סיסמה ואימות סיסמה אינם תואמים');
         return;
       }
-      finalPassword = newPassword;
+      passwordToSend = finalPassword;
     }
 
     const updatedProfile = {
       _id: userData._id,
       email: finalEmail,
-      password: finalPassword,
+      password: passwordToSend,
       dateOfBirth: finalDateOfBirth,
       city: finalCity,
       street: finalStreet,
       houseNumber: finalHouseNumber,
       profilePic: newProfilePic || userData.profilePic,
       gender: gender,
+      firstName: finalFirstName,
+      lastName: finalLastName,
     };
 
-    console.log('Updating profile with:', updatedProfile);
     try {
       const response = await fetch(
-        'http://10.100.102.16:5000/auth/updateProfile',
+        `http://10.100.102.16:5000/auth/updateProfile`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedProfile),
         }
       );
-      const responseText = await response.text();
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        data = { message: responseText };
-      }
+      const data = await response.json();
       if (response.ok) {
-        console.log('Profile updated successfully:', data);
-        Alert.alert(
-          'עדכון פרופיל',
-          'הפרופיל עודכן בהצלחה',
-          [
-            {
-              text: 'OK',
-              onPress: () =>
-                navigation.navigate('UserHomeScreen', { user: data.user }),
-            },
-          ],
-          { cancelable: false }
-        );
+        Alert.alert('עדכון פרופיל', 'הפרופיל עודכן בהצלחה', [
+          {
+            text: 'OK',
+            onPress: () =>
+              navigation.navigate('UserHomeScreen', { user: data.user }),
+          },
+        ]);
       } else {
         Alert.alert('Error', data.message || 'עדכון הפרופיל נכשל');
       }
     } catch (error) {
-      console.error('Profile update error:', error);
       Alert.alert('Error', 'אירעה שגיאה בעדכון הפרופיל');
     }
   };
 
   const fetchUpdatedUserData = async () => {
     try {
-      console.log('Fetching updated user data...');
       const response = await fetch(
         `http://10.100.102.16:5000/auth/profile/${userData._id}`
       );
       if (response.ok) {
         const updatedUser = await response.json();
-        console.log('Updated user received:', updatedUser);
         setUserData(updatedUser.user || updatedUser);
-      } else {
-        console.error('Failed to fetch updated user data');
       }
     } catch (error) {
       console.error('Error fetching updated user data:', error);
@@ -284,6 +264,24 @@ export default function EditProfile({ navigation, route }) {
           </Pressable>
         </View>
 
+        <Text style={styles.label}>שם פרטי</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={userData.firstName || 'שם פרטי'}
+          value={newFirstName}
+          onChangeText={setNewFirstName}
+          textAlign="right"
+        />
+
+        <Text style={styles.label}>שם משפחה</Text>
+        <TextInput
+          style={styles.input}
+          placeholder={userData.lastName || 'שם משפחה'}
+          value={newLastName}
+          onChangeText={setNewLastName}
+          textAlign="right"
+        />
+
         <Text style={styles.label}>אימייל</Text>
         <TextInput
           style={styles.input}
@@ -296,7 +294,6 @@ export default function EditProfile({ navigation, route }) {
         <Text style={styles.label}>סיסמה חדשה</Text>
         <TextInput
           style={styles.input}
-          placeholder=""
           secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}
@@ -306,7 +303,6 @@ export default function EditProfile({ navigation, route }) {
         <Text style={styles.label}>אימות סיסמה</Text>
         <TextInput
           style={styles.input}
-          placeholder=""
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
@@ -319,6 +315,7 @@ export default function EditProfile({ navigation, route }) {
           onPress={() => setShowDatePicker(true)}
         >
           <Text style={[styles.dateText, { textAlign: 'right' }]}>
+            {' '}
             {newDateOfBirth
               ? newDateOfBirth.toLocaleDateString('he-IL')
               : userData.dateOfBirth

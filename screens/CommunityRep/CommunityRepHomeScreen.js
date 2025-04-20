@@ -14,15 +14,24 @@ const CommunityRepHomeScreen = () => {
       <View style={styles.content}>
         <Text style={styles.welcomeText}>שלום, אדמין! זהו העמוד שלך.</Text>
 
-        <Pressable style={styles.button} onPress={() => handlePress('צפה בסטטיסטיקה')}>
-          <Text style={styles.buttonText}> </Text>
+        <Pressable
+          style={styles.button}
+          onPress={() => handlePress('צפה בסטטיסטיקה')}
+        >
+          <Text style={styles.buttonText}>צפה בחנות </Text>
         </Pressable>
 
-        <Pressable style={styles.button} onPress={() => handlePress('עריכת משתתפים')}>
+        <Pressable
+          style={styles.button}
+          onPress={() => handlePress('עריכת משתתפים')}
+        >
           <Text style={styles.buttonText}>עריכת משתתפים</Text>
         </Pressable>
 
-        <Pressable style={styles.button} onPress={() => handlePress('עריכת התנדבויות')}>
+        <Pressable
+          style={styles.button}
+          onPress={() => handlePress('עריכת התנדבויות')}
+        >
           <Text style={styles.buttonText}>עריכת התנדבויות</Text>
         </Pressable>
       </View>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import CustomCoinIcon from '../../components/CustomCoinIcon'; // עדכן את הנתיב לפי מיקום הקובץ
 import { Button } from 'react-native-paper';
+import { Modal } from 'react-native';
 
 export default function UserHomeScreen({ navigation, route }) {
   // חסימת לחיצת כפתור החזרה הפיזי
@@ -23,6 +24,7 @@ export default function UserHomeScreen({ navigation, route }) {
   }, []);
 
   const { user } = route.params;
+  const [modalVisible, setModalVisible] = useState(false);
 
   const handlePress = () => {
     Alert.alert('Button Pressed!', 'You pressed the button.');
@@ -42,17 +44,20 @@ export default function UserHomeScreen({ navigation, route }) {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        {/* תמונת פרופיל עגולה */}
-        <Image
-          source={
-            user.profilePic
-              ? { uri: user.profilePic }
-              : require('../../images/defaultProfile.png')
-          }
-          style={styles.profileImage}
-        />
+        <Pressable onPress={() => setModalVisible(true)}>
+          <Image
+            source={
+              user.profilePic
+                ? { uri: user.profilePic }
+                : require('../../images/defaultProfile.png')
+            }
+            style={styles.profileImage}
+          />
+        </Pressable>
 
-        <Text style={styles.welcomeText}>שלום, {user.username}!</Text>
+        <Text style={styles.welcomeText}>
+          שלום, {user.firstName} {user.lastName}!
+        </Text>
 
         <View style={styles.coinContainer}>
           <Text style={styles.coinLabel}>גוגואים:</Text>
@@ -76,6 +81,27 @@ export default function UserHomeScreen({ navigation, route }) {
           <Text style={styles.buttonText}>עריכת פרטים אישיים</Text>
         </Pressable>
       </View>
+      {/* Modal להצגת תמונת הפרופיל המוגדלת */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <Pressable
+          style={styles.modalBackground}
+          onPress={() => setModalVisible(false)}
+        >
+          <Image
+            source={
+              user.profilePic
+                ? { uri: user.profilePic }
+                : require('../../images/defaultProfile.png')
+            }
+            style={styles.enlargedImage}
+          />
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -130,5 +156,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  enlargedImage: {
+    width: '90%',
+    height: '70%',
+    resizeMode: 'contain',
   },
 });

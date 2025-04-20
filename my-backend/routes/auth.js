@@ -29,7 +29,10 @@ router.post('/register', async (req, res) => {
     street,
     houseNumber,
     gender,
+    firstName,
+    lastName,
   } = req.body;
+
   console.log('Registration request:', req.body);
 
   try {
@@ -47,6 +50,8 @@ router.post('/register', async (req, res) => {
       street,
       houseNumber,
       gender,
+      firstName,
+      lastName,
     });
 
     await newUser.save();
@@ -61,7 +66,6 @@ router.post('/register', async (req, res) => {
 // ראוט לעדכון פרופיל המשתמש
 router.put('/updateProfile', async (req, res) => {
   try {
-    // קבלת הנתונים מהבקשה
     const {
       _id,
       email,
@@ -72,13 +76,14 @@ router.put('/updateProfile', async (req, res) => {
       gender,
       password,
       profilePic,
+      firstName,
+      lastName,
     } = req.body;
 
     if (!_id) {
       return res.status(400).json({ message: 'User id is required' });
     }
 
-    // עדכון המשתמש במסד
     const updatedUser = await User.findByIdAndUpdate(
       _id,
       {
@@ -90,8 +95,10 @@ router.put('/updateProfile', async (req, res) => {
         gender,
         password,
         profilePic,
+        firstName,
+        lastName,
       },
-      { new: true } // מחזיר את המסמך המעודכן
+      { new: true }
     );
 
     if (!updatedUser) {
