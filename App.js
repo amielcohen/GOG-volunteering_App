@@ -64,6 +64,10 @@ export default function App() {
         />
         <Stack.Screen name="AdminHomeScreen" component={AdminHomeScreen} />
         <Stack.Screen
+          name="CommunityRepHomeScreen"
+          component={CommunityRepHomeScreen}
+        />
+        <Stack.Screen
           name="UserHomeScreen"
           component={UserHomeScreen}
           options={({ navigation }) => ({
@@ -93,7 +97,22 @@ export default function App() {
             ),
           })}
         />
-        <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfile}
+          options={({ navigation }) => ({
+            headerTitle: 'עריכת פרופיל',
+            headerStyle: {
+              backgroundColor: '#6200EE', // צבע רקע הכותרת
+            },
+            headerTitleStyle: {
+              color: '#fff', // צבע טקסט
+              fontWeight: 'bold', // עובי טקסט
+              fontSize: 20, // גודל טקסט
+            },
+            headerTitleAlign: 'center',
+          })}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

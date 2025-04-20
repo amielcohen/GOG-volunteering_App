@@ -28,20 +28,31 @@ export default function LoginScreen({ navigation }) {
   }
 
   async function loginHandler() {
-    console.log('loginHandler started', username, password);
+    const cleanUsername = username.trim();
+    const cleanPassword = password.trim();
+
+    console.log('loginHandler started', cleanUsername, cleanPassword);
+
     try {
       const response = await fetch('http://10.100.102.16:5000/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({
+          username: cleanUsername,
+          password: cleanPassword,
+        }),
       });
+
       console.log('Response status:', response.status);
 
       if (response.ok) {
         const user = await response.json();
         console.log('User received:', user);
+
         if (user.role === 'admin') {
           navigation.navigate('AdminHomeScreen');
+        } else if (user.role === 'CommunityRep') {
+          navigation.navigate('CommunityRepHomeScreen');
         } else {
           navigation.reset({
             index: 0,

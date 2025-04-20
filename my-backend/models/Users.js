@@ -2,6 +2,9 @@ const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema(
   {
+    firstName: { type: String, required: [true, 'שם פרטי הוא שדה חובה'] },
+    lastName: { type: String, required: [true, 'שם משפחה הוא שדה חובה'] },
+
     username: {
       type: String,
       required: [true, 'שם משתמש הוא שדה חובה'],

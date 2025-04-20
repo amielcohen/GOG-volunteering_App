@@ -17,6 +17,7 @@ import { Button } from 'react-native-paper';
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [email, setEmail] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState(null); // אין תאריך דיפולטי
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -25,17 +26,51 @@ export default function RegisterScreen({ navigation }) {
   const [houseNumber, setHouseNumber] = useState('');
   const [gender, setGender] = useState('זכר'); // ברירת מחדל
   const [errorMessage, setErrorMessage] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
 
   const registerHandler = async () => {
+    // ניקוי רווחים מהשדות
+    const cleanUsername = username.trim();
+    const cleanPassword = password.trim();
+    const cleanConfirmPassword = confirmPassword.trim();
+    const cleanEmail = email.trim();
+    const cleanFirstName = firstName.trim();
+    const cleanLastName = lastName.trim();
+    const cleanCity = city.trim();
+    const cleanStreet = street.trim();
+    const cleanHouseNumber = houseNumber.trim();
+
+    if (
+      !cleanUsername ||
+      !cleanPassword ||
+      !cleanConfirmPassword ||
+      !cleanEmail ||
+      !cleanFirstName ||
+      !cleanLastName
+    ) {
+      setErrorMessage('אנא מלא את כל השדות');
+      Alert.alert('שגיאה', 'אנא מלא את כל השדות');
+      return;
+    }
+
+    if (cleanPassword !== cleanConfirmPassword) {
+      setErrorMessage('הסיסמאות לא תואמות');
+      Alert.alert('שגיאה', 'הסיסמאות לא תואמות');
+      return;
+    }
+
     console.log('Registering user:', {
-      username,
-      password,
-      email,
+      cleanUsername,
+      cleanPassword,
+      cleanEmail,
       dateOfBirth: dateOfBirth ? dateOfBirth.toISOString().split('T')[0] : '',
-      city,
-      street,
-      houseNumber,
+      cleanCity,
+      cleanStreet,
+      cleanHouseNumber,
       gender,
+      cleanFirstName,
+      cleanLastName,
     });
 
     try {
@@ -43,16 +78,18 @@ export default function RegisterScreen({ navigation }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username,
-          password,
-          email,
+          username: cleanUsername,
+          password: cleanPassword,
+          email: cleanEmail,
           dateOfBirth: dateOfBirth
             ? dateOfBirth.toISOString().split('T')[0]
             : '',
-          city,
-          street,
-          houseNumber,
+          city: cleanCity,
+          street: cleanStreet,
+          houseNumber: cleanHouseNumber,
           gender,
+          firstName: cleanFirstName,
+          lastName: cleanLastName,
         }),
       });
 
@@ -60,6 +97,7 @@ export default function RegisterScreen({ navigation }) {
         const data = await response.json();
         console.log('Registration successful:', data);
         setErrorMessage('');
+        Alert.alert('הרשמה הצליחה', 'המשתמש נרשם בהצלחה');
         navigation.reset({
           index: 0,
           routes: [{ name: 'Login' }],
@@ -108,6 +146,33 @@ export default function RegisterScreen({ navigation }) {
           secureTextEntry
           value={password}
           onChangeText={setPassword}
+          textAlign="right"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="אימות סיסמה"
+          placeholderTextColor="#000"
+          secureTextEntry
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          textAlign="right"
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="שם פרטי"
+          placeholderTextColor="#000"
+          value={firstName}
+          onChangeText={setFirstName}
+          textAlign="right"
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="שם משפחה"
+          placeholderTextColor="#000"
+          value={lastName}
+          onChangeText={setLastName}
           textAlign="right"
         />
 
