@@ -15,11 +15,15 @@ import { createStackNavigator } from '@react-navigation/stack';
 // ייבוא המסכים
 import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
 import UserHomeScreen from './screens/User/userHomeScreen';
-import CommunityRepHomeScreen from './screens/CommunityRep/CommunityRepHomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import GiftShop from './screens/User/GiftShop';
 import RegisterScreen from './screens/RegisterScreen';
 import EditProfile from './screens/User/EditProfile';
+
+//CommunityRep
+import CommunityRepHomeScreen from './screens/CommunityRep/CommunityRepHomeScreen';
+import ShopMenu from './screens/CommunityRep/ShopMenu';
+import AddShopItemScreen from './screens/CommunityRep/AddShopItemScreen';
 
 const Stack = createStackNavigator();
 
@@ -67,6 +71,39 @@ export default function App() {
           name="CommunityRepHomeScreen"
           component={CommunityRepHomeScreen}
         />
+        <Stack.Screen
+          name="ShopMenu"
+          component={ShopMenu}
+          options={{
+            headerTitle: ' תפריט החנות',
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+            },
+            headerTitleStyle: {
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+          }}
+        />
+        <Stack.Screen
+          name="AddShopItemScreen"
+          component={AddShopItemScreen}
+          options={{
+            headerTitle: 'הוסף פריט',
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+            },
+            headerTitleStyle: {
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+          }}
+        />
+
         <Stack.Screen
           name="UserHomeScreen"
           component={UserHomeScreen}
