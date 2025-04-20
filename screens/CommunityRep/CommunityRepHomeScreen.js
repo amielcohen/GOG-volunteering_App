@@ -1,9 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 
-const CommunityRepHomeScreen = () => {
+const CommunityRepHomeScreen = ({ navigation, route }) => {
   const handlePress = (action) => {
     Alert.alert('Button Pressed!', `You pressed the "${action}" button.`);
+  };
+
+  const Shopinfo = () => {
+    navigation.navigate('ShopMenu');
   };
 
   return (
@@ -14,10 +18,7 @@ const CommunityRepHomeScreen = () => {
       <View style={styles.content}>
         <Text style={styles.welcomeText}>שלום, אדמין! זהו העמוד שלך.</Text>
 
-        <Pressable
-          style={styles.button}
-          onPress={() => handlePress('צפה בסטטיסטיקה')}
-        >
+        <Pressable style={styles.button} onPress={() => Shopinfo()}>
           <Text style={styles.buttonText}>צפה בחנות </Text>
         </Pressable>
 

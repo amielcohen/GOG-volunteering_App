@@ -14,9 +14,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // חיבור ל-MongoDB
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected successfully'))
-  .catch(err => {
+  .catch((err) => {
     console.error('MongoDB connection error:', err);
     process.exit(1);
   });
@@ -24,6 +25,9 @@ mongoose.connect(process.env.MONGO_URI)
 // שימוש בראוטים - לדוגמה, ראוט התחברות
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
+
+const shopRoutes = require('./routes/shop');
+app.use('/shop', shopRoutes);
 
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
