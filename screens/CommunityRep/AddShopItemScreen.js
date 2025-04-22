@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
-  Button,
   Alert,
   ScrollView,
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import axios from 'axios';
 
 export default function AddShopItemScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -21,8 +20,24 @@ export default function AddShopItemScreen({ navigation }) {
   const [level, setLevel] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    fetch('http://10.100.102.16:5000/categories/all')
+      .then((res) => res.json())
+      .then((data) => setAvailableCategories(data))
+      .catch((err) => console.error('שגיאה בטעינת קטגוריות', err));
+  }, []);
+
+  const toggleCategory = (name) => {
+    setSelectedCategories((prev) =>
+      prev.includes(name) ? prev.filter((c) => c !== name) : [...prev, name]
+    );
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -47,8 +62,7 @@ export default function AddShopItemScreen({ navigation }) {
 
     let formData = new FormData();
     formData.append('file', { uri: imageUri, name: filename, type });
-    formData.append('upload_preset', 'GOG-ProfilesIMG'); // שנה לפלואד שלך
-    // אין צורך ב-cloud_name כששולחים לכתובת URL הנכונה
+    formData.append('upload_preset', 'GOG-ProfilesIMG');
 
     try {
       let response = await fetch(
@@ -62,12 +76,7 @@ export default function AddShopItemScreen({ navigation }) {
         }
       );
       let data = await response.json();
-      if (data.secure_url) {
-        return data.secure_url;
-      } else {
-        console.log('Cloudinary response missing secure_url', data);
-        return null;
-      }
+      return data.secure_url || null;
     } catch (error) {
       console.error('Error uploading image:', error);
       return null;
@@ -90,6 +99,8 @@ export default function AddShopItemScreen({ navigation }) {
       description: description || '',
       imageUrl: imageUrl || '',
     };
+    newItem.categories =
+      selectedCategories.length > 0 ? selectedCategories : ['אחר'];
 
     try {
       const response = await fetch('http://10.100.102.16:5000/shop/add', {
@@ -101,15 +112,13 @@ export default function AddShopItemScreen({ navigation }) {
       const data = await response.json();
 
       if (response.ok) {
-        // Alert.alert('הצלחה', `הפריט "${data.name}" נשמר בהצלחה`);
-
         setName('');
         setPrice('');
         setQuantity('');
         setLevel('');
         setDescription('');
         setImageUrl('');
-
+        setSelectedCategories([]);
         setIsLoading(false);
 
         navigation.navigate('ShopMenu', {
@@ -169,6 +178,7 @@ export default function AddShopItemScreen({ navigation }) {
         placeholder="תיאור של הפריט..."
         multiline
       />
+
       <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
         <Text style={styles.imageButtonText}>📷 בחר תמונה</Text>
       </TouchableOpacity>
@@ -181,6 +191,18 @@ export default function AddShopItemScreen({ navigation }) {
         </Text>
       )}
 
+      <TouchableOpacity
+        style={styles.imageButton}
+        onPress={() => setCategoryModalVisible(true)}
+      >
+        <Text style={styles.imageButtonText}>🏷️ בחר קטגוריות</Text>
+      </TouchableOpacity>
+      <Text style={{ textAlign: 'center', marginTop: 8 }}>
+        {selectedCategories.length > 0
+          ? selectedCategories.join(', ')
+          : 'לא נבחרו קטגוריות'}
+      </Text>
+
       {isLoading ? (
         <ActivityIndicator
           size="large"
@@ -192,9 +214,38 @@ export default function AddShopItemScreen({ navigation }) {
           <Text style={styles.addButtonText}>➕ הוסף פריט</Text>
         </TouchableOpacity>
       )}
+
+      <Modal visible={categoryModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>בחר קטגוריות</Text>
+            <ScrollView style={{ maxHeight: 300 }}>
+              {availableCategories.map((cat) => (
+                <TouchableOpacity
+                  key={cat._id}
+                  style={styles.checkboxRow}
+                  onPress={() => toggleCategory(cat.name)}
+                >
+                  <Text style={styles.checkboxLabel}>{cat.name}</Text>
+                  <Text>
+                    {selectedCategories.includes(cat.name) ? '✅' : '⬜'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={styles.modalClose}
+              onPress={() => setCategoryModalVisible(false)}
+            >
+              <Text style={{ color: 'white', fontWeight: 'bold' }}>סגור</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     padding: 20,
@@ -230,7 +281,6 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: 'bold',
   },
-
   addButton: {
     backgroundColor: '#6200EE',
     padding: 14,
@@ -242,5 +292,43 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBox: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 12,
+    width: '85%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  checkboxRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: '#eee',
+  },
+  checkboxLabel: {
+    flex: 1,
+    textAlign: 'right',
+    paddingRight: 8,
+    fontSize: 16,
+  },
+  modalClose: {
+    backgroundColor: '#6200EE',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
   },
 });

@@ -10,6 +10,10 @@ const CommunityRepHomeScreen = ({ navigation, route }) => {
     navigation.navigate('ShopMenu');
   };
 
+  const CategoriesManger = () => {
+    navigation.navigate('ManageCategoriesScreen');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -22,11 +26,8 @@ const CommunityRepHomeScreen = ({ navigation, route }) => {
           <Text style={styles.buttonText}>צפה בחנות </Text>
         </Pressable>
 
-        <Pressable
-          style={styles.button}
-          onPress={() => handlePress('עריכת משתתפים')}
-        >
-          <Text style={styles.buttonText}>עריכת משתתפים</Text>
+        <Pressable style={styles.button} onPress={() => CategoriesManger()}>
+          <Text style={styles.buttonText}>ניהול קטגוריות</Text>
         </Pressable>
 
         <Pressable

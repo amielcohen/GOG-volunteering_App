@@ -29,6 +29,9 @@ app.use('/auth', authRoutes);
 const shopRoutes = require('./routes/shop');
 app.use('/shop', shopRoutes);
 
+const categoryRoutes = require('./routes/categories');
+app.use('/categories', categoryRoutes);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');

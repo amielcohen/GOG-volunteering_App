@@ -24,6 +24,7 @@ import EditProfile from './screens/User/EditProfile';
 import CommunityRepHomeScreen from './screens/CommunityRep/CommunityRepHomeScreen';
 import ShopMenu from './screens/CommunityRep/ShopMenu';
 import AddShopItemScreen from './screens/CommunityRep/AddShopItemScreen';
+import ManageCategoriesScreen from './screens/CommunityRep/ManageCategoriesScreen';
 
 const Stack = createStackNavigator();
 
@@ -92,6 +93,22 @@ export default function App() {
           component={AddShopItemScreen}
           options={{
             headerTitle: 'הוסף פריט',
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+            },
+            headerTitleStyle: {
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+          }}
+        />
+        <Stack.Screen
+          name="ManageCategoriesScreen"
+          component={ManageCategoriesScreen}
+          options={{
+            headerTitle: 'מנהל קטגוריות',
             headerTitleAlign: 'center',
             headerStyle: {
               backgroundColor: '#FFFFFF',
