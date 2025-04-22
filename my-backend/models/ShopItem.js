@@ -7,6 +7,7 @@ const shopItemSchema = new mongoose.Schema({
   level: { type: Number, default: 0 },
   description: { type: String, default: '' },
   imageUrl: { type: String, default: '' },
+  categories: { type: [String], default: ['אחר'] },
   createdAt: { type: Date, default: Date.now },
 });
 
