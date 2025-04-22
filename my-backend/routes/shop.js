@@ -22,4 +22,17 @@ router.get('/all', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  try {
+    const deleted = await ShopItem.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'פריט לא נמצא' });
+    }
+    res.json({ message: 'נמחק בהצלחה' });
+  } catch (err) {
+    console.error('שגיאה במחיקה:', err.message);
+    res.status(500).json({ error: 'שגיאה במחיקה' });
+  }
+});
+
 module.exports = router;

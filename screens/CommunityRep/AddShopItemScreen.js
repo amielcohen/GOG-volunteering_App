@@ -88,7 +88,7 @@ export default function AddShopItemScreen({ navigation }) {
       quantity: Number(quantity),
       level: level ? Number(level) : 0,
       description: description || '',
-      imageUrl: imageUrl || 'https://example.com/default.jpg',
+      imageUrl: imageUrl || '',
     };
 
     try {
@@ -101,13 +101,20 @@ export default function AddShopItemScreen({ navigation }) {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert('הצלחה', `הפריט "${data.name}" נשמר בהצלחה`);
+        // Alert.alert('הצלחה', `הפריט "${data.name}" נשמר בהצלחה`);
+
         setName('');
         setPrice('');
         setQuantity('');
         setLevel('');
         setDescription('');
         setImageUrl('');
+
+        setIsLoading(false);
+
+        navigation.navigate('ShopMenu', {
+          message: `הפריט "${data.name}" נשמר בהצלחה ✅`,
+        });
       } else {
         Alert.alert('שגיאה', data.error || 'שמירת הפריט נכשלה');
       }
@@ -115,9 +122,6 @@ export default function AddShopItemScreen({ navigation }) {
       console.error('שגיאה:', err.message);
       Alert.alert('שגיאה', 'תקלה בעת שליחה לשרת');
     }
-
-    setIsLoading(false);
-    navigation.navigate('ShopMenu');
   };
 
   return (
