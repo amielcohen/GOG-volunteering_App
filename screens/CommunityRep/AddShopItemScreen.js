@@ -121,8 +121,15 @@ export default function AddShopItemScreen({ navigation }) {
         setSelectedCategories([]);
         setIsLoading(false);
 
-        navigation.navigate('ShopMenu', {
-          message: `הפריט "${data.name}" נשמר בהצלחה ✅`,
+        navigation.reset({
+          index: 1,
+          routes: [
+            { name: 'CommunityRepHomeScreen' }, // או שם אחר של העמוד הקודם
+            {
+              name: 'ShopMenu',
+              params: { message: `הפריט "${data.name}" נשמר בהצלחה ✅` },
+            },
+          ],
         });
       } else {
         Alert.alert('שגיאה', data.error || 'שמירת הפריט נכשלה');
