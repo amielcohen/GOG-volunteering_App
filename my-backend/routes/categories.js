@@ -76,7 +76,6 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'שגיאה במחיקת הקטגוריה' });
   }
 });
-
 router.put('/:id', async (req, res) => {
   const name = req.body.name?.trim();
   if (!name) {
@@ -84,14 +83,23 @@ router.put('/:id', async (req, res) => {
   }
 
   try {
+    const oldCategory = await Category.findById(req.params.id);
+    if (!oldCategory) {
+      return res.status(404).json({ error: 'קטגוריה לא נמצאה' });
+    }
+
     const updated = await Category.findByIdAndUpdate(
       req.params.id,
       { name },
       { new: true }
     );
-    if (!updated) {
-      return res.status(404).json({ error: 'קטגוריה לא נמצאה' });
-    }
+
+    // 🔄 עדכון שם הקטגוריה בכל הפריטים
+    await ShopItem.updateMany(
+      { categories: oldCategory.name },
+      { $set: { 'categories.$': name } }
+    );
+
     res.json(updated);
   } catch (err) {
     console.error('שגיאה בעדכון:', err.message);

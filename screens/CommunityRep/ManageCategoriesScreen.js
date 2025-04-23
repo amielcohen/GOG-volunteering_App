@@ -7,6 +7,11 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -194,64 +199,73 @@ export default function ManageCategoriesScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.header}>ניהול קטגוריות</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <View style={styles.container}>
+        <Text style={styles.header}>ניהול קטגוריות</Text>
 
-      <View style={styles.addRow}>
-        <TextInput
-          style={styles.input}
-          value={newCategory}
-          onChangeText={setNewCategory}
-          placeholder="הוסף קטגוריה"
+        <View style={styles.addRow}>
+          <TextInput
+            style={styles.input}
+            value={newCategory}
+            onChangeText={setNewCategory}
+            placeholder="הוסף קטגוריה"
+          />
+          <Pressable style={styles.addButton} onPress={addCategory}>
+            <Icon name="add" size={24} color="white" />
+          </Pressable>
+        </View>
+
+        {loading ? (
+          <ActivityIndicator
+            size="large"
+            color="#6200EE"
+            style={{ marginTop: 20 }}
+          />
+        ) : (
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: 30 }}
+            keyboardShouldPersistTaps="handled"
+          >
+            {categories.map((item) => (
+              <View key={item._id}>{renderItem({ item })}</View>
+            ))}
+          </ScrollView>
+        )}
+
+        <ErrorModal
+          visible={errorVisible}
+          title={errorText.title}
+          message={errorText.message}
+          onClose={() => setErrorVisible(false)}
         />
-        <Pressable style={styles.addButton} onPress={addCategory}>
-          <Icon name="add" size={24} color="white" />
-        </Pressable>
+
+        <ConfirmModal
+          visible={confirmVisible}
+          title="אישור מחיקה"
+          message={`האם אתה בטוח שברצונך למחוק את הקטגוריה "${categoryToDelete?.name}"?`}
+          onCancel={() => {
+            setConfirmVisible(false);
+            setCategoryToDelete(null);
+          }}
+          onConfirm={confirmDeleteCategory}
+          confirmText="מחק"
+          cancelText="בטל"
+          confirmColor="#d32f2f"
+          cancelColor="#757575"
+        />
+
+        {toastMessage && (
+          <CustomToast
+            message={toastMessage}
+            onHide={() => setToastMessage(null)}
+          />
+        )}
       </View>
-
-      {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#6200EE"
-          style={{ marginTop: 20 }}
-        />
-      ) : (
-        <FlatList
-          data={categories}
-          renderItem={renderItem}
-          keyExtractor={(item) => item._id}
-          contentContainerStyle={{ paddingBottom: 30 }}
-        />
-      )}
-
-      <ErrorModal
-        visible={errorVisible}
-        title={errorText.title}
-        message={errorText.message}
-        onClose={() => setErrorVisible(false)}
-      />
-
-      <ConfirmModal
-        visible={confirmVisible}
-        title="אישור מחיקה"
-        message={`האם אתה בטוח שברצונך למחוק את הקטגוריה "${categoryToDelete?.name}"?`}
-        onCancel={() => {
-          setConfirmVisible(false);
-          setCategoryToDelete(null);
-        }}
-        onConfirm={confirmDeleteCategory}
-        confirmText="מחק"
-        cancelText="בטל"
-        confirmColor="#d32f2f"
-        cancelColor="#757575"
-      />
-      {toastMessage && (
-        <CustomToast
-          message={toastMessage}
-          onHide={() => setToastMessage(null)}
-        />
-      )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

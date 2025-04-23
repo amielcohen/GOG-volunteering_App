@@ -32,6 +32,12 @@ app.use('/shop', shopRoutes);
 const categoryRoutes = require('./routes/categories');
 app.use('/categories', categoryRoutes);
 
+const organizationsRoutes = require('./routes/organization');
+app.use('/organizations', organizationsRoutes);
+
+const cityOrganizationsRoutes = require('./routes/cityOrganizations');
+app.use('/city-organizations', cityOrganizationsRoutes);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');

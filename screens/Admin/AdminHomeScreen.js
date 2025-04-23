@@ -1,28 +1,33 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 
-const AdminHomeScreen = () => {
+const AdminHomeScreen = ({ navigation, route }) => {
   const handlePress = (action) => {
     Alert.alert('Button Pressed!', `You pressed the "${action}" button.`);
   };
-
+  const OrganizationManger = () => {
+    navigation.navigate('AdminOrganizationScreen');
+  };
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>ברוך הבא לעמוד האדמין</Text>
-      </View>
       <View style={styles.content}>
         <Text style={styles.welcomeText}>שלום, אדמין! זהו העמוד שלך.</Text>
 
-        <Pressable style={styles.button} onPress={() => handlePress('צפה בסטטיסטיקה')}>
+        <Pressable
+          style={styles.button}
+          onPress={() => handlePress('צפה בסטטיסטיקה')}
+        >
           <Text style={styles.buttonText}>צפה בסטטיסטיקה</Text>
         </Pressable>
 
-        <Pressable style={styles.button} onPress={() => handlePress('עריכת משתתפים')}>
-          <Text style={styles.buttonText}>עריכת משתתפים</Text>
+        <Pressable style={styles.button} onPress={() => OrganizationManger()}>
+          <Text style={styles.buttonText}>מנהל ארגונים ועמותות</Text>
         </Pressable>
 
-        <Pressable style={styles.button} onPress={() => handlePress('עריכת התנדבויות')}>
+        <Pressable
+          style={styles.button}
+          onPress={() => handlePress('עריכת התנדבויות')}
+        >
           <Text style={styles.buttonText}>עריכת התנדבויות</Text>
         </Pressable>
       </View>
