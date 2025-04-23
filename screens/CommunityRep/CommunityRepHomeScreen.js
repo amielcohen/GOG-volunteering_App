@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 
 const CommunityRepHomeScreen = ({ navigation, route }) => {
+  const { user } = route.params;
   const handlePress = (action) => {
     Alert.alert('Button Pressed!', `You pressed the "${action}" button.`);
   };
@@ -13,14 +14,13 @@ const CommunityRepHomeScreen = ({ navigation, route }) => {
   const CategoriesManger = () => {
     navigation.navigate('ManageCategoriesScreen');
   };
-
+  const OrganizationManger = () => {
+    navigation.navigate('OrganizationManagerScreen', { user });
+  };
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>ברוך הבא לעמוד אחראי קהילתי</Text>
-      </View>
       <View style={styles.content}>
-        <Text style={styles.welcomeText}>שלום, אדמין! זהו העמוד שלך.</Text>
+        <Text style={styles.welcomeText}>שלום, אחראי עירוני! </Text>
 
         <Pressable style={styles.button} onPress={() => Shopinfo()}>
           <Text style={styles.buttonText}>צפה בחנות </Text>
@@ -30,6 +30,9 @@ const CommunityRepHomeScreen = ({ navigation, route }) => {
           <Text style={styles.buttonText}>ניהול קטגוריות</Text>
         </Pressable>
 
+        <Pressable style={styles.button} onPress={() => OrganizationManger()}>
+          <Text style={styles.buttonText}>ניהול ארגונים</Text>
+        </Pressable>
         <Pressable
           style={styles.button}
           onPress={() => handlePress('עריכת התנדבויות')}

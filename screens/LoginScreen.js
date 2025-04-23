@@ -10,17 +10,32 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import ErrorModal from '../components/ErrorModal';
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [secureText, setSecureText] = useState(true);
+  const [usernameAlign, setUsernameAlign] = useState('right');
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [errorVisible, setErrorVisible] = useState(false);
+  const [errorText, setErrorText] = useState('');
 
   function userNameInputHandler(enteredText) {
     setUsername(enteredText);
+    if (enteredText.length === 0) {
+      setUsernameAlign('right'); // placeholder בלבד
+    } else {
+      const firstChar = enteredText[0];
+      const isEnglish = /^[A-Za-z]/.test(firstChar);
+      setUsernameAlign(isEnglish ? 'left' : 'right');
+    }
   }
 
   function passwordInputHandler(enteredText) {
@@ -28,6 +43,9 @@ export default function LoginScreen({ navigation }) {
   }
 
   async function loginHandler() {
+    if (isLoading) return; // מניעת לחיצות כפולות
+    setIsLoading(true);
+
     const cleanUsername = username.trim();
     const cleanPassword = password.trim();
 
@@ -52,7 +70,10 @@ export default function LoginScreen({ navigation }) {
         if (user.role === 'admin') {
           navigation.navigate('AdminHomeScreen');
         } else if (user.role === 'CommunityRep') {
-          navigation.navigate('CommunityRepHomeScreen');
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'CommunityRepHomeScreen', params: { user } }],
+          });
         } else {
           navigation.reset({
             index: 0,
@@ -62,11 +83,21 @@ export default function LoginScreen({ navigation }) {
       } else {
         const errorData = await response.json();
         console.log('Error data:', errorData);
-        alert(errorData.message || 'שם המשתמש או הסיסמה שגויים');
+        setErrorText({
+          title: 'אופס...',
+          message: ' שם המשתמש או הסיסמה שגויים',
+        });
+        setErrorVisible(true);
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('אירעה שגיאה במהלך ההתחברות');
+      setErrorText({
+        title: 'שגיאה',
+        message: 'אירעה שגיאה במהלך ההתחברות',
+      });
+      setErrorVisible(true);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -98,6 +129,10 @@ export default function LoginScreen({ navigation }) {
                   autoCapitalize="none"
                   value={username}
                   onChangeText={userNameInputHandler}
+                  style={{
+                    flex: 1,
+                    textAlign: usernameAlign,
+                  }}
                 />
               </View>
               <View style={[styles.inputstyle, styles.passwordContainer]}>
@@ -121,8 +156,12 @@ export default function LoginScreen({ navigation }) {
                 </Pressable>
               </View>
               <View style={styles.loginStyle}>
-                <Pressable onPress={loginHandler}>
-                  <Text style={styles.loginText}>התחבר</Text>
+                <Pressable onPress={loginHandler} disabled={isLoading}>
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#000" />
+                  ) : (
+                    <Text style={styles.loginText}>התחבר</Text>
+                  )}
                 </Pressable>
               </View>
             </View>
@@ -131,13 +170,18 @@ export default function LoginScreen({ navigation }) {
                 <Text style={styles.newAccountText}>צור חשבון חדש</Text>
               </Pressable>
             </View>
+            <ErrorModal
+              visible={errorVisible}
+              title={errorText.title}
+              message={errorText.message}
+              onClose={() => setErrorVisible(false)}
+            />
           </ScrollView>
         </KeyboardAvoidingView>
       </ImageBackground>
     </LinearGradient>
   );
 }
-
 const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
@@ -167,9 +211,13 @@ const styles = StyleSheet.create({
   },
   inputstyle: {
     marginBottom: 20,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
-    width: 200,
+    backgroundColor: 'rgba(255, 255, 255, 0.7)', // רקע בהיר עם שקיפות
+    borderRadius: 12, // גבולות מעוגלים
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    width: 250,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -180,10 +228,16 @@ const styles = StyleSheet.create({
   },
   loginStyle: {
     marginTop: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 20,
   },
   loginText: {
     fontSize: 18,
-    color: 'black', // טקסט "התחבר" בשחור
+    color: 'black',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   newaccount: {
     alignItems: 'center',
@@ -191,7 +245,7 @@ const styles = StyleSheet.create({
   },
   newAccountText: {
     fontSize: 16,
-    color: 'black', // טקסט "צור חשבון חדש" בשחור
+    color: 'black',
     textDecorationLine: 'underline',
   },
 });
