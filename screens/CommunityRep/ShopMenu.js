@@ -14,7 +14,11 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import CustomToast from '../../components/CustomToast';
 
+import config from '../../config';
+
 function ShopMenu({ navigation, route }) {
+  const { user } = route.params;
+
   const [deleteMode, setDeleteMode] = useState(false); //deleteMode
   const [gifts, setGifts] = useState([]); //item list from the DB
 
@@ -49,7 +53,7 @@ function ShopMenu({ navigation, route }) {
   );
 
   const additem = () => {
-    navigation.navigate('AddShopItemScreen');
+    navigation.navigate('AddShopItemScreen', { user });
   };
 
   const handleDelete = (item) => {

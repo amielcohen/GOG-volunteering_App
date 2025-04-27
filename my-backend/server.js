@@ -36,7 +36,7 @@ const organizationsRoutes = require('./routes/organization');
 app.use('/organizations', organizationsRoutes);
 
 const cityOrganizationsRoutes = require('./routes/cityOrganizations');
-app.use('/city-organizations', cityOrganizationsRoutes);
+app.use('/cityOrganizations', cityOrganizationsRoutes);
 
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {

@@ -7,6 +7,9 @@ import {
   ImageBackground,
   Pressable,
 } from 'react-native';
+import { I18nManager } from 'react-native';
+import { useEffect } from 'react';
+
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NavigationContainer } from '@react-navigation/native';
@@ -24,13 +27,15 @@ import EditProfile from './screens/User/EditProfile';
 //Admin
 import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
 import AdminOrganizationScreen from './screens/Admin/AdminOrganizationScreen';
-
+import AddOrganizationScreen from './screens/Admin/AddOrganizationScreen';
 //CommunityRep
 import CommunityRepHomeScreen from './screens/CommunityRep/CommunityRepHomeScreen';
 import ShopMenu from './screens/CommunityRep/ShopMenu';
 import AddShopItemScreen from './screens/CommunityRep/AddShopItemScreen';
 import ManageCategoriesScreen from './screens/CommunityRep/ManageCategoriesScreen';
 import OrganizationManagerScreen from './screens/CommunityRep/OrganizationMangerScreen';
+import ChooseGlobalOrganizationScreen from './screens/CommunityRep/ChooseGlobalOrganizationScreen';
+import LinkGlobalOrganizationScreen from './screens/CommunityRep/LinkGlobalOrganizationScreen';
 
 const Stack = createStackNavigator();
 
@@ -150,6 +155,38 @@ export default function App() {
           }}
         />
         <Stack.Screen
+          name="LinkGlobalOrganization"
+          component={LinkGlobalOrganizationScreen}
+          options={{
+            headerTitle: 'קישור עמותה לעיר',
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+            },
+            headerTitleStyle: {
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+          }}
+        />
+        <Stack.Screen
+          name="ChooseGlobalOrganization"
+          component={ChooseGlobalOrganizationScreen}
+          options={{
+            headerTitle: 'קישור עמותה ארצית לעיר',
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+            },
+            headerTitleStyle: {
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+          }}
+        />
+        <Stack.Screen
           name="AddShopItemScreen"
           component={AddShopItemScreen}
           options={{
@@ -169,7 +206,23 @@ export default function App() {
           name="AdminOrganizationScreen"
           component={AdminOrganizationScreen}
           options={{
-            headerTitle: 'הוסף פריט',
+            headerTitle: 'מנהל עמותות',
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+            },
+            headerTitleStyle: {
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+          }}
+        />
+        <Stack.Screen
+          name="AddOrganizationScreen"
+          component={AddOrganizationScreen}
+          options={{
+            headerTitle: 'הוסף עמותה',
             headerTitleAlign: 'center',
             headerStyle: {
               backgroundColor: '#FFFFFF',
@@ -201,7 +254,7 @@ export default function App() {
           name="OrganizationManagerScreen"
           component={OrganizationManagerScreen}
           options={{
-            headerTitle: 'מנהל קטגוריות',
+            headerTitle: 'מנהל עמותות',
             headerTitleAlign: 'center',
             headerStyle: {
               backgroundColor: '#FFFFFF',
