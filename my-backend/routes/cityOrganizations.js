@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const CityOrganization = require('../models/CityOrganization');
+const Organization = require('../models/Organization');
 
 // Link global organization to city
 router.post('/link', async (req, res) => {
@@ -12,17 +13,35 @@ router.post('/link', async (req, res) => {
     if (exists)
       return res.status(400).json({ message: 'עמותה כבר משויכת לעיר' });
 
+    const org = await Organization.findById(organizationId);
+    if (!org) return res.status(404).json({ message: 'עמותה לא נמצאה' });
+
     const newLink = new CityOrganization({
       organizationId,
       city,
-      name: '',
-      isLocalOnly: false,
+      name: org.name,
+      description: org.description,
+      contactEmail: org.contactEmail,
+      phone: org.phone,
+      imageUrl: org.imageUrl,
+      type: org.type,
       addedBy,
+      isLocalOnly: false,
+      externalRewardAllowed: false,
+      maxRewardPerVolunteering: 50,
     });
 
     await newLink.save();
+
+    // עדכון רשימת הערים הפעילות של הארגון הגלובלי
+    if (!org.activeCities.includes(city)) {
+      org.activeCities.push(city);
+      await org.save();
+    }
+
     res.status(201).json(newLink);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'שגיאה בקישור עמותה' });
   }
 });
@@ -45,8 +64,19 @@ router.get('/', async (req, res) => {
 
 // Add new local organization
 router.post('/local', async (req, res) => {
-  const { name, description, city, addedBy, phone, contactEmail, imageUrl } =
-    req.body;
+  const {
+    name,
+    description,
+    city,
+    addedBy,
+    phone,
+    contactEmail,
+    imageUrl,
+    type,
+    tags,
+    externalRewardAllowed,
+    maxRewardPerVolunteering,
+  } = req.body;
 
   try {
     const newLocal = new CityOrganization({
@@ -58,6 +88,10 @@ router.post('/local', async (req, res) => {
       imageUrl,
       addedBy,
       isLocalOnly: true,
+      type,
+      tags,
+      externalRewardAllowed: externalRewardAllowed ?? false,
+      maxRewardPerVolunteering: maxRewardPerVolunteering ?? 50,
     });
 
     await newLocal.save();
@@ -67,7 +101,53 @@ router.post('/local', async (req, res) => {
   }
 });
 
-// Delete local city organization
+// Update city organization
+router.put('/:id', async (req, res) => {
+  const {
+    name,
+    description,
+    phone,
+    contactEmail,
+    imageUrl,
+    type,
+    tags,
+    externalRewardAllowed,
+    maxRewardPerVolunteering,
+    isActive,
+  } = req.body;
+
+  try {
+    const id = req.params.id;
+
+    const updated = await CityOrganization.findByIdAndUpdate(
+      id,
+      {
+        ...(name && { name }),
+        ...(description && { description }),
+        ...(phone && { phone }),
+        ...(contactEmail && { contactEmail }),
+        ...(imageUrl && { imageUrl }),
+        ...(type && { type }),
+        ...(tags && { tags }),
+        ...(externalRewardAllowed !== undefined && { externalRewardAllowed }),
+        ...(maxRewardPerVolunteering !== undefined && {
+          maxRewardPerVolunteering,
+        }),
+        ...(isActive !== undefined && { isActive }),
+      },
+      { new: true }
+    );
+
+    if (!updated)
+      return res.status(404).json({ message: 'עמותה לא נמצאה לעדכון' });
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: 'שגיאה בעדכון עמותה' });
+  }
+});
+
+// Delete city organization (local or linked)
 router.delete('/:id', async (req, res) => {
   try {
     const id = req.params.id;
@@ -75,6 +155,15 @@ router.delete('/:id', async (req, res) => {
     const deleted = await CityOrganization.findByIdAndDelete(id);
     if (!deleted)
       return res.status(404).json({ message: 'קישור עירוני לא נמצא' });
+
+    // עדכון רשימת הערים הפעילות של הארגון הגלובלי
+    if (deleted.organizationId) {
+      const org = await Organization.findById(deleted.organizationId);
+      if (org) {
+        org.activeCities = org.activeCities.filter((c) => c !== deleted.city);
+        await org.save();
+      }
+    }
 
     res.json({ message: 'העמותה הוסרה מהרשימה העירונית' });
   } catch (err) {

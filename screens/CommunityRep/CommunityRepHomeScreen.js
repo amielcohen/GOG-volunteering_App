@@ -8,7 +8,7 @@ const CommunityRepHomeScreen = ({ navigation, route }) => {
   };
 
   const Shopinfo = () => {
-    navigation.navigate('ShopMenu');
+    navigation.navigate('ShopMenu', { user });
   };
 
   const CategoriesManger = () => {

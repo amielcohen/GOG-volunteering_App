@@ -3,168 +3,188 @@ import {
   View,
   Text,
   FlatList,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import OrganizationCard from '../../components/OrganizationCard';
+import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
+import config from '../../config'; // קובץ קונפיג עם SERVER_URL
+
+import OptionsModal from '../../components/OptionsModal'; // תעדכן את הנתיב בהתאם למיקום
+import HelpModal from '../../components/HelpModal';
 
 export default function OrganizationManagerScreen({ route }) {
-  const [globalOrganizations, setGlobalOrganizations] = useState([]);
-  const [linkedOrganizations, setLinkedOrganizations] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-  const { user } = route.params;
+  const { user } = route.params; // רק user
+  const city = user.city; // מוציאים את שם העיר מתוך היוזר
 
-  const city = user.city;
+  const navigation = useNavigation();
+
+  const [optionsVisible, setOptionsVisible] = useState(false);
+  const [helpVisible, setHelpVisible] = useState(false);
+
+  const [organizations, setOrganizations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    fetchOrganizations();
   }, []);
 
-  const fetchData = async () => {
+  const fetchOrganizations = async () => {
     try {
-      const [globalRes, linkedRes] = await Promise.all([
-        axios.get('http://10.100.102.16:5000/organizations'),
-        axios.get(`http://10.100.102.16:5000/city-organizations?city=${city}`),
-      ]);
-      setGlobalOrganizations(globalRes.data);
-      setLinkedOrganizations(linkedRes.data);
+      const response = await axios.get(
+        `${config.SERVER_URL}/cityOrganizations?city=${city}`
+      );
+      setOrganizations(response.data);
     } catch (error) {
-      console.log('FETCH ERROR:', error.response?.data || error.message);
-
-      Alert.alert('שגיאה', 'נכשלה טעינת הנתונים');
+      console.error('שגיאה בטעינת עמותות:', error);
+      Alert.alert('שגיאה', 'לא ניתן לטעון את רשימת העמותות.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLink = async (organizationId) => {
-    try {
-      await axios.post('http://10.100.102.16:5000/city-organizations/link', {
-        organizationId,
-        city,
-        addedBy: user._id,
-      });
-      fetchData();
-    } catch (error) {
-      Alert.alert('שגיאה', 'לא ניתן לקשר את העמותה');
-    }
+  const handleViewDetails = (organization) => {
+    navigation.navigate('CityOrganizationDetails', { organization, user });
   };
 
-  const handleRemove = async (cityOrgId) => {
-    Alert.alert('אישור מחיקה', 'האם אתה בטוח שברצונך להסיר את העמותה?', [
-      { text: 'ביטול', style: 'cancel' },
+  const handlePrimaryAction = (organizationId) => {
+    Alert.alert('מחיקה', 'האם אתה בטוח שברצונך למחוק עמותה זו?', [
       {
-        text: 'אשר',
+        text: 'כן',
         onPress: async () => {
           try {
             await axios.delete(
-              `http://10.100.102.16:5000/city-organizations/${cityOrgId}`
+              `${config.SERVER_URL}/cityOrganizations/${organizationId}`
             );
-            fetchData();
-          } catch (err) {
-            Alert.alert('שגיאה', 'לא ניתן למחוק את העמותה');
+            fetchOrganizations(); // רענון הרשימה אחרי מחיקה
+          } catch (error) {
+            console.error('שגיאה במחיקה:', error);
+            Alert.alert('שגיאה', 'לא ניתן למחוק את העמותה.');
           }
         },
+        style: 'destructive',
       },
+      { text: 'לא', style: 'cancel' },
     ]);
   };
 
-  const renderOrg = ({ item }) => {
-    const isLinked = linkedOrganizations.some(
-      (org) => org.organizationId === item._id
-    );
+  if (loading) {
     return (
-      <View style={styles.card}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text>{item.description}</Text>
-        {!isLinked ? (
-          <TouchableOpacity
-            onPress={() => handleLink(item._id)}
-            style={styles.button}
-          >
-            <Text style={styles.buttonText}>קשר לעיר</Text>
-          </TouchableOpacity>
-        ) : (
-          <Text style={styles.linked}>מקושר לעיר שלך</Text>
-        )}
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#2196F3" />
       </View>
     );
-  };
-
-  const renderLinked = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.name}>{item.name}</Text>
-      <TouchableOpacity
-        onPress={() => handleRemove(item._id)}
-        style={[styles.button, { backgroundColor: 'red' }]}
-      >
-        <Text style={styles.buttonText}>הסר</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
-  if (loading)
-    return (
-      <ActivityIndicator
-        size="large"
-        style={{ flex: 1, justifyContent: 'center' }}
-      />
-    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>עמותות מקושרות לעיר שלך</Text>
-      <FlatList
-        data={linkedOrganizations}
-        keyExtractor={(item) => item._id}
-        renderItem={renderLinked}
+      <Text style={styles.header}>ניהול עמותות בעיר {city}</Text>
+
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => setOptionsVisible(true)}
+      >
+        <Text style={styles.addButtonText}>➕ הוסף עמותה</Text>
+      </TouchableOpacity>
+
+      {organizations.length === 0 ? (
+        <Text style={styles.noOrganizationsText}>
+          אין עמותות בעיר זו עדיין.
+        </Text>
+      ) : (
+        <FlatList
+          data={organizations}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
+            <OrganizationCard
+              organization={{
+                ...item,
+                activeCities: undefined, // אין צורך בשדה הזה בתצוגה העירונית
+              }}
+              onPrimaryAction={() => handlePrimaryAction(item._id)}
+              onViewDetails={() => handleViewDetails(item)}
+              primaryButtonLabel="מחק"
+              viewDetailsLabel="פרטים"
+            />
+          )}
+          contentContainerStyle={{ paddingBottom: 16 }}
+        />
+      )}
+
+      <OptionsModal
+        visible={optionsVisible}
+        onClose={() => setOptionsVisible(false)}
+        title="בחירת סוג עמותה"
+        subtitle="בחר האם להוסיף עמותה ארצית קיימת או ליצור עמותה עירונית חדשה."
+        onHelpPress={() => setHelpVisible(true)}
+        buttons={[
+          {
+            label: '➔ עמותה ארצית קיימת',
+            color: '#2196F3',
+            onPress: () => {
+              setOptionsVisible(false);
+              navigation.navigate('ChooseGlobalOrganization', { user });
+            },
+          },
+          {
+            label: '➔ עמותה עירונית חדשה',
+            color: '#FF9800',
+            onPress: () => {
+              setOptionsVisible(false);
+              navigation.navigate('CreateCityOrganization', { user });
+            },
+          },
+        ]}
       />
 
-      <Text style={styles.header}>עמותות גלובליות זמינות</Text>
-      <TextInput
-        placeholder="חפש עמותה..."
-        style={styles.search}
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-      />
-      <FlatList
-        data={globalOrganizations.filter((org) =>
-          org.name.includes(searchTerm)
-        )}
-        keyExtractor={(item) => item._id}
-        renderItem={renderOrg}
+      <HelpModal
+        visible={helpVisible}
+        onClose={() => setHelpVisible(false)}
+        title="עמותה ארצית"
+        message="עמותה ארצית היא עמותה שמוכרת על ידי האפליקציה ופועלת ברחבי הארץ. ניתן לקשר אותה לערים שונות לפי הצורך."
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16 },
-  header: { fontSize: 18, fontWeight: 'bold', marginVertical: 10 },
-  card: {
-    backgroundColor: '#eee',
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 10,
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#f5f5f5',
   },
-  name: { fontSize: 16, fontWeight: 'bold' },
-  button: {
-    backgroundColor: '#2196F3',
-    padding: 8,
-    marginTop: 10,
-    borderRadius: 6,
+  header: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 16,
+    color: '#333',
   },
-  buttonText: { color: 'white', textAlign: 'center' },
-  linked: { color: 'green', marginTop: 10 },
-  search: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 8,
-    borderRadius: 6,
-    marginBottom: 10,
+  addButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noOrganizationsText: {
+    textAlign: 'center',
+    color: '#777',
+    marginTop: 20,
+    fontSize: 16,
   },
 });

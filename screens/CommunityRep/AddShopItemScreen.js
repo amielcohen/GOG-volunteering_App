@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Modal,
+  Pressable,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { useFocusEffect } from '@react-navigation/native';
+import config from '../../config'; // תוודא שהנתיב נכון
 
-export default function AddShopItemScreen({ navigation }) {
+export default function AddShopItemScreen({ navigation, route }) {
+  const { user } = route.params;
+
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -25,13 +30,30 @@ export default function AddShopItemScreen({ navigation }) {
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  const fetchCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const res = await fetch(`${config.SERVER_URL}/categories/all`);
+      const data = await res.json();
+      setAvailableCategories(data);
+    } catch (err) {
+      console.error('שגיאה בטעינת קטגוריות', err);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
 
   useEffect(() => {
-    fetch('http://10.100.102.16:5000/categories/all')
-      .then((res) => res.json())
-      .then((data) => setAvailableCategories(data))
-      .catch((err) => console.error('שגיאה בטעינת קטגוריות', err));
+    fetchCategories();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCategories();
+    }, [])
+  );
 
   const toggleCategory = (name) => {
     setSelectedCategories((prev) =>
@@ -98,12 +120,11 @@ export default function AddShopItemScreen({ navigation }) {
       level: level ? Number(level) : 0,
       description: description || '',
       imageUrl: imageUrl || '',
+      categories: selectedCategories.length > 0 ? selectedCategories : ['אחר'],
     };
-    newItem.categories =
-      selectedCategories.length > 0 ? selectedCategories : ['אחר'];
 
     try {
-      const response = await fetch('http://10.100.102.16:5000/shop/add', {
+      const response = await fetch(`${config.SERVER_URL}/shop/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newItem),
@@ -124,7 +145,7 @@ export default function AddShopItemScreen({ navigation }) {
         navigation.reset({
           index: 1,
           routes: [
-            { name: 'CommunityRepHomeScreen' }, // או שם אחר של העמוד הקודם
+            { name: 'CommunityRepHomeScreen', params: { user } },
             {
               name: 'ShopMenu',
               params: { message: `הפריט "${data.name}" נשמר בהצלחה ✅` },
@@ -137,6 +158,8 @@ export default function AddShopItemScreen({ navigation }) {
     } catch (err) {
       console.error('שגיאה:', err.message);
       Alert.alert('שגיאה', 'תקלה בעת שליחה לשרת');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -202,8 +225,13 @@ export default function AddShopItemScreen({ navigation }) {
         style={styles.imageButton}
         onPress={() => setCategoryModalVisible(true)}
       >
-        <Text style={styles.imageButtonText}>🏷️ בחר קטגוריות</Text>
+        {loadingCategories ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={styles.imageButtonText}>🏷️ בחר קטגוריות</Text>
+        )}
       </TouchableOpacity>
+
       <Text style={{ textAlign: 'center', marginTop: 8 }}>
         {selectedCategories.length > 0
           ? selectedCategories.join(', ')
@@ -226,6 +254,18 @@ export default function AddShopItemScreen({ navigation }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>בחר קטגוריות</Text>
+            <Pressable
+              style={styles.manageLink}
+              onPress={() => {
+                setCategoryModalVisible(false);
+                navigation.navigate('ManageCategoriesScreen', {
+                  onCategoriesUpdated: fetchCategories,
+                });
+              }}
+            >
+              <Text style={styles.manageLinkText}>נהל קטגוריות</Text>
+            </Pressable>
+
             <ScrollView style={{ maxHeight: 300 }}>
               {availableCategories.map((cat) => (
                 <TouchableOpacity
@@ -277,7 +317,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   imageButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#6200EE',
     padding: 12,
     borderRadius: 8,
     marginTop: 24,
@@ -285,7 +325,7 @@ const styles = StyleSheet.create({
   },
   imageButtonText: {
     fontSize: 16,
-    color: '#333',
+    color: '#fff',
     fontWeight: 'bold',
   },
   addButton: {
@@ -337,5 +377,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 16,
+  },
+  manageLink: {
+    alignSelf: 'flex-end',
+    marginBottom: 10,
+  },
+  manageLinkText: {
+    color: '#2196F3',
+    fontSize: 16,
+    textDecorationLine: 'underline',
+    fontWeight: '500',
   },
 });

@@ -14,6 +14,7 @@ const organizationSchema = new mongoose.Schema(
     contactEmail: { type: String },
     phone: { type: String },
     isGlobal: { type: Boolean, default: true }, // תמיד true כאן
+    activeCities: [{ type: String }],
   },
   { timestamps: true }
 );

@@ -3,15 +3,12 @@ import {
   View,
   Text,
   TextInput,
-  FlatList,
   StyleSheet,
   Pressable,
   ActivityIndicator,
   KeyboardAvoidingView,
-  TouchableWithoutFeedback,
-  Keyboard,
-  Platform,
   ScrollView,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -19,28 +16,35 @@ import ErrorModal from '../../components/ErrorModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import CustomToast from '../../components/CustomToast';
 
-export default function ManageCategoriesScreen() {
+import config from '../../config';
+
+export default function ManageCategoriesScreen({ route }) {
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState('');
   const [loading, setLoading] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [editedName, setEditedName] = useState('');
-
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [errorVisible, setErrorVisible] = useState(false);
   const [errorText, setErrorText] = useState('');
-
   const [toastMessage, setToastMessage] = useState(null);
-
   const [categoryToDelete, setCategoryToDelete] = useState(null);
 
   const fetchCategories = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('http://10.100.102.16:5000/categories/all');
+      const response = await fetch(`${config.SERVER_URL}/categories/all`);
       const data = await response.json();
       setCategories(data);
     } catch (err) {
       console.error('שגיאה בטעינה:', err);
+      setErrorText({
+        title: 'שגיאה',
+        message: 'בעיה בחיבור לשרת',
+      });
+      setErrorVisible(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -50,8 +54,9 @@ export default function ManageCategoriesScreen() {
 
   const addCategory = async () => {
     if (!newCategory.trim()) return;
+    setLoading(true);
     try {
-      const response = await fetch('http://10.100.102.16:5000/categories/add', {
+      const response = await fetch(`${config.SERVER_URL}/categories/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newCategory.trim() }),
@@ -60,6 +65,9 @@ export default function ManageCategoriesScreen() {
       if (response.ok) {
         setNewCategory('');
         fetchCategories();
+        if (route.params?.onCategoriesUpdated) {
+          route.params.onCategoriesUpdated(); // 🔥
+        }
       } else {
         const error = await response.json();
         setErrorText({
@@ -71,9 +79,11 @@ export default function ManageCategoriesScreen() {
     } catch (err) {
       setErrorText({
         title: 'שגיאה',
-        message: 'התרחשה תקלה בחיבור לשרת',
+        message: 'בעיה בחיבור לשרת',
       });
       setErrorVisible(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,12 +94,11 @@ export default function ManageCategoriesScreen() {
 
   const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
+    setLoading(true);
     try {
       const response = await fetch(
-        `http://10.100.102.16:5000/categories/${categoryToDelete._id}`,
-        {
-          method: 'DELETE',
-        }
+        `${config.SERVER_URL}/categories/${categoryToDelete._id}`,
+        { method: 'DELETE' }
       );
 
       if (response.status === 400) {
@@ -109,8 +118,10 @@ export default function ManageCategoriesScreen() {
         setErrorVisible(true);
       } else {
         setToastMessage('הקטגוריה נמחקה בהצלחה');
-
         fetchCategories();
+        if (route.params?.onCategoriesUpdated) {
+          route.params.onCategoriesUpdated(); // 🔥
+        }
       }
     } catch (err) {
       setErrorText({
@@ -119,6 +130,7 @@ export default function ManageCategoriesScreen() {
       });
       setErrorVisible(true);
     } finally {
+      setLoading(false);
       setConfirmVisible(false);
       setCategoryToDelete(null);
     }
@@ -126,20 +138,21 @@ export default function ManageCategoriesScreen() {
 
   const updateCategory = async (id) => {
     if (!editedName.trim()) return;
+    setLoading(true);
     try {
-      const response = await fetch(
-        `http://10.100.102.16:5000/categories/${id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: editedName.trim() }),
-        }
-      );
+      const response = await fetch(`${config.SERVER_URL}/categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editedName.trim() }),
+      });
 
       if (response.ok) {
         setEditingCategoryId(null);
         setEditedName('');
         fetchCategories();
+        if (route.params?.onCategoriesUpdated) {
+          route.params.onCategoriesUpdated(); // 🔥
+        }
       } else {
         const error = await response.json();
         setErrorText({
@@ -154,6 +167,8 @@ export default function ManageCategoriesScreen() {
         message: 'בעיה בחיבור לשרת',
       });
       setErrorVisible(true);
+    } finally {
+      setLoading(false);
     }
   };
 
