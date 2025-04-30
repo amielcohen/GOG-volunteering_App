@@ -1,4 +1,3 @@
-// routes/cityOrganizations.js
 const express = require('express');
 const router = express.Router();
 const CityOrganization = require('../models/CityOrganization');
@@ -6,15 +5,24 @@ const Organization = require('../models/Organization');
 
 // Link global organization to city
 router.post('/link', async (req, res) => {
-  const { organizationId, city, addedBy } = req.body;
+  const {
+    organizationId,
+    city,
+    addedBy,
+    externalRewardAllowed,
+    maxRewardPerVolunteering,
+  } = req.body;
 
   try {
     const exists = await CityOrganization.findOne({ organizationId, city });
-    if (exists)
+    if (exists) {
       return res.status(400).json({ message: 'עמותה כבר משויכת לעיר' });
+    }
 
     const org = await Organization.findById(organizationId);
-    if (!org) return res.status(404).json({ message: 'עמותה לא נמצאה' });
+    if (!org) {
+      return res.status(404).json({ message: 'עמותה לא נמצאה' });
+    }
 
     const newLink = new CityOrganization({
       organizationId,
@@ -27,19 +35,19 @@ router.post('/link', async (req, res) => {
       type: org.type,
       addedBy,
       isLocalOnly: false,
-      externalRewardAllowed: false,
-      maxRewardPerVolunteering: 50,
+      externalRewardAllowed: externalRewardAllowed ?? false,
+      maxRewardPerVolunteering: maxRewardPerVolunteering ?? 50,
     });
 
     await newLink.save();
 
-    // עדכון רשימת הערים הפעילות של הארגון הגלובלי
-    if (!org.activeCities.includes(city)) {
-      org.activeCities.push(city);
+    // עדכון רשימת הערים המקושרות של הארגון
+    if (!org.linkedCities.includes(city)) {
+      org.linkedCities.push(city);
       await org.save();
     }
 
-    res.status(201).json(newLink);
+    res.status(201).json({ message: 'העמותה קושרה בהצלחה' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'שגיאה בקישור עמותה' });
@@ -56,8 +64,9 @@ router.get('/', async (req, res) => {
 
   try {
     const results = await CityOrganization.find({ city });
-    res.json(results);
+    res.status(200).json(results);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'שגיאה בטעינת עמותות עירוניות' });
   }
 });
@@ -97,6 +106,7 @@ router.post('/local', async (req, res) => {
     await newLocal.save();
     res.status(201).json(newLocal);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'שגיאה בהוספת עמותה מקומית' });
   }
 });
@@ -138,11 +148,13 @@ router.put('/:id', async (req, res) => {
       { new: true }
     );
 
-    if (!updated)
+    if (!updated) {
       return res.status(404).json({ message: 'עמותה לא נמצאה לעדכון' });
+    }
 
-    res.json(updated);
+    res.status(200).json(updated);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'שגיאה בעדכון עמותה' });
   }
 });
@@ -153,21 +165,25 @@ router.delete('/:id', async (req, res) => {
     const id = req.params.id;
 
     const deleted = await CityOrganization.findByIdAndDelete(id);
-    if (!deleted)
+    if (!deleted) {
       return res.status(404).json({ message: 'קישור עירוני לא נמצא' });
+    }
 
-    // עדכון רשימת הערים הפעילות של הארגון הגלובלי
+    // עדכון רשימת הערים המקושרות של הארגון
     if (deleted.organizationId) {
       const org = await Organization.findById(deleted.organizationId);
       if (org) {
-        org.activeCities = org.activeCities.filter((c) => c !== deleted.city);
+        org.linkedCities = org.linkedCities.filter(
+          (c) => c.toString() !== deleted.city.toString()
+        );
         await org.save();
       }
     }
 
-    res.json({ message: 'העמותה הוסרה מהרשימה העירונית' });
+    res.status(200).json({ message: 'הקישור העירוני נמחק בהצלחה' });
   } catch (err) {
-    res.status(500).json({ message: 'שגיאה במחיקת הקישור העירוני' });
+    console.error(err);
+    res.status(500).json({ message: 'שגיאה במחיקת קישור עירוני' });
   }
 });
 

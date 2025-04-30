@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,18 +16,38 @@ import config from '../../config';
 import { useNavigation } from '@react-navigation/native';
 import HelpModal from '../../components/HelpModal';
 import OptionsModal from '../../components/OptionsModal';
+import CityHeader from '../../components/CityHeader';
+import theColor from '../../constants/theColor';
+import ErrorModal from '../../components/ErrorModal';
 
 export default function LinkGlobalOrganizationScreen({ route }) {
-  const { organization, user } = route.params;
-  const city = user.city;
+  const { organization, user, cityName } = route.params;
   const navigation = useNavigation();
 
+  const [fullOrganization, setFullOrganization] = useState(null);
   const [externalAllowed, setExternalAllowed] = useState(true);
   const [maxReward, setMaxReward] = useState('50');
 
   const [helpVisible, setHelpVisible] = useState(false);
   const [helpType, setHelpType] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [errorVisible, setErrorVisible] = useState(false);
+  const [errorText, setErrorText] = useState('');
+
+  useEffect(() => {
+    fetchFullOrganization();
+  }, []);
+
+  const fetchFullOrganization = async () => {
+    try {
+      const response = await axios.get(
+        `${config.SERVER_URL}/organizations/${organization._id}`
+      );
+      setFullOrganization(response.data);
+    } catch (err) {
+      console.error('שגיאה בטעינת פרטי העמותה:', err);
+    }
+  };
 
   const openHelp = (type) => {
     setHelpType(type);
@@ -36,14 +56,18 @@ export default function LinkGlobalOrganizationScreen({ route }) {
 
   const handleLinkOrganization = async () => {
     if (!maxReward || isNaN(maxReward)) {
-      Alert.alert('שגיאה', 'אנא הזן מספר תקין למקסימום מטבעות.');
+      setErrorText({
+        title: 'שגיאה',
+        message: 'אנא הזן מספר תקין לערך מטבעות מקסימלי',
+      });
+      setErrorVisible(true);
       return;
     }
 
     try {
       await axios.post(`${config.SERVER_URL}/cityOrganizations/link`, {
         organizationId: organization._id,
-        city,
+        city: user.city,
         addedBy: user._id,
         externalRewardAllowed: externalAllowed,
         maxRewardPerVolunteering: Number(maxReward),
@@ -53,16 +77,28 @@ export default function LinkGlobalOrganizationScreen({ route }) {
     } catch (error) {
       console.error('שגיאה בקישור עמותה:', error);
       if (error.response?.data?.message) {
-        Alert.alert('שגיאה', error.response.data.message);
+        setErrorText({
+          title: 'שגיאה',
+          message: error.response.data.message,
+        });
+        setErrorVisible(true);
       } else {
-        Alert.alert('שגיאה', 'לא ניתן לקשר את העמותה.');
+        setErrorText({
+          title: 'שגיאה',
+          message: 'לא ניתן לקשר את העמותה',
+        });
+        setErrorVisible(true);
       }
     }
   };
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>קבע את מדיניות העמותה בעיר {city}</Text>
+      <CityHeader
+        title="קבע את מדיניות העמותה"
+        cityName={cityName}
+        color={theColor.primaryBlue}
+      />
 
       <View style={styles.card}>
         <Image
@@ -81,10 +117,10 @@ export default function LinkGlobalOrganizationScreen({ route }) {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>העמותה פעילה בערים הבאות:</Text>
-        {organization.activeCities && organization.activeCities.length > 0 ? (
-          organization.activeCities.map((cityName, index) => (
+        {fullOrganization?.activeCities?.length > 0 ? (
+          fullOrganization.activeCities.map((city, index) => (
             <Text key={index} style={styles.cityName}>
-              • {cityName}
+              • {city.name}
             </Text>
           ))
         ) : (
@@ -92,7 +128,6 @@ export default function LinkGlobalOrganizationScreen({ route }) {
         )}
       </View>
 
-      {/* אפשר התנדבות בכל הארץ */}
       <View style={styles.optionRow}>
         <View style={styles.labelWithIcon}>
           <Text style={styles.optionText}>אפשר התנדבות בכל הארץ</Text>
@@ -113,7 +148,6 @@ export default function LinkGlobalOrganizationScreen({ route }) {
         לבצע זאת גם בהמשך.
       </Text>
 
-      {/* סכום מקסימלי */}
       <View style={styles.section}>
         <View style={styles.labelWithIcon}>
           <Text style={styles.sectionTitle}>
@@ -141,12 +175,10 @@ export default function LinkGlobalOrganizationScreen({ route }) {
         </View>
       </View>
 
-      {/* כפתור קישור */}
       <TouchableOpacity style={styles.button} onPress={handleLinkOrganization}>
         <Text style={styles.buttonText}>קשר עמותה לעיר</Text>
       </TouchableOpacity>
 
-      {/* מודל עזרה */}
       <HelpModal
         visible={helpVisible}
         onClose={() => setHelpVisible(false)}
@@ -157,6 +189,14 @@ export default function LinkGlobalOrganizationScreen({ route }) {
             : 'הגדרת סכום מקסימלי קובעת את מספר המטבעות המרבי שניתן להעניק לכל מתנדב עבור התנדבות אחת.'
         }
       />
+
+      <ErrorModal
+        visible={errorVisible}
+        title={errorText.title}
+        message={errorText.message}
+        onClose={() => setErrorVisible(false)}
+      />
+
       <OptionsModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -169,11 +209,17 @@ export default function LinkGlobalOrganizationScreen({ route }) {
             onPress: () => {
               setModalVisible(false);
               navigation.reset({
-                index: 0,
+                index: 1,
                 routes: [
+                  { name: 'CommunityRepHomeScreen', params: { user } },
                   {
-                    name: 'CreateCommunityRep',
-                    params: { city, cityOrganizationId: organization._id },
+                    name: 'CreateOrganizationRepScreen',
+                    params: {
+                      cityName,
+                      organizationId: organization._id,
+                      user,
+                      organizationName: organization.name,
+                    },
                   },
                 ],
               });
@@ -190,7 +236,7 @@ export default function LinkGlobalOrganizationScreen({ route }) {
                   { name: 'CommunityRepHomeScreen', params: { user } },
                   {
                     name: 'OrganizationManagerScreen',
-                    params: { user },
+                    params: { user, cityName },
                   },
                 ],
               });

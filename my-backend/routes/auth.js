@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/Users');
+const City = require('../models/City'); // נדרש כדי למצוא עיר לפי שם
 
 // ראוט התחברות
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    // חיפוש המשתמש במסד הנתונים
     const user = await User.findOne({ username, password });
     if (user) {
-      res.status(200).json(user); // מחזיר את המשתמש במידה והוא קיים
+      res.status(200).json(user);
     } else {
       res.status(401).json({ message: 'שם המשתמש או הסיסמה שגויים' });
     }
@@ -25,12 +25,14 @@ router.post('/register', async (req, res) => {
     password,
     email,
     dateOfBirth,
-    city,
+    city, // יכול להיות ID או שם
     street,
     houseNumber,
     gender,
     firstName,
     lastName,
+    role, // אפשרות להגדיר role (ברירת מחדל user)
+    organization, // במידה ורלוונטי (למשל OrganizationRep)
   } = req.body;
 
   console.log('Registration request:', req.body);
@@ -41,17 +43,28 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'שם המשתמש כבר קיים' });
     }
 
+    let cityId = city;
+
+    // בדיקה אם הגיע שם ולא ID
+    if (typeof city === 'string' && city.length < 24) {
+      const cityDoc = await City.findOne({ name: city });
+      if (!cityDoc) return res.status(400).json({ message: 'עיר לא נמצאה' });
+      cityId = cityDoc._id;
+    }
+
     const newUser = new User({
       username,
       password,
       email,
       dateOfBirth,
-      city,
+      city: cityId,
       street,
       houseNumber,
       gender,
       firstName,
       lastName,
+      role: role || 'user', // ברירת מחדל אם לא סופק
+      organization: organization || null,
     });
 
     await newUser.save();
@@ -78,10 +91,20 @@ router.put('/updateProfile', async (req, res) => {
       profilePic,
       firstName,
       lastName,
+      role,
+      organization,
     } = req.body;
 
     if (!_id) {
       return res.status(400).json({ message: 'User id is required' });
+    }
+
+    let cityId = city;
+
+    if (typeof city === 'string' && city.length < 24) {
+      const cityDoc = await City.findOne({ name: city });
+      if (!cityDoc) return res.status(400).json({ message: 'עיר לא נמצאה' });
+      cityId = cityDoc._id;
     }
 
     const updatedUser = await User.findByIdAndUpdate(
@@ -89,7 +112,7 @@ router.put('/updateProfile', async (req, res) => {
       {
         email,
         dateOfBirth,
-        city,
+        city: cityId,
         street,
         houseNumber,
         gender,
@@ -97,6 +120,8 @@ router.put('/updateProfile', async (req, res) => {
         profilePic,
         firstName,
         lastName,
+        ...(role && { role }),
+        ...(organization && { organization }),
       },
       { new: true }
     );
@@ -114,10 +139,30 @@ router.put('/updateProfile', async (req, res) => {
   }
 });
 
+// בדיקת זמינות שם משתמש
+router.get('/checkUsername', async (req, res) => {
+  const { username } = req.query;
+
+  if (!username) {
+    return res.status(400).json({ message: 'שם משתמש לא סופק' });
+  }
+
+  try {
+    const exists = await User.exists({ username });
+    res.status(200).json({ exists: !!exists });
+  } catch (err) {
+    console.error('שגיאה בבדיקת שם משתמש:', err);
+    res.status(500).json({ message: 'שגיאה בבדיקת שם משתמש' });
+  }
+});
+
 // ראוט לקבלת פרטי המשתמש לפי מזהה
 router.get('/profile/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id)
+      .populate('city', 'name')
+      .populate('organization', 'name');
+
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.status(200).json(user);
   } catch (error) {

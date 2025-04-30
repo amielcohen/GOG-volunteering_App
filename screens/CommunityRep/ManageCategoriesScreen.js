@@ -66,7 +66,7 @@ export default function ManageCategoriesScreen({ route }) {
         setNewCategory('');
         fetchCategories();
         if (route.params?.onCategoriesUpdated) {
-          route.params.onCategoriesUpdated(); // 🔥
+          route.params.onCategoriesUpdated();
         }
       } else {
         const error = await response.json();
@@ -120,7 +120,7 @@ export default function ManageCategoriesScreen({ route }) {
         setToastMessage('הקטגוריה נמחקה בהצלחה');
         fetchCategories();
         if (route.params?.onCategoriesUpdated) {
-          route.params.onCategoriesUpdated(); // 🔥
+          route.params.onCategoriesUpdated();
         }
       }
     } catch (err) {
@@ -151,7 +151,7 @@ export default function ManageCategoriesScreen({ route }) {
         setEditedName('');
         fetchCategories();
         if (route.params?.onCategoriesUpdated) {
-          route.params.onCategoriesUpdated(); // 🔥
+          route.params.onCategoriesUpdated();
         }
       } else {
         const error = await response.json();

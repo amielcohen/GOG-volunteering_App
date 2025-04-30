@@ -1,4 +1,3 @@
-// models/Organization.js
 const mongoose = require('mongoose');
 
 const organizationSchema = new mongoose.Schema(
@@ -14,7 +13,19 @@ const organizationSchema = new mongoose.Schema(
     contactEmail: { type: String },
     phone: { type: String },
     isGlobal: { type: Boolean, default: true }, // תמיד true כאן
-    activeCities: [{ type: String }],
+
+    linkedCities: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'City',
+      },
+    ],
+    activeCities: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'City',
+      },
+    ],
   },
   { timestamps: true }
 );

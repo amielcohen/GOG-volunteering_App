@@ -11,20 +11,19 @@ import {
 import OrganizationCard from '../../components/OrganizationCard';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import config from '../../config'; // קובץ קונפיג עם SERVER_URL
+import config from '../../config';
 
-import OptionsModal from '../../components/OptionsModal'; // תעדכן את הנתיב בהתאם למיקום
+import OptionsModal from '../../components/OptionsModal';
 import HelpModal from '../../components/HelpModal';
+import CityHeader from '../../components/CityHeader';
+import theColor from '../../constants/theColor';
 
 export default function OrganizationManagerScreen({ route }) {
-  const { user } = route.params; // רק user
-  const city = user.city; // מוציאים את שם העיר מתוך היוזר
-
+  const { user, cityName } = route.params;
   const navigation = useNavigation();
 
   const [optionsVisible, setOptionsVisible] = useState(false);
   const [helpVisible, setHelpVisible] = useState(false);
-
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +34,7 @@ export default function OrganizationManagerScreen({ route }) {
   const fetchOrganizations = async () => {
     try {
       const response = await axios.get(
-        `${config.SERVER_URL}/cityOrganizations?city=${city}`
+        `${config.SERVER_URL}/cityOrganizations?city=${user.city}`
       );
       setOrganizations(response.data);
     } catch (error) {
@@ -59,7 +58,7 @@ export default function OrganizationManagerScreen({ route }) {
             await axios.delete(
               `${config.SERVER_URL}/cityOrganizations/${organizationId}`
             );
-            fetchOrganizations(); // רענון הרשימה אחרי מחיקה
+            fetchOrganizations();
           } catch (error) {
             console.error('שגיאה במחיקה:', error);
             Alert.alert('שגיאה', 'לא ניתן למחוק את העמותה.');
@@ -81,7 +80,11 @@ export default function OrganizationManagerScreen({ route }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>ניהול עמותות בעיר {city}</Text>
+      <CityHeader
+        title="ניהול עמותות"
+        cityName={cityName}
+        color={theColor.calmBlue}
+      />
 
       <TouchableOpacity
         style={styles.addButton}
@@ -102,7 +105,7 @@ export default function OrganizationManagerScreen({ route }) {
             <OrganizationCard
               organization={{
                 ...item,
-                activeCities: undefined, // אין צורך בשדה הזה בתצוגה העירונית
+                activeCities: undefined,
               }}
               onPrimaryAction={() => handlePrimaryAction(item._id)}
               onViewDetails={() => handleViewDetails(item)}
@@ -126,7 +129,10 @@ export default function OrganizationManagerScreen({ route }) {
             color: '#2196F3',
             onPress: () => {
               setOptionsVisible(false);
-              navigation.navigate('ChooseGlobalOrganization', { user });
+              navigation.navigate('ChooseGlobalOrganization', {
+                user,
+                cityName,
+              });
             },
           },
           {
@@ -134,7 +140,7 @@ export default function OrganizationManagerScreen({ route }) {
             color: '#FF9800',
             onPress: () => {
               setOptionsVisible(false);
-              navigation.navigate('CreateCityOrganization', { user });
+              navigation.navigate('CreateCityOrganization', { user, cityName });
             },
           },
         ]}

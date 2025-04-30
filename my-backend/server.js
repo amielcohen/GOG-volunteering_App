@@ -38,6 +38,12 @@ app.use('/organizations', organizationsRoutes);
 const cityOrganizationsRoutes = require('./routes/cityOrganizations');
 app.use('/cityOrganizations', cityOrganizationsRoutes);
 
+const cityRoutes = require('./routes/city');
+app.use('/cities', cityRoutes);
+
+const organizationRepsRoutes = require('./routes/organizationReps');
+app.use('/organizationReps', organizationRepsRoutes);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');
