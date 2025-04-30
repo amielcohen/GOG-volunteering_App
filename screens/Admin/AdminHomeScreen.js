@@ -26,9 +26,9 @@ const AdminHomeScreen = ({ navigation, route }) => {
 
         <Pressable
           style={styles.button}
-          onPress={() => handlePress('עריכת התנדבויות')}
+          onPress={() => navigation.navigate('AddCityScreen')}
         >
-          <Text style={styles.buttonText}>עריכת התנדבויות</Text>
+          <Text style={styles.buttonText}>הוסף עיר</Text>
         </Pressable>
       </View>
     </View>

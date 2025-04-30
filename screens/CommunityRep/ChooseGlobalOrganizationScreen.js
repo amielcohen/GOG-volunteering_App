@@ -15,8 +15,7 @@ import config from '../../config';
 import { useNavigation } from '@react-navigation/native';
 
 export default function ChooseGlobalOrganizationScreen({ route }) {
-  const { user } = route.params;
-  const city = user.city;
+  const { user, cityName } = route.params;
   const navigation = useNavigation();
 
   const [organizations, setOrganizations] = useState([]);
@@ -25,22 +24,18 @@ export default function ChooseGlobalOrganizationScreen({ route }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchGlobalOrganizations();
+    fetchUnlinkedOrganizations();
   }, []);
 
-  const fetchGlobalOrganizations = async () => {
+  const fetchUnlinkedOrganizations = async () => {
     try {
-      const response = await axios.get(`${config.SERVER_URL}/organizations`);
-      const globalOrgs = response.data.filter((org) => org.isGlobal);
-
-      const unlinkedOrgs = globalOrgs.filter((org) => {
-        return !org.activeCities || !org.activeCities.includes(city);
-      });
-
-      setOrganizations(unlinkedOrgs);
-      setFilteredOrganizations(unlinkedOrgs);
+      const response = await axios.get(
+        `${config.SERVER_URL}/organizations/unlinked/${user.city}`
+      );
+      setOrganizations(response.data);
+      setFilteredOrganizations(response.data);
     } catch (error) {
-      console.error('שגיאה בטעינת עמותות ארציות:', error);
+      console.error('שגיאה בטעינת עמותות לא מקושרות:', error);
       Alert.alert('שגיאה', 'לא ניתן לטעון את רשימת העמותות הארציות.');
     } finally {
       setLoading(false);
@@ -60,7 +55,11 @@ export default function ChooseGlobalOrganizationScreen({ route }) {
   };
 
   const handleSelectOrganization = (organization) => {
-    navigation.navigate('LinkGlobalOrganization', { organization, user });
+    navigation.navigate('LinkGlobalOrganization', {
+      organization,
+      user,
+      cityName,
+    });
   };
 
   if (loading) {
@@ -73,7 +72,7 @@ export default function ChooseGlobalOrganizationScreen({ route }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>בחר עמותה ארצית לקישור לעיר {city}</Text>
+      <Text style={styles.header}>בחר עמותה ארצית לקישור לעיר {cityName}</Text>
 
       <TextInput
         style={styles.searchInput}
@@ -127,7 +126,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
     elevation: 2,
-    textAlign: 'right', // בשביל עברית
+    textAlign: 'right',
   },
   loaderContainer: {
     flex: 1,

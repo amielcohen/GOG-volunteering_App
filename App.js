@@ -28,6 +28,7 @@ import EditProfile from './screens/User/EditProfile';
 import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
 import AdminOrganizationScreen from './screens/Admin/AdminOrganizationScreen';
 import AddOrganizationScreen from './screens/Admin/AddOrganizationScreen';
+import AddCityScreen from './screens/Admin/AddCityScreen';
 //CommunityRep
 import CommunityRepHomeScreen from './screens/CommunityRep/CommunityRepHomeScreen';
 import ShopMenu from './screens/CommunityRep/ShopMenu';
@@ -36,6 +37,7 @@ import ManageCategoriesScreen from './screens/CommunityRep/ManageCategoriesScree
 import OrganizationManagerScreen from './screens/CommunityRep/OrganizationMangerScreen';
 import ChooseGlobalOrganizationScreen from './screens/CommunityRep/ChooseGlobalOrganizationScreen';
 import LinkGlobalOrganizationScreen from './screens/CommunityRep/LinkGlobalOrganizationScreen';
+import CreateOrganizationRepScreen from './screens/CommunityRep/CreateOrganizationRepScreen';
 
 const Stack = createStackNavigator();
 
@@ -203,8 +205,40 @@ export default function App() {
           }}
         />
         <Stack.Screen
+          name="CreateOrganizationRepScreen"
+          component={CreateOrganizationRepScreen}
+          options={{
+            headerTitle: 'יצירת אחראי עמותה',
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+            },
+            headerTitleStyle: {
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+          }}
+        />
+        <Stack.Screen
           name="AdminOrganizationScreen"
           component={AdminOrganizationScreen}
+          options={{
+            headerTitle: 'מנהל עמותות',
+            headerTitleAlign: 'center',
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+            },
+            headerTitleStyle: {
+              color: '#000000',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+          }}
+        />
+        <Stack.Screen
+          name="AddCityScreen"
+          component={AddCityScreen}
           options={{
             headerTitle: 'מנהל עמותות',
             headerTitleAlign: 'center',
