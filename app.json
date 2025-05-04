@@ -4,7 +4,7 @@
     "slug": "GoG",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/GOG_LOGO.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -27,10 +27,16 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "CAMERA"
-      ]
+      ],
+      "package": "com.amitco8.GoG"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d1eff5a5-8382-438a-b796-31891e8de605"
+      }
     }
   }
 }

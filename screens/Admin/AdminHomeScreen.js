@@ -1,81 +1,108 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  Alert,
+  Image,
+  ScrollView,
+} from 'react-native';
 
-const AdminHomeScreen = ({ navigation, route }) => {
+const AdminHomeScreen = ({ navigation }) => {
   const handlePress = (action) => {
     Alert.alert('Button Pressed!', `You pressed the "${action}" button.`);
   };
-  const OrganizationManger = () => {
+
+  const navigateToOrganizations = () => {
     navigation.navigate('AdminOrganizationScreen');
   };
+
+  const navigateToAddCity = () => {
+    navigation.navigate('AddCityScreen');
+  };
+
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.welcomeText}>שלום, אדמין! זהו העמוד שלך.</Text>
-
-        <Pressable
-          style={styles.button}
-          onPress={() => handlePress('צפה בסטטיסטיקה')}
-        >
-          <Text style={styles.buttonText}>צפה בסטטיסטיקה</Text>
-        </Pressable>
-
-        <Pressable style={styles.button} onPress={() => OrganizationManger()}>
-          <Text style={styles.buttonText}>מנהל ארגונים ועמותות</Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.button}
-          onPress={() => navigation.navigate('AddCityScreen')}
-        >
-          <Text style={styles.buttonText}>הוסף עיר</Text>
-        </Pressable>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.header}>
+        <Image
+          source={require('../../images/adminBanner.png')}
+          style={styles.bannerImage}
+        />
+        <Text style={styles.welcomeText}>שלום, מנהל מערכת</Text>
       </View>
-    </View>
+
+      <Pressable
+        style={[styles.card, styles.greenCard]}
+        onPress={() => handlePress('צפה בסטטיסטיקה')}
+      >
+        <Text style={styles.cardText}>צפה בסטטיסטיקה</Text>
+      </Pressable>
+
+      <Pressable
+        style={[styles.card, styles.blueCard]}
+        onPress={navigateToOrganizations}
+      >
+        <Text style={styles.cardText}>ניהול ארגונים ועמותות</Text>
+      </Pressable>
+
+      <Pressable
+        style={[styles.card, styles.orangeCard]}
+        onPress={navigateToAddCity}
+      >
+        <Text style={styles.cardText}>הוספת עיר חדשה</Text>
+      </Pressable>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#f8f8f8',
+    padding: 24,
+    backgroundColor: '#9f97d8',
+    flexGrow: 1,
   },
   header: {
-    padding: 20,
-    backgroundColor: '#6200ee',
     alignItems: 'center',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    marginBottom: 32,
   },
-  headerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  bannerImage: {
+    width: '100%',
+    height: 160,
+    borderRadius: 16,
+    marginBottom: 20,
+    borderWidth: 4,
   },
   welcomeText: {
-    fontSize: 22,
-    marginBottom: 30,
-    color: '#333',
-    fontWeight: '600',
-  },
-  button: {
-    backgroundColor: '#6200ee',
-    width: '80%',
-    paddingVertical: 12,
-    marginVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontSize: 18,
-    color: '#fff',
+    fontSize: 26,
     fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+
+  card: {
+    padding: 20,
+    borderRadius: 14,
+    marginBottom: 18,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+  },
+  greenCard: {
+    backgroundColor: '#e0f8e9',
+  },
+  blueCard: {
+    backgroundColor: '#e0f0ff',
+  },
+  orangeCard: {
+    backgroundColor: '#fff0e0',
+  },
+  cardText: {
+    fontSize: 18,
+    color: '#2c3e50',
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 
