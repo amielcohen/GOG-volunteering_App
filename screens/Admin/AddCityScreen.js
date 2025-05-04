@@ -14,6 +14,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import config from '../../config';
+import { uploadImageToCloudinary } from '../../utils/cloudinary';
 
 const ISRAEL_DISTRICTS = [
   '',
@@ -50,32 +51,6 @@ export default function AddCityScreen({ navigation }) {
         Alert.alert('שגיאה', 'העלאת התמונה נכשלה');
       }
       setUploadingImage(false);
-    }
-  };
-
-  const uploadImageToCloudinary = async (imageUri) => {
-    let filename = imageUri.split('/').pop();
-    let match = /\.(\w+)$/.exec(filename);
-    let type = match ? `image/${match[1]}` : 'image';
-
-    let formData = new FormData();
-    formData.append('file', { uri: imageUri, name: filename, type });
-    formData.append('upload_preset', 'GOG-ProfilesIMG');
-
-    try {
-      let response = await fetch(
-        'https://api.cloudinary.com/v1_1/drlrtt5dz/image/upload',
-        {
-          method: 'POST',
-          body: formData,
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
-      );
-      let data = await response.json();
-      return data.secure_url || null;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      return null;
     }
   };
 
@@ -205,6 +180,8 @@ const styles = StyleSheet.create({
   },
   chipsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     marginBottom: 20,
   },
   chip: {
@@ -212,7 +189,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 8,
+    margin: 5,
   },
   selectedChip: {
     backgroundColor: '#007BFF',
@@ -263,28 +240,5 @@ const styles = StyleSheet.create({
     color: 'green',
     marginBottom: 10,
     textAlign: 'center',
-  },
-  chipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap', // עטיפה לשורה הבאה
-    justifyContent: 'center', // למרכז הכל
-    marginBottom: 20,
-  },
-  chip: {
-    backgroundColor: '#eee',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    margin: 5,
-  },
-  selectedChip: {
-    backgroundColor: '#007BFF',
-  },
-  chipText: {
-    color: '#333',
-  },
-  selectedChipText: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
 });
