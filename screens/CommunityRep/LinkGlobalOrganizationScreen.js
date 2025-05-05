@@ -136,7 +136,7 @@ export default function LinkGlobalOrganizationScreen({ route }) {
               name="help-circle-outline"
               size={20}
               color="#555"
-              style={{ marginEnd: 8 }}
+              style={{ marginEnd: 5 }}
             />
           </TouchableOpacity>
         </View>

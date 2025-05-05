@@ -43,6 +43,7 @@ import CreateOrganizationRepScreen from './screens/CommunityRep/CreateOrganizati
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
+import CreateVolunteeringScreen from './screens/OrganizationRep/CreateVolunteeringScreen';
 
 const Stack = createStackNavigator();
 
@@ -185,6 +186,11 @@ export default function App() {
           name="LinkGlobalOrganization"
           component={LinkGlobalOrganizationScreen}
           options={defaultHeader('קישור עמותה לעיר')}
+        />
+        <Stack.Screen
+          name="CreateVolunteering"
+          component={CreateVolunteeringScreen}
+          options={defaultHeader('יצירת התנדבות חדשה')}
         />
         <Stack.Screen
           name="ChooseGlobalOrganization"
