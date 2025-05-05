@@ -45,7 +45,7 @@ export default function UserHomeScreen({ route, navigation }) {
     );
   }
 
-  const nextLevelXP = levelTable[user.level['requiredExp']] || 100;
+  const nextLevelXP = levelTable[user.level]?.requiredExp || 100;
   const progress = Math.min((user.exp / nextLevelXP) * 100, 100);
 
   return (
@@ -101,7 +101,10 @@ export default function UserHomeScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.secondaryCard}
-          onPress={() => navigation.navigate('EditProfile', { user })}
+          onPress={() => {
+            console.log(' edit profile press');
+            navigation.navigate('EditProfile', { user });
+          }}
         >
           <Icon name="settings" size={24} color="#999" />
           <Text style={styles.secondaryText}>עריכת פרופיל</Text>

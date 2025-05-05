@@ -34,6 +34,7 @@ export default function EditProfile({ navigation, route }) {
   const [newFirstName, setNewFirstName] = useState('');
   const [newLastName, setNewLastName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [citiesList, setCitiesList] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -46,6 +47,19 @@ export default function EditProfile({ navigation, route }) {
         );
       }
     })();
+  }, []);
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const res = await fetch(`http://10.100.102.16:5000/cities`);
+        const data = await res.json();
+        setCitiesList(data);
+      } catch (err) {
+        console.error('שגיאה בשליפת ערים:', err);
+      }
+    };
+    fetchCities();
   }, []);
 
   const onDateChange = (event, selectedDate) => {
@@ -130,7 +144,9 @@ export default function EditProfile({ navigation, route }) {
   const updateProfileHandler = async () => {
     const finalEmail =
       newEmail.trim() === '' ? userData.email : newEmail.trim();
-    const finalCity = newCity.trim() === '' ? userData.city : newCity.trim();
+    const finalCity =
+      newCity ||
+      (typeof userData.city === 'object' ? userData.city._id : userData.city);
     const finalStreet =
       newStreet.trim() === '' ? userData.street : newStreet.trim();
     const finalHouseNumber =
@@ -334,13 +350,23 @@ export default function EditProfile({ navigation, route }) {
         )}
 
         <Text style={styles.label}>עיר</Text>
-        <TextInput
-          style={styles.input}
-          placeholder={userData.city || 'עיר'}
-          value={newCity}
-          onChangeText={setNewCity}
-          textAlign="right"
-        />
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={
+              newCity ||
+              (typeof userData.city === 'object'
+                ? userData.city._id
+                : userData.city)
+            }
+            onValueChange={(itemValue) => setNewCity(itemValue)}
+            style={styles.picker}
+            itemStyle={{ textAlign: 'right' }}
+          >
+            {citiesList.map((city) => (
+              <Picker.Item key={city._id} label={city.name} value={city._id} />
+            ))}
+          </Picker>
+        </View>
 
         <Text style={styles.label}>רחוב</Text>
         <TextInput

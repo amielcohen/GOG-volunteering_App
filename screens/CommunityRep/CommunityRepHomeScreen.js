@@ -9,6 +9,7 @@ import {
   Modal,
   Pressable,
   Image,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
@@ -17,6 +18,7 @@ import config from '../../config';
 export default function CommunityRepHomeScreen({ navigation, route }) {
   const { user } = route.params;
   const [cityName, setCityName] = useState('');
+  const [cityImageUrl, setCityImageUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -32,9 +34,11 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
       setLoading(true);
       const res = await axios.get(`${config.SERVER_URL}/cities/${cityId}`);
       setCityName(res.data.name);
+      setCityImageUrl(res.data.imageUrl);
     } catch (error) {
       console.error('Error fetching city name:', error);
       setCityName('עיר לא ידועה');
+      setCityImageUrl(null);
     } finally {
       setLoading(false);
     }
@@ -49,14 +53,18 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
       <ScrollView>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <Image
-              source={
-                user.city?.imageUrl
-                  ? { uri: user.city.imageUrl }
-                  : require('../../images/defaultProfile.png')
-              }
-              style={styles.cityImage}
-            />
+            {loading ? (
+              <ActivityIndicator size="large" color="#007bff" />
+            ) : (
+              <Image
+                source={
+                  cityImageUrl
+                    ? { uri: cityImageUrl }
+                    : require('../../images/defaultProfile.png')
+                }
+                style={styles.cityImage}
+              />
+            )}
           </TouchableOpacity>
           <Text style={styles.title}>
             שלום מנהל העיר {cityName || 'לא ידועה'}!
@@ -82,7 +90,10 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
         <TouchableOpacity
           style={styles.actionCard}
           onPress={() =>
-            navigation.navigate('OrganizationManagerScreen', { user, cityName })
+            navigation.navigate('OrganizationManagerScreen', {
+              user,
+              cityName,
+            })
           }
         >
           <Icon name="groups" size={28} color="#007bff" />
@@ -110,8 +121,8 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
         >
           <Image
             source={
-              user.city?.imageUrl
-                ? { uri: user.city.imageUrl }
+              cityImageUrl
+                ? { uri: cityImageUrl }
                 : require('../../images/defaultProfile.png')
             }
             style={styles.enlargedImage}
