@@ -90,7 +90,9 @@ export default function CreateOrganizationRepScreen({ route }) {
       await axios.post(`${config.SERVER_URL}/organizationReps`, {
         username,
         password,
-        city: user.city,
+        city: typeof user.city === 'object' ? user.city._id : user.city,
+        cities: [typeof user.city === 'object' ? user.city._id : user.city],
+
         organization: organizationId,
       });
 

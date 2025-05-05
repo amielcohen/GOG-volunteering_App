@@ -12,6 +12,7 @@ router.post('/', async (req, res) => {
     email,
     dateOfBirth,
     city, // יכול להיות שם או ID
+    cities, // חייב להיות מערך (לפחות אחד) – חובה לפי המודל
     street,
     houseNumber,
     gender,
@@ -26,16 +27,24 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ message: 'חובה לבחור עמותה' });
   }
 
+  if (!cities || !Array.isArray(cities) || cities.length === 0) {
+    return res
+      .status(400)
+      .json({ message: 'יש לציין לפחות עיר אחת עבור אחראי העמותה' });
+  }
+
   try {
     const existingUser = await User.findOne({ username });
     if (existingUser) {
       return res.status(400).json({ message: 'שם המשתמש כבר קיים' });
     }
 
+    // פתרון תומך: ניתן לשלוח שם או ID, אז נזהה ונמיר לפי הצורך
     let cityId = city;
     if (typeof city === 'string' && city.length < 24) {
       const cityDoc = await City.findOne({ name: city });
-      if (!cityDoc) return res.status(400).json({ message: 'עיר לא נמצאה' });
+      if (!cityDoc)
+        return res.status(400).json({ message: 'עיר לא נמצאה לפי שם' });
       cityId = cityDoc._id;
     }
 
@@ -45,6 +54,7 @@ router.post('/', async (req, res) => {
       email,
       dateOfBirth,
       city: cityId,
+      cities, // כאן אנו מוסיפים את מערך הערים
       street,
       houseNumber,
       gender,
@@ -56,7 +66,7 @@ router.post('/', async (req, res) => {
 
     await newOrgRep.save();
 
-    // עדכון העיר
+    // עדכון העיר הראשית אם צריך
     const cityDoc = await City.findById(cityId);
     if (cityDoc && !cityDoc.activeOrganizations.includes(organization)) {
       cityDoc.activeOrganizations.push(organization);
@@ -76,91 +86,6 @@ router.post('/', async (req, res) => {
       .json({ message: 'אחראי עמותה נוצר בהצלחה', user: newOrgRep });
   } catch (error) {
     console.error('Error creating OrganizationRep:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ✅ שליפת אחראי עמותה לפי מזהה
-router.get('/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-
-    if (!user || user.role !== 'OrganizationRep') {
-      return res.status(404).json({ message: 'אחראי עמותה לא נמצא' });
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error('Error fetching OrganizationRep:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ✅ עדכון פרטי אחראי עמותה
-router.put('/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-
-    if (!user || user.role !== 'OrganizationRep') {
-      return res.status(404).json({ message: 'אחראי עמותה לא נמצא' });
-    }
-
-    const { firstName, phone, email } = req.body;
-
-    if (firstName) user.firstName = firstName;
-    if (phone) user.phone = phone;
-    if (email) user.email = email;
-
-    await user.save();
-
-    res.status(200).json({ message: 'הפרטים עודכנו בהצלחה', user });
-  } catch (error) {
-    console.error('Error updating OrganizationRep:', error);
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// ✅ מחיקת אחראי עמותה
-router.delete('/:id', async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const user = await User.findById(userId);
-
-    if (!user || user.role !== 'OrganizationRep') {
-      return res.status(404).json({ message: 'אחראי עמותה לא נמצא' });
-    }
-
-    const { city, organization } = user;
-
-    await user.deleteOne();
-
-    const otherReps = await User.find({
-      role: 'OrganizationRep',
-      city: city,
-      organization: organization,
-    });
-
-    if (otherReps.length === 0) {
-      const cityDoc = await City.findById(city);
-      if (cityDoc) {
-        cityDoc.activeOrganizations = cityDoc.activeOrganizations.filter(
-          (orgId) => !orgId.equals(organization)
-        );
-        await cityDoc.save();
-      }
-
-      const organizationDoc = await Organization.findById(organization);
-      if (organizationDoc) {
-        organizationDoc.activeCities = organizationDoc.activeCities.filter(
-          (cityId) => !cityId.equals(city)
-        );
-        await organizationDoc.save();
-      }
-    }
-
-    res.status(200).json({ message: 'אחראי עמותה נמחק בהצלחה' });
-  } catch (error) {
-    console.error('Error deleting OrganizationRep:', error);
     res.status(500).json({ message: error.message });
   }
 });
