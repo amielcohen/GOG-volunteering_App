@@ -85,7 +85,7 @@ export default function UserHomeScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => navigation.navigate('ExploreVolunteerings', { user })}
+          onPress={() => navigation.navigate('SearchVolunteering', { user })}
         >
           <Icon name="search" size={28} color="#007bff" />
           <Text style={styles.actionText}>מצא התנדבויות חדשות</Text>

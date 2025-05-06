@@ -12,6 +12,7 @@ import {
 import TagSelectorModal from '../TagSelectorModal';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToCloudinary } from '../../utils/cloudinary';
+import Slider from '@react-native-community/slider';
 
 const predefinedTags = ['קשישים', 'ילדים', 'בעלי חיים', 'חינוך', 'סביבה'];
 
@@ -106,12 +107,12 @@ export default function VolunteeringStep2({
       <Pressable
         style={[
           styles.rewardOption,
-          formData.usePredictionModel && styles.selectedOption,
+          formData.rewardType === 'model' && styles.selectedOption,
         ]}
         onPress={() =>
           setFormData((prev) => ({
             ...prev,
-            usePredictionModel: true,
+            rewardType: 'model',
             percentageReward: '',
           }))
         }
@@ -122,29 +123,38 @@ export default function VolunteeringStep2({
       <Pressable
         style={[
           styles.rewardOption,
-          !formData.usePredictionModel && styles.selectedOption,
+          formData.rewardType === 'percent' && styles.selectedOption,
         ]}
         onPress={() =>
           setFormData((prev) => ({
             ...prev,
-            usePredictionModel: false,
+            rewardType: 'percent',
           }))
         }
       >
         <Text style={styles.rewardText}>אחוז מהתקרה העירונית</Text>
       </Pressable>
 
-      {!formData.usePredictionModel && (
-        <TextInput
-          placeholder="כמה אחוזים מהתקרה? (למשל 50)"
-          value={formData.percentageReward}
-          onChangeText={(text) =>
-            setFormData((prev) => ({ ...prev, percentageReward: text }))
-          }
-          keyboardType="numeric"
-          style={styles.input}
-          textAlign="right"
-        />
+      {formData.rewardType === 'percent' && (
+        <>
+          <Text style={styles.sliderLabel}>
+            אחוז מהתקרה: {formData.percentageReward || 0}%
+          </Text>
+
+          <Slider
+            style={{ width: '100%', height: 40 }}
+            minimumValue={0}
+            maximumValue={100}
+            step={1}
+            value={parseInt(formData.percentageReward) || 0}
+            onValueChange={(value) =>
+              setFormData((prev) => ({
+                ...prev,
+                percentageReward: String(value),
+              }))
+            }
+          />
+        </>
       )}
 
       <View style={styles.navButtons}>
@@ -169,7 +179,6 @@ export default function VolunteeringStep2({
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     padding: 20,
@@ -246,6 +255,14 @@ const styles = StyleSheet.create({
   rewardText: {
     fontSize: 16,
     textAlign: 'right',
+  },
+  sliderLabel: {
+    fontSize: 16,
+    textAlign: 'right',
+    marginBottom: 8,
+    marginTop: 4,
+    fontWeight: '500',
+    color: '#444',
   },
   navButtons: {
     flexDirection: 'row-reverse',

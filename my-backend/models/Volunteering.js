@@ -5,7 +5,6 @@ const volunteeringSchema = new mongoose.Schema({
   description: { type: String },
 
   date: { type: Date, required: true },
-  time: { type: String, required: true }, // לדוג' "14:30"
   durationMinutes: { type: Number, required: true },
 
   address: { type: String, required: true },
@@ -15,6 +14,7 @@ const volunteeringSchema = new mongoose.Schema({
   },
 
   city: { type: String, required: true },
+
   organizationId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organization',
@@ -27,8 +27,21 @@ const volunteeringSchema = new mongoose.Schema({
   },
 
   tags: [{ type: String }],
-  reward: { type: Number, default: 0 },
+
+  rewardType: {
+    type: String,
+    enum: ['percent', 'model'],
+    default: 'percent',
+  },
+  reward: { type: Number, default: 0 }, // אחוז מהתקרה או מה שהמודל יקבע
+
   isRecurring: { type: Boolean, default: false },
+  recurringDay: {
+    type: Number, // 0–6 (א'–שבת)
+    min: 0,
+    max: 6,
+  },
+
   maxParticipants: { type: Number },
 
   registeredVolunteers: [
