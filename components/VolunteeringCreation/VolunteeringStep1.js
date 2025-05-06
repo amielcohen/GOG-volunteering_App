@@ -80,6 +80,20 @@ export default function VolunteeringStep1({ formData, setFormData, onNext }) {
         textAlign="right"
       />
 
+      <TextInput
+        placeholder="מספר משתתפים מקסימלי"
+        value={formData.maxParticipants?.toString() || ''}
+        onChangeText={(text) =>
+          setFormData((prev) => ({
+            ...prev,
+            maxParticipants: parseInt(text) || '',
+          }))
+        }
+        keyboardType="numeric"
+        style={styles.input}
+        textAlign="right"
+      />
+
       <View style={styles.toggleRow}>
         <Text style={styles.toggleLabel}>התנדבות קבועה?</Text>
 

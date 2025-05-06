@@ -44,6 +44,9 @@ app.use('/cities', cityRoutes);
 const organizationRepsRoutes = require('./routes/organizationReps');
 app.use('/organizationReps', organizationRepsRoutes);
 
+const volunteeringsRouter = require('./routes/volunteerings');
+app.use('/volunteerings', volunteeringsRouter);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');
