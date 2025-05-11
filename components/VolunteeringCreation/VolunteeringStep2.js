@@ -8,13 +8,18 @@ import {
   ScrollView,
   Alert,
   Image,
+  TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
 import TagSelectorModal from '../TagSelectorModal';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToCloudinary } from '../../utils/cloudinary';
 import Slider from '@react-native-community/slider';
+import VOLUNTEERING_TAGS from '../../constants/volunteeringTags';
+import HelpModal from '../../components/HelpModal';
 
-const predefinedTags = ['קשישים', 'ילדים', 'בעלי חיים', 'חינוך', 'סביבה'];
+const predefinedTags = VOLUNTEERING_TAGS;
 
 export default function VolunteeringStep2({
   formData,
@@ -25,6 +30,9 @@ export default function VolunteeringStep2({
 }) {
   const [showTagModal, setShowTagModal] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  const [helpVisible, setHelpVisible] = useState(false);
+  const [helpType, setHelpType] = useState(null);
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -44,7 +52,10 @@ export default function VolunteeringStep2({
       setUploadingImage(false);
     }
   };
-
+  const openHelp = (type) => {
+    setHelpType(type);
+    setHelpVisible(true);
+  };
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.stepLabel}>שלב 2 מתוך 3</Text>
@@ -101,9 +112,17 @@ export default function VolunteeringStep2({
           style={styles.imagePreview}
         />
       )}
-
-      <Text style={styles.sectionTitle}>שיטת תגמול:</Text>
-
+      <View style={{ flexDirection: 'row-reverse', alignItems: 'center' }}>
+        <Text style={styles.sectionTitle}>שיטת תגמול:</Text>
+        <TouchableOpacity onPress={() => openHelp('external')}>
+          <Ionicons
+            name="help-circle-outline"
+            size={25}
+            color="#555"
+            style={{ marginEnd: 5, marginTop: 10 }}
+          />
+        </TouchableOpacity>
+      </View>
       <Pressable
         style={[
           styles.rewardOption,
@@ -175,6 +194,16 @@ export default function VolunteeringStep2({
         selectedTags={formData.tags}
         onSelectTags={(tags) => setFormData((prev) => ({ ...prev, tags }))}
         availableTags={predefinedTags}
+      />
+      <HelpModal
+        visible={helpVisible}
+        onClose={() => setHelpVisible(false)}
+        title="כיצד לקבוע את שיטת התגמול?"
+        message={
+          helpType === 'external'
+            ? 'שיטת התגמול נועדה להתאים את כמות הגוגואים לקושי ולמשמעות של ההתנדבות. ככל שהמשימה דורשת יותר מאמץ, מומלץ להעניק אחוז גבוה יותר מהתקרה העירונית. ניתן גם להשתמש במודל החיזוי כדי לחשב תגמול אופטימלי באופן אוטומטי.'
+            : ''
+        }
       />
     </ScrollView>
   );

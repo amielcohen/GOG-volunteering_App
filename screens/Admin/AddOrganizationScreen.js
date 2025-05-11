@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
+import config from '../../config';
 
 export default function AddOrganizationScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -98,7 +99,7 @@ export default function AddOrganizationScreen({ navigation }) {
     };
 
     try {
-      const response = await fetch('http://10.100.102.16:5000/organizations', {
+      const response = await fetch(`${config.SERVER_URL}/organizations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

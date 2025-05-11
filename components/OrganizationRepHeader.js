@@ -9,10 +9,9 @@ export default function OrganizationRepHeader({
   backgroundColor = '#f2f2f2',
   onImagePress,
 }) {
+  // נניח שקיבלנו מערך של מזהי עיר (ObjectId כמחרוזות)
   const cityText =
-    cities.length === 1
-      ? `עיר: ${cities[0]?.name}`
-      : `ערים: ${cities.map((c) => c.name).join(', ')}`;
+    cities.length === 1 ? `עיר: ${cities[0]}` : `ערים: ${cities.join(', ')}`;
 
   return (
     <View style={[styles.container, { backgroundColor }]}>

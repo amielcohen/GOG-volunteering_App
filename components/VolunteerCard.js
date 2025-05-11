@@ -14,6 +14,7 @@ export default function VolunteerCard({ volunteering, onPress }) {
   const spotsLeft = volunteering.totalSpots - volunteering.registeredSpots;
   const imageToUse =
     volunteering.imageUrl || volunteering.fallbackImageUrl || null;
+  console.log('VolunteerCard props:', volunteering);
 
   return (
     <Pressable style={styles.card} onPress={() => onPress(volunteering)}>
