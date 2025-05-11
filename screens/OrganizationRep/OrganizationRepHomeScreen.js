@@ -22,9 +22,25 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [volunteeringList, setVolunteeringList] = useState([]);
-  const cities = user.cities?.length > 0 ? user.cities : [user.city];
-
   const [modalVisible, setModalVisible] = useState(false);
+  const [cityNames, setCityNames] = useState([]);
+
+  // עזר: הפקת ObjectId כמחרוזת
+  const extractId = (val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return val;
+    if (val.$oid) return val.$oid;
+    if (val._id) return val._id.toString?.();
+    return val.toString?.() ?? null;
+  };
+
+  // הפקת cities: תמיד יחזיר מערך עם מזהה אחד
+  const cities =
+    Array.isArray(user.cities) && user.cities.length > 0
+      ? [extractId(user.cities[0])]
+      : user.city
+        ? [extractId(user.city)]
+        : [];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,7 +60,7 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
             `${config.SERVER_URL}/volunteerings/by-org-rep/${initialUser._id}`
           );
           setVolunteeringList(vRes.data);
-        } catch (volErr) {
+        } catch {
           console.warn('לא נמצאו התנדבויות או שהראוט לא קיים עדיין');
         }
       } catch (err) {
@@ -58,10 +74,29 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
   }, []);
 
   useEffect(() => {
-    if (user) {
-      console.log('organization:', user.organization);
-    }
-  }, [user]);
+    const fetchCityNames = async () => {
+      const validIds = cities.filter(
+        (id) => typeof id === 'string' && id.length === 24
+      );
+      if (validIds.length === 0) return;
+
+      try {
+        const res = await axios.get(
+          `${config.SERVER_URL}/cities/byIds?ids=${validIds.join(',')}`
+        );
+        const names = res.data.map((city) => city.name);
+        setCityNames(names);
+      } catch (err) {
+        console.error('שגיאה בשליפת שמות ערים:', err);
+      }
+    };
+
+    fetchCityNames();
+  }, [cities]);
+
+  const handleNavigate = (screen) => {
+    navigation.navigate(screen, { user });
+  };
 
   if (loading) {
     return (
@@ -70,10 +105,6 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
       </View>
     );
   }
-
-  const handleNavigate = (screen) => {
-    navigation.navigate(screen, { user });
-  };
 
   return (
     <View style={styles.container}>
@@ -86,7 +117,7 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
               ? { uri: user.organization.imageUrl }
               : require('../../images/noImageFound.webp')
           }
-          cities={cities}
+          cities={cityNames} // שמות, לא מזהים
           backgroundColor="#e6f0ff"
           onImagePress={() => setModalVisible(true)}
         />
@@ -131,7 +162,7 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
           <Text style={styles.secondaryText}>עריכת פרטי עמותה</Text>
         </TouchableOpacity>
       </ScrollView>
-      {/* Modal להצגת תמונת הפרופיל המוגדלת */}
+
       <Modal
         visible={modalVisible}
         transparent={true}
@@ -144,7 +175,7 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
         >
           <Image
             source={
-              user.organization.imageUrl
+              user.organization?.imageUrl
                 ? { uri: user.organization.imageUrl }
                 : require('../../images/defaultProfile.png')
             }
@@ -164,15 +195,8 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,19 +1,28 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = express.Router();
 const Organization = require('../models/Organization');
 const CityOrganization = require('../models/CityOrganization');
 
-// ראוטר חדש: שליפת עמותות ארציות שלא מקושרות לעיר מסוימת
 router.get('/unlinked/:cityId', async (req, res) => {
-  const { cityId } = req.params;
-
   try {
-    // שליפת כל העמותות שמקושרות לעיר
-    const linked = await CityOrganization.find({ city: cityId }).distinct(
+    const { cityId } = req.params;
+
+    if (!cityId || typeof cityId !== 'string' || cityId.length !== 24) {
+      return res.status(400).json({ message: 'מזהה עיר לא תקין' });
+    }
+
+    let objectCityId;
+    try {
+      objectCityId = new mongoose.Types.ObjectId(cityId);
+    } catch (err) {
+      return res.status(400).json({ message: 'ObjectId לא חוקי' });
+    }
+
+    const linked = await CityOrganization.find({ city: objectCityId }).distinct(
       'organizationId'
     );
 
-    // שליפת עמותות ארציות שלא מקושרות לעיר
     const unlinked = await Organization.find({
       isGlobal: true,
       _id: { $nin: linked },
@@ -21,12 +30,12 @@ router.get('/unlinked/:cityId', async (req, res) => {
 
     res.json(unlinked);
   } catch (err) {
-    console.error('שגיאה בשליפת עמותות לא מקושרות:', err);
-    res.status(500).json({ message: 'שגיאה בשליפת עמותות' });
+    console.error('❌ שגיאה בשליפת עמותות לא מקושרות:', err);
+    res.status(500).json({ message: 'שגיאה בשרת בעת שליפת עמותות' });
   }
 });
 
-// Add global organization
+// הוספת עמותה גלובלית
 router.post('/', async (req, res) => {
   const { name, description, type, imageUrl, contactEmail, phone } = req.body;
 
@@ -53,7 +62,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Get all global organizations
+// שליפת כל העמותות הגלובליות
 router.get('/', async (req, res) => {
   try {
     const organizations = await Organization.find({ isGlobal: true }).populate(
@@ -66,7 +75,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single organization by ID with activeCities populated
+// שליפת עמותה אחת לפי ID עם ערים פעילות
 router.get('/:id', async (req, res) => {
   try {
     const organization = await Organization.findById(req.params.id).populate(
@@ -85,7 +94,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Delete global organization (admin only)
+// מחיקת עמותה גלובלית (כולל מחיקת קישורים לעיר)
 router.delete('/:id', async (req, res) => {
   try {
     const id = req.params.id;

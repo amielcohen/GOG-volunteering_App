@@ -18,7 +18,7 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
     description: '',
     date: new Date(),
     durationMinutes: '',
-    maxParticipants: '', // ✅ נוסף
+    maxParticipants: '',
     isRecurring: false,
     recurringDay: null,
     createdBy: user._id,
@@ -33,6 +33,7 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
     usePredictionModel: false,
     customRewardByCity: {},
     percentageReward: '',
+    rewardType: 'percent', // ברירת מחדל אם לא נבחר אחרת
     imageUrl: '',
   });
 
@@ -43,11 +44,30 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
 
   const handleSubmit = async () => {
     try {
-      // ✅ הכנה של הנתונים למניעת שדות מחרוזתיים במספרים
+      const reward =
+        formData.rewardType === 'percent'
+          ? parseInt(formData.percentageReward) || 0
+          : 0;
+
       const preparedFormData = {
-        ...formData,
-        maxParticipants: parseInt(formData.maxParticipants) || null,
+        title: formData.title,
+        description: formData.description,
+        date: formData.date,
         durationMinutes: parseInt(formData.durationMinutes) || 0,
+        maxParticipants: parseInt(formData.maxParticipants) || null,
+        isRecurring: formData.isRecurring,
+        recurringDay: formData.recurringDay,
+        createdBy: formData.createdBy,
+        organizationId: formData.organizationId,
+        tags: formData.tags,
+        city: formData.city,
+        address: formData.address,
+        notes: formData.notes,
+        imageUrl: formData.imageUrl,
+        rewardType: formData.rewardType,
+        reward, // ← זה מה שישמר במונגו
+        customRewardByCity: formData.customRewardByCity || {},
+        usePredictionModel: formData.usePredictionModel || false,
       };
 
       const response = await fetch(
