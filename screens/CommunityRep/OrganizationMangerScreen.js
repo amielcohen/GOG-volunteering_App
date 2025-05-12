@@ -28,13 +28,16 @@ export default function OrganizationManagerScreen({ route }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchOrganizations();
-  }, []);
+    if (user.city) {
+      fetchOrganizations();
+    }
+  }, [user.city]);
 
   const fetchOrganizations = async () => {
     try {
+      const cityId = typeof user.city === 'object' ? user.city._id : user.city;
       const response = await axios.get(
-        `${config.SERVER_URL}/cityOrganizations?city=${user.city}`
+        `${config.SERVER_URL}/cityOrganizations?city=${cityId}`
       );
       setOrganizations(response.data);
     } catch (error) {
@@ -140,7 +143,10 @@ export default function OrganizationManagerScreen({ route }) {
             color: '#FF9800',
             onPress: () => {
               setOptionsVisible(false);
-              navigation.navigate('CreateCityOrganization', { user, cityName });
+              navigation.navigate('CreateCityOrganization', {
+                user,
+                cityName,
+              });
             },
           },
         ]}
@@ -161,13 +167,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#f5f5f5',
-  },
-  header: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 16,
-    color: '#333',
   },
   addButton: {
     backgroundColor: '#4CAF50',

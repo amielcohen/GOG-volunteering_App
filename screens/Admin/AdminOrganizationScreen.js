@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import OrganizationCard from '../../components/OrganizationCard';
+import config from '../../config';
 
 import ErrorModal from '../../components/ErrorModal';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -35,7 +36,7 @@ export default function AdminOrganizationScreen({ navigation }) {
 
   const fetchOrganizations = async () => {
     try {
-      const res = await axios.get('http://10.100.102.16:5000/organizations');
+      const res = await axios.get(`${config.SERVER_URL}/organizations`);
       setOrganizations(res.data);
     } catch (error) {
       Alert.alert('שגיאה', 'שגיאה בטעינת עמותות');
@@ -54,7 +55,7 @@ export default function AdminOrganizationScreen({ navigation }) {
 
     try {
       await axios.delete(
-        `http://10.100.102.16:5000/organizations/${orgToDelete._id}`
+        `${config.SERVER_URL}/organizations/${orgToDelete._id}`
       );
       setToastMessage('העמותה נמחקה בהצלחה!');
       fetchOrganizations(); // מרענן את הרשימה

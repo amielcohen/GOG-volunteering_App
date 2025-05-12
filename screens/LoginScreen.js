@@ -15,6 +15,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import ErrorModal from '../components/ErrorModal';
+import config from '../config';
+import { saveUserId } from '../services/authService';
 
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
@@ -52,7 +54,7 @@ export default function LoginScreen({ navigation }) {
     console.log('loginHandler started', cleanUsername, cleanPassword);
 
     try {
-      const response = await fetch('http://10.100.102.16:5000/auth/login', {
+      const response = await fetch(`${config.SERVER_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -66,6 +68,7 @@ export default function LoginScreen({ navigation }) {
       if (response.ok) {
         const user = await response.json();
         console.log('User received:', user);
+        await saveUserId(user._id);
 
         if (user.role === 'admin') {
           navigation.navigate('AdminHomeScreen');
@@ -73,6 +76,11 @@ export default function LoginScreen({ navigation }) {
           navigation.reset({
             index: 0,
             routes: [{ name: 'CommunityRepHomeScreen', params: { user } }],
+          });
+        } else if (user.role === 'OrganizationRep') {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'OrganizationRepHomeScreen', params: { user } }],
           });
         } else {
           navigation.reset({

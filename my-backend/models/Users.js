@@ -33,11 +33,20 @@ const UserSchema = new mongoose.Schema(
 
     dateOfBirth: { type: Date },
 
+    // שדה העיר הראשית
     city: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'City',
       required: [true, 'עיר הוא שדה חובה'],
     },
+
+    // שדות עבור ערים מרובות (בעיקר ל-OrganizationRep)
+    cities: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'City',
+      },
+    ],
 
     street: { type: String },
     houseNumber: { type: String },
@@ -63,8 +72,14 @@ UserSchema.pre('validate', function (next) {
   const isOrgRep = this.role === 'OrganizationRep';
   const isRegularUser = this.role === 'user';
 
-  if (isOrgRep && !this.organization) {
-    return next(new Error('חובה לבחור עמותה עבור אחראי עמותה'));
+  if (isOrgRep) {
+    if (!this.organization) {
+      return next(new Error('חובה לבחור עמותה עבור אחראי עמותה'));
+    }
+
+    if (!this.cities || this.cities.length === 0) {
+      return next(new Error('חובה לשייך לפחות עיר אחת לאחראי עמותה'));
+    }
   }
 
   if (isRegularUser) {

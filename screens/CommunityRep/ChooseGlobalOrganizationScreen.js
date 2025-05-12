@@ -30,7 +30,7 @@ export default function ChooseGlobalOrganizationScreen({ route }) {
   const fetchUnlinkedOrganizations = async () => {
     try {
       const response = await axios.get(
-        `${config.SERVER_URL}/organizations/unlinked/${user.city}`
+        `${config.SERVER_URL}/organizations/unlinked/${user.city._id}`
       );
       setOrganizations(response.data);
       setFilteredOrganizations(response.data);

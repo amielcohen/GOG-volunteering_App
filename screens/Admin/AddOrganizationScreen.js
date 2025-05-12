@@ -3,15 +3,15 @@ import {
   View,
   Text,
   TextInput,
-  Button,
-  StyleSheet,
+  Alert,
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
+  StyleSheet,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Picker } from '@react-native-picker/picker';
+import config from '../../config';
 
 export default function AddOrganizationScreen({ navigation }) {
   const [name, setName] = useState('');
@@ -35,8 +35,36 @@ export default function AddOrganizationScreen({ navigation }) {
       quality: 0.7,
     });
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets.length > 0) {
       setImage(result.assets[0].uri);
+    }
+  };
+
+  const uploadImageToCloudinary = async (imageUri) => {
+    let filename = imageUri.split('/').pop();
+    let match = /\.(\w+)$/.exec(filename);
+    let type = match ? `image/${match[1]}` : 'image';
+
+    let formData = new FormData();
+    formData.append('file', { uri: imageUri, name: filename, type });
+    formData.append('upload_preset', 'GOG-ProfilesIMG');
+
+    try {
+      let response = await fetch(
+        'https://api.cloudinary.com/v1_1/drlrtt5dz/image/upload',
+        {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      let data = await response.json();
+      return data.secure_url || null;
+    } catch (error) {
+      console.error('שגיאה בהעלאת תמונה:', error);
+      return null;
     }
   };
 
@@ -50,19 +78,28 @@ export default function AddOrganizationScreen({ navigation }) {
       return;
     }
 
+    let uploadedImageUrl = '';
+    if (image) {
+      uploadedImageUrl = await uploadImageToCloudinary(image);
+      if (!uploadedImageUrl) {
+        Alert.alert('שגיאה', 'העלאת התמונה נכשלה.');
+        return;
+      }
+    }
+
     const newOrganization = {
       name: name.trim(),
       description,
       type,
       contactEmail: email,
       phone,
-      imageUrl: image,
+      imageUrl: uploadedImageUrl,
       isGlobal: true,
       activeCities: [],
     };
 
     try {
-      const response = await fetch('http://10.100.102.16:5000/organizations', {
+      const response = await fetch(`${config.SERVER_URL}/organizations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

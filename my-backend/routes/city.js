@@ -84,6 +84,28 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// שליפת מספר ערים לפי מזהים (עבור תצוגה בפרופיל וכו')
+router.get('/byIds', async (req, res) => {
+  try {
+    const rawIds = req.query.ids?.split(',') || [];
+
+    // סינון מזהים חוקיים באורך 24 תווים
+    const ids = rawIds.filter(
+      (id) => typeof id === 'string' && id.length === 24
+    );
+
+    if (ids.length === 0) {
+      return res.status(400).json({ error: 'לא סופקו מזהים חוקיים' });
+    }
+
+    const cities = await City.find({ _id: { $in: ids } }, 'name');
+    res.json(cities);
+  } catch (error) {
+    console.error('❌ שגיאה בראוט /cities/byIds:', error);
+    res.status(500).json({ error: 'שגיאה בשרת בעת שליפת ערים לפי מזהים' });
+  }
+});
 // שליפת עיר לפי ID
 router.get('/:id', async (req, res) => {
   try {

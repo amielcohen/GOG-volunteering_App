@@ -81,6 +81,7 @@ router.put('/updateProfile', async (req, res) => {
   try {
     const {
       _id,
+      username,
       email,
       dateOfBirth,
       city,
@@ -99,8 +100,17 @@ router.put('/updateProfile', async (req, res) => {
       return res.status(400).json({ message: 'User id is required' });
     }
 
+    // בדיקת כפילות בשם משתמש (אם נשלח)
+    if (username) {
+      const existing = await User.findOne({ username, _id: { $ne: _id } });
+      if (existing) {
+        return res.status(400).json({ message: 'שם המשתמש כבר קיים' });
+      }
+    }
+
     let cityId = city;
 
+    // המרה של שם עיר ל־ObjectId (אם נשלח string קצר)
     if (typeof city === 'string' && city.length < 24) {
       const cityDoc = await City.findOne({ name: city });
       if (!cityDoc) return res.status(400).json({ message: 'עיר לא נמצאה' });
@@ -110,6 +120,7 @@ router.put('/updateProfile', async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       _id,
       {
+        username,
         email,
         dateOfBirth,
         city: cityId,
@@ -125,6 +136,8 @@ router.put('/updateProfile', async (req, res) => {
       },
       { new: true }
     );
+
+    console.log('עדכון משתמש:', updatedUser);
 
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });
@@ -160,8 +173,8 @@ router.get('/checkUsername', async (req, res) => {
 router.get('/profile/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
-      .populate('city', 'name')
-      .populate('organization', 'name');
+      .populate('city')
+      .populate('organization');
 
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.status(200).json(user);

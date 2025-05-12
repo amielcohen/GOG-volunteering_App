@@ -18,17 +18,20 @@ import { createStackNavigator } from '@react-navigation/stack';
 // ייבוא המסכים
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import SplashScreen from './screens/SplashScreen';
 
 //User
 import UserHomeScreen from './screens/User/userHomeScreen';
 import GiftShop from './screens/User/GiftShop';
 import EditProfile from './screens/User/EditProfile';
+import SearchVolunteering from './screens/User/SearchVolunteering';
 
 //Admin
 import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
 import AdminOrganizationScreen from './screens/Admin/AdminOrganizationScreen';
 import AddOrganizationScreen from './screens/Admin/AddOrganizationScreen';
 import AddCityScreen from './screens/Admin/AddCityScreen';
+
 //CommunityRep
 import CommunityRepHomeScreen from './screens/CommunityRep/CommunityRepHomeScreen';
 import ShopMenu from './screens/CommunityRep/ShopMenu';
@@ -39,12 +42,21 @@ import ChooseGlobalOrganizationScreen from './screens/CommunityRep/ChooseGlobalO
 import LinkGlobalOrganizationScreen from './screens/CommunityRep/LinkGlobalOrganizationScreen';
 import CreateOrganizationRepScreen from './screens/CommunityRep/CreateOrganizationRepScreen';
 
+//OrganizationRep
+import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
+import CreateVolunteeringScreen from './screens/OrganizationRep/CreateVolunteeringScreen';
+
 const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName="SplashScreen">
+        <Stack.Screen
+          name="SplashScreen"
+          component={SplashScreen}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name="giftshop"
           component={GiftShop}
@@ -53,7 +65,6 @@ export default function App() {
             headerTitle: 'חנות המתנות',
           }}
         />
-
         <Stack.Screen
           name="Login"
           component={LoginScreen}
@@ -86,15 +97,43 @@ export default function App() {
           options={({ navigation }) => ({
             headerTitle: 'מסך הבית',
             headerStyle: {
-              backgroundColor: '#6200EE', // צבע רקע הכותרת
+              backgroundColor: '#492DB3',
             },
             headerTitleStyle: {
-              color: '#fff', // צבע טקסט
-              fontWeight: 'bold', // עובי טקסט
-              fontSize: 20, // גודל טקסט
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 20,
             },
             headerTitleAlign: 'center',
-            // כפתור Logout במקום חץ אחורה
+            headerLeft: () => (
+              <Pressable
+                onPress={() => {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Login' }],
+                  });
+                }}
+                style={{ marginLeft: 15 }}
+              >
+                <Text style={{ color: '#fff', fontSize: 16 }}>Logout</Text>
+              </Pressable>
+            ),
+          })}
+        />
+        <Stack.Screen
+          name="OrganizationRepHomeScreen"
+          component={OrganizationRepHomeScreen}
+          options={({ navigation }) => ({
+            headerTitle: 'מסך הבית',
+            headerStyle: {
+              backgroundColor: '#333aff',
+            },
+            headerTitleStyle: {
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+            headerTitleAlign: 'center',
             headerLeft: () => (
               <Pressable
                 onPress={() => {
@@ -116,15 +155,14 @@ export default function App() {
           options={({ navigation }) => ({
             headerTitle: 'מסך הבית',
             headerStyle: {
-              backgroundColor: '#6200EE', // צבע רקע הכותרת
+              backgroundColor: '#F5767A',
             },
             headerTitleStyle: {
-              color: '#fff', // צבע טקסט
-              fontWeight: 'bold', // עובי טקסט
-              fontSize: 20, // גודל טקסט
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 20,
             },
             headerTitleAlign: 'center',
-            // כפתור Logout במקום חץ אחורה
             headerLeft: () => (
               <Pressable
                 onPress={() => {
@@ -143,179 +181,77 @@ export default function App() {
         <Stack.Screen
           name="ShopMenu"
           component={ShopMenu}
-          options={{
-            headerTitle: ' תפריט החנות',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('תפריט החנות')}
+        />
+        <Stack.Screen
+          name="SearchVolunteering"
+          component={SearchVolunteering}
+          options={defaultHeader('חפש התנדבויות')}
         />
         <Stack.Screen
           name="LinkGlobalOrganization"
           component={LinkGlobalOrganizationScreen}
-          options={{
-            headerTitle: 'קישור עמותה לעיר',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('קישור עמותה לעיר')}
+        />
+        <Stack.Screen
+          name="CreateVolunteering"
+          component={CreateVolunteeringScreen}
+          options={defaultHeader('יצירת התנדבות חדשה')}
         />
         <Stack.Screen
           name="ChooseGlobalOrganization"
           component={ChooseGlobalOrganizationScreen}
-          options={{
-            headerTitle: 'קישור עמותה ארצית לעיר',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('קישור עמותה ארצית לעיר')}
         />
         <Stack.Screen
           name="AddShopItemScreen"
           component={AddShopItemScreen}
-          options={{
-            headerTitle: 'הוסף פריט',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('הוסף פריט')}
         />
         <Stack.Screen
           name="CreateOrganizationRepScreen"
           component={CreateOrganizationRepScreen}
-          options={{
-            headerTitle: 'יצירת אחראי עמותה',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('יצירת אחראי עמותה')}
         />
         <Stack.Screen
           name="AdminOrganizationScreen"
           component={AdminOrganizationScreen}
-          options={{
-            headerTitle: 'מנהל עמותות',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('מנהל עמותות')}
         />
         <Stack.Screen
           name="AddCityScreen"
           component={AddCityScreen}
-          options={{
-            headerTitle: 'מנהל עמותות',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('הוסף עיר')}
         />
         <Stack.Screen
           name="AddOrganizationScreen"
           component={AddOrganizationScreen}
-          options={{
-            headerTitle: 'הוסף עמותה',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('הוסף עמותה')}
         />
         <Stack.Screen
           name="ManageCategoriesScreen"
           component={ManageCategoriesScreen}
-          options={{
-            headerTitle: 'מנהל קטגוריות',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('מנהל קטגוריות')}
         />
         <Stack.Screen
           name="OrganizationManagerScreen"
           component={OrganizationManagerScreen}
-          options={{
-            headerTitle: 'מנהל עמותות',
-            headerTitleAlign: 'center',
-            headerStyle: {
-              backgroundColor: '#FFFFFF',
-            },
-            headerTitleStyle: {
-              color: '#000000',
-              fontWeight: 'bold',
-              fontSize: 20,
-            },
-          }}
+          options={defaultHeader('מנהל עמותות')}
         />
-
         <Stack.Screen
           name="UserHomeScreen"
           component={UserHomeScreen}
           options={({ navigation }) => ({
             headerTitle: 'מסך הבית',
             headerStyle: {
-              backgroundColor: '#6200EE', // צבע רקע הכותרת
+              backgroundColor: '#6200EE',
             },
             headerTitleStyle: {
-              color: '#fff', // צבע טקסט
-              fontWeight: 'bold', // עובי טקסט
-              fontSize: 20, // גודל טקסט
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 20,
             },
             headerTitleAlign: 'center',
-            // כפתור Logout במקום חץ אחורה
             headerLeft: () => (
               <Pressable
                 onPress={() => {
@@ -334,57 +270,35 @@ export default function App() {
         <Stack.Screen
           name="EditProfile"
           component={EditProfile}
-          options={({ navigation }) => ({
+          options={{
             headerTitle: 'עריכת פרופיל',
             headerStyle: {
-              backgroundColor: '#6200EE', // צבע רקע הכותרת
+              backgroundColor: '#6200EE',
             },
             headerTitleStyle: {
-              color: '#fff', // צבע טקסט
-              fontWeight: 'bold', // עובי טקסט
-              fontSize: 20, // גודל טקסט
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 20,
             },
             headerTitleAlign: 'center',
-          })}
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  datacontainer: {
-    flex: 8,
-    padding: 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 150,
-  },
-  inputstyle: {
-    marginBottom: 20,
-    color: '#000000',
-    borderBottomWidth: 1,
-    width: 200,
-  },
-  newaccount: {
-    flex: 1,
-  },
-  appcontiner: {
-    flex: 1,
-  },
-  imgappcontiner: {
-    padding: 50,
-    flex: 1,
-  },
-  loginStyle: {
-    marginTop: 20,
-  },
-  imagetranspernt: {
-    opacity: 0.2,
-  },
-});
+function defaultHeader(title) {
+  return {
+    headerTitle: title,
+    headerTitleAlign: 'center',
+    headerStyle: {
+      backgroundColor: '#FFFFFF',
+    },
+    headerTitleStyle: {
+      color: '#000000',
+      fontWeight: 'bold',
+      fontSize: 20,
+    },
+  };
+}
