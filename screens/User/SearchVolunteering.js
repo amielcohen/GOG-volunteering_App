@@ -111,7 +111,12 @@ export default function SearchVolunteering({ route, navigation }) {
   };
 
   const handlePress = (volunteering) => {
-    navigation.navigate('VolunteerDetails', { volunteering });
+    console.log('volunteer', volunteering);
+    navigation.navigate('VolunteerDetails', {
+      volunteering,
+      userId: user._id,
+      user,
+    });
   };
 
   if (loading) {

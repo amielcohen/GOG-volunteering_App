@@ -93,9 +93,9 @@ export default function VolunteeringStep2({
 
       <TextInput
         placeholder="הערות למתנדב (אופציונלי)"
-        value={formData.notes}
+        value={formData.notesForVolunteers}
         onChangeText={(text) =>
-          setFormData((prev) => ({ ...prev, notes: text }))
+          setFormData((prev) => ({ ...prev, notesForVolunteers: text }))
         }
         style={styles.input}
         textAlign="right"

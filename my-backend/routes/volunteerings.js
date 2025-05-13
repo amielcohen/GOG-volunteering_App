@@ -76,10 +76,14 @@ router.post('/:id/register', async (req, res) => {
   const volunteeringId = req.params.id;
   const { userId } = req.body;
 
+  console.log('📥 רישום משתמש להתנדבות');
+  console.log('volunteeringId:', volunteeringId);
+  console.log('userId:', userId);
+
   try {
     const volunteering = await Volunteering.findById(volunteeringId);
-
     if (!volunteering) {
+      console.warn('❌ לא נמצאה התנדבות');
       return res.status(404).json({ message: 'Volunteering not found' });
     }
 
@@ -88,10 +92,11 @@ router.post('/:id/register', async (req, res) => {
     );
 
     if (alreadyRegistered) {
+      console.warn('⚠️ המשתמש כבר רשום');
       return res.status(400).json({ message: 'User already registered' });
     }
 
-    volunteering.registeredVolunteers.push({ userId });
+    volunteering.registeredVolunteers.push({ userId, status: 'approved' });
     await volunteering.save();
 
     res.json({
@@ -99,7 +104,7 @@ router.post('/:id/register', async (req, res) => {
       volunteering,
     });
   } catch (error) {
-    console.error('Error registering to volunteering:', error);
+    console.error('🔥 שגיאה אמיתית ברישום:', error);
     res.status(500).json({ message: 'Error registering to volunteering' });
   }
 });
@@ -163,6 +168,20 @@ router.get('/byCity/:cityName', async (req, res) => {
   } catch (err) {
     console.error('Error in /byCity route:', err);
     res.status(500).json({ message: 'Error loading volunteerings for city' });
+  }
+});
+
+// שליפת התנדבות לפי ID
+router.get('/:id', async (req, res) => {
+  try {
+    const volunteering = await Volunteering.findById(req.params.id);
+    if (!volunteering) {
+      return res.status(404).json({ message: 'Volunteering not found' });
+    }
+    res.json(volunteering);
+  } catch (error) {
+    console.error('Error fetching volunteering by ID:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

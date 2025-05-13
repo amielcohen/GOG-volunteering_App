@@ -30,6 +30,9 @@ export function adaptVolunteeringForCard(
     totalSpots: volunteering.maxParticipants || 0,
     registeredSpots: approvedVolunteers.length,
     tags: volunteering.tags || [],
+    notesForVolunteers: volunteering.notesForVolunteers || '',
+    address: volunteering.address || '',
+    _id: volunteering._id || '',
   };
 }
 
