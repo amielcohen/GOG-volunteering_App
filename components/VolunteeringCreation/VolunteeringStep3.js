@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+
 import {
   View,
   Text,
@@ -10,6 +11,10 @@ import {
 
 export default function VolunteeringStep3({ formData, onBack, onSubmit }) {
   const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+
+  useEffect(() => {
+    console.log('formData:', formData);
+  }, []);
 
   const renderRewardDetails = () => {
     if (formData.usePredictionModel) return 'מודל חיזוי';

@@ -29,7 +29,7 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
     tags: [],
     city: user.cities?.length === 1 ? user.cities[0].name || '' : '',
     address: '',
-    notes: '',
+    notesForVolunteers: '',
     usePredictionModel: false,
     customRewardByCity: {},
     percentageReward: '',
@@ -62,7 +62,7 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
         tags: formData.tags,
         city: formData.city,
         address: formData.address,
-        notes: formData.notes,
+        notesForVolunteers: formData.notesForVolunteers,
         imageUrl: formData.imageUrl,
         rewardType: formData.rewardType,
         reward, // ← זה מה שישמר במונגו
@@ -84,6 +84,8 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
       const data = await response.json();
 
       if (response.ok) {
+        console.log('response:', data.volunteering.notesForVolunteers);
+
         console.log('ההתנדבות נשמרה בהצלחה:', data);
         navigation.reset({
           index: 0,
