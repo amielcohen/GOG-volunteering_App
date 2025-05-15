@@ -22,7 +22,7 @@ export default function VolunteeringStep3({ formData, onBack, onSubmit }) {
       return `אחוז מהתקרה: ${formData.percentageReward}%`;
     if (Object.keys(formData.customRewardByCity || {}).length > 0)
       return 'תגמול ידני לפי עיר';
-    return 'לא הוגדר';
+    return 'מודל חיזוי';
   };
 
   return (

@@ -22,6 +22,7 @@ export default function UserHomeScreen({ route, navigation }) {
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
   useEffect(() => {
+    console.log('USER INfo Home  ', user);
     const fetchUser = async () => {
       try {
         const res = await axios.get(

@@ -109,6 +109,34 @@ router.post('/:id/register', async (req, res) => {
   }
 });
 
+router.post('/:volunteeringId/unregister', async (req, res) => {
+  const { volunteeringId } = req.params;
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'userId is required' });
+  }
+
+  try {
+    const updated = await Volunteering.findByIdAndUpdate(
+      volunteeringId,
+      {
+        $pull: { registeredVolunteers: { userId: userId } },
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Volunteering not found' });
+    }
+
+    res.json({ message: 'Unregistered successfully' });
+  } catch (err) {
+    console.error('❌ Error unregistering from volunteering:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // שליפת כל ההתנדבויות לעיר לפי מחרוזת
 router.get('/', async (req, res) => {
   const { city } = req.query;
@@ -182,6 +210,22 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching volunteering by ID:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// שליפה לפי משתמש שנרשם להתנדבות
+router.get('/forUser/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const volunteerings = await Volunteering.find({
+      'registeredVolunteers.userId': userId,
+    }).sort({ date: 1 }); // מיון לפי תאריך עולה (אופציונלי)
+
+    res.json(volunteerings);
+  } catch (err) {
+    console.error('❌ Error fetching user volunteerings:', err);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 

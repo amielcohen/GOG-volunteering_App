@@ -26,6 +26,7 @@ import GiftShop from './screens/User/GiftShop';
 import EditProfile from './screens/User/EditProfile';
 import SearchVolunteering from './screens/User/SearchVolunteering';
 import VolunteerDetails from './screens/User/VolunteerDetails';
+import MyVolunteerings from './screens/User/MyVolunteerings';
 
 //Admin
 import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
@@ -183,6 +184,11 @@ export default function App() {
           name="ShopMenu"
           component={ShopMenu}
           options={defaultHeader('תפריט החנות')}
+        />
+        <Stack.Screen
+          name="MyVolunteerings"
+          component={MyVolunteerings}
+          options={defaultHeader('ההתנדבויות שלי')}
         />
         <Stack.Screen
           name="VolunteerDetails"
