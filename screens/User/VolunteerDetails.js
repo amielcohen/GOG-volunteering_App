@@ -6,34 +6,34 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import CustomCoinIcon from '../../components/CustomCoinIcon';
 import axios from 'axios';
 import config from '../../config';
-import { Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import Confirm from '../../components/ErrorModal';
 
 export default function VolunteerDetailsScreen() {
   const route = useRoute();
-  const { volunteering, userId, user } = route.params;
+  const { volunteering, userId, user, isRegistered } = route.params;
 
   const navigation = useNavigation();
 
-  const [ConfirmVisible, setConfirmVisible] = useState(false);
-  const [ConfirmText, setConfirmText] = useState('');
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
 
-  const backHome = async () => {
+  const backHome = () => {
     setConfirmVisible(false);
     navigation.reset({
       index: 0,
       routes: [{ name: 'UserHomeScreen', params: { user } }],
     });
   };
+
   const handleRegister = async () => {
     try {
-      const response = await axios.post(
+      await axios.post(
         `${config.SERVER_URL}/volunteerings/${volunteering._id}/register`,
         { userId }
       );
@@ -48,6 +48,27 @@ export default function VolunteerDetailsScreen() {
       Alert.alert(
         'שגיאה',
         error.response?.data?.message || 'אירעה שגיאה בעת הרישום'
+      );
+    }
+  };
+
+  const handleUnregister = async () => {
+    try {
+      await axios.post(
+        `${config.SERVER_URL}/volunteerings/${volunteering._id}/unregister`,
+        { userId }
+      );
+
+      setConfirmText({
+        title: 'ביטול הצליח',
+        message: 'ההרשמה בוטלה בהצלחה.',
+      });
+      setConfirmVisible(true);
+    } catch (error) {
+      console.error('שגיאה בביטול:', error.response?.data || error.message);
+      Alert.alert(
+        'שגיאה',
+        error.response?.data?.message || 'אירעה שגיאה בעת ביטול ההרשמה'
       );
     }
   };
@@ -102,14 +123,20 @@ export default function VolunteerDetailsScreen() {
         )}
       </ScrollView>
 
-      <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-        <Text style={styles.registerText}>הצטרפות להתנדבות</Text>
+      <TouchableOpacity
+        style={styles.registerButton}
+        onPress={isRegistered ? handleUnregister : handleRegister}
+      >
+        <Text style={styles.registerText}>
+          {isRegistered ? 'ביטול הרשמה' : 'הצטרפות להתנדבות'}
+        </Text>
       </TouchableOpacity>
+
       <Confirm
-        visible={ConfirmVisible}
-        title={ConfirmText.title}
-        message={ConfirmText.message}
-        onClose={() => backHome()}
+        visible={confirmVisible}
+        title={confirmText.title}
+        message={confirmText.message}
+        onClose={backHome}
       />
     </View>
   );
