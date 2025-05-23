@@ -10,12 +10,18 @@ import {
   Pressable,
   Image,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { Button } from 'react-native-paper';
 import { Picker } from '@react-native-picker/picker';
 import { useFocusEffect } from '@react-navigation/native';
+import config from '../../config';
+import HelpModal from '../../components/HelpModal';
+import ConfirmModal from '../../components/ConfirmModal';
+import SuccessModal from '../../components/ErrorModal';
 
 export default function EditProfile({ navigation, route }) {
   const { user } = route.params;
@@ -36,6 +42,14 @@ export default function EditProfile({ navigation, route }) {
   const [isUploading, setIsUploading] = useState(false);
   const [citiesList, setCitiesList] = useState([]);
 
+  const [helpVisible, setHelpVisible] = useState(false);
+  const openHelp = () => setHelpVisible(true);
+
+  const [confirmResetVisible, setConfirmResetVisible] = useState(false);
+  const [updatedProfilePayload, setUpdatedProfilePayload] = useState(null);
+
+  const [SuccessVisible, setSuccessVisible] = useState(false);
+
   useEffect(() => {
     (async () => {
       const { status } =
@@ -52,7 +66,7 @@ export default function EditProfile({ navigation, route }) {
   useEffect(() => {
     const fetchCities = async () => {
       try {
-        const res = await fetch(`http://10.100.102.16:5000/cities`);
+        const res = await fetch(`${config.SERVER_URL}/cities`);
         const data = await res.json();
         setCitiesList(data);
       } catch (err) {
@@ -207,24 +221,26 @@ export default function EditProfile({ navigation, route }) {
       lastName: finalLastName,
     };
 
+    const originalCity =
+      typeof userData.city === 'object' ? userData.city._id : userData.city;
+
+    if (finalCity !== originalCity) {
+      setUpdatedProfilePayload(updatedProfile);
+      setConfirmResetVisible(true); // מציג את המודל
+    } else {
+      await continueProfileUpdate(updatedProfile);
+    }
+  };
+  const continueProfileUpdate = async (profile) => {
     try {
-      const response = await fetch(
-        `http://10.100.102.16:5000/auth/updateProfile`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedProfile),
-        }
-      );
+      const response = await fetch(`${config.SERVER_URL}/auth/updateProfile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile),
+      });
       const data = await response.json();
       if (response.ok) {
-        Alert.alert('עדכון פרופיל', 'הפרופיל עודכן בהצלחה', [
-          {
-            text: 'OK',
-            onPress: () =>
-              navigation.navigate('UserHomeScreen', { user: data.user }),
-          },
-        ]);
+        setSuccessVisible(true);
       } else {
         Alert.alert('Error', data.message || 'עדכון הפרופיל נכשל');
       }
@@ -236,7 +252,7 @@ export default function EditProfile({ navigation, route }) {
   const fetchUpdatedUserData = async () => {
     try {
       const response = await fetch(
-        `http://10.100.102.16:5000/auth/profile/${userData._id}`
+        `${config.SERVER_URL}/auth/profile/${userData._id}`
       );
       if (response.ok) {
         const updatedUser = await response.json();
@@ -259,8 +275,6 @@ export default function EditProfile({ navigation, route }) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.header}>עריכת פרופיל</Text>
-
         <View style={styles.profilePicContainer}>
           <Image
             source={
@@ -348,8 +362,17 @@ export default function EditProfile({ navigation, route }) {
             maximumDate={new Date()}
           />
         )}
-
-        <Text style={styles.label}>עיר</Text>
+        <View style={styles.row}>
+          <Text style={styles.label}>עיר</Text>
+          <TouchableOpacity onPress={openHelp}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={20}
+              color="red"
+              style={{ marginStart: 5, marginRight: 5 }}
+            />
+          </TouchableOpacity>
+        </View>
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={
@@ -402,6 +425,48 @@ export default function EditProfile({ navigation, route }) {
         <Button mode="contained" onPress={updateProfileHandler}>
           עדכן פרופיל
         </Button>
+
+        <ConfirmModal
+          visible={confirmResetVisible}
+          title="שינוי עיר מגורים"
+          message="שינוי העיר יאפס את כל הגוגואים שצברת. האם אתה בטוח שברצונך להמשיך?"
+          onCancel={() => {
+            setConfirmResetVisible(false);
+            setUpdatedProfilePayload(null);
+          }}
+          onConfirm={async () => {
+            setConfirmResetVisible(false);
+            try {
+              await fetch(`${config.SERVER_URL}/auth/resetGoGs`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: userData._id }),
+              });
+            } catch (err) {
+              console.error('Reset GoGs failed:', err);
+            }
+            if (updatedProfilePayload) {
+              await continueProfileUpdate(updatedProfilePayload);
+            }
+          }}
+        />
+        {SuccessVisible && (
+          <SuccessModal
+            title="פרופיל עדכון"
+            message="הפרופיל עודכן בהצלחה"
+            onClose={() => {
+              setSuccessVisible(false);
+              navigation.navigate('UserHomeScreen', { user: user });
+            }}
+          />
+        )}
+
+        <HelpModal
+          visible={helpVisible}
+          onClose={() => setHelpVisible(false)}
+          title="אזהרה!"
+          message="שינוי העיר מגורים יאפס את כל הגוגואים בחשבון, לא ניתן לשחזר גוגואים שיאופסו!  "
+        />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -468,5 +533,10 @@ const styles = StyleSheet.create({
     height: 55,
     width: '100%',
     textAlign: 'right',
+  },
+  row: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    marginBottom: 5,
   },
 });

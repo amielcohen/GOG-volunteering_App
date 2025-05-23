@@ -152,6 +152,26 @@ router.put('/updateProfile', async (req, res) => {
   }
 });
 
+//איפוס הגוגואים
+router.put('/resetGoGs', async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ message: 'Missing userId' });
+
+  try {
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { GoGs: 0 },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ message: 'GoGs reset' });
+  } catch (err) {
+    console.error('Reset GoGs error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // בדיקת זמינות שם משתמש
 router.get('/checkUsername', async (req, res) => {
   const { username } = req.query;
