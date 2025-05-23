@@ -43,6 +43,7 @@ import OrganizationManagerScreen from './screens/CommunityRep/OrganizationManger
 import ChooseGlobalOrganizationScreen from './screens/CommunityRep/ChooseGlobalOrganizationScreen';
 import LinkGlobalOrganizationScreen from './screens/CommunityRep/LinkGlobalOrganizationScreen';
 import CreateOrganizationRepScreen from './screens/CommunityRep/CreateOrganizationRepScreen';
+import CreateCityOrganizationScreen from './screens/CommunityRep/CreateCityOrganization';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
@@ -184,6 +185,11 @@ export default function App() {
           name="ShopMenu"
           component={ShopMenu}
           options={defaultHeader('תפריט החנות')}
+        />
+        <Stack.Screen
+          name="CreateCityOrganization"
+          component={CreateCityOrganizationScreen}
+          options={defaultHeader('יציירת עמותות')}
         />
         <Stack.Screen
           name="MyVolunteerings"
