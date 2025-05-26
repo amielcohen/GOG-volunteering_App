@@ -49,7 +49,7 @@ export default function OrganizationManagerScreen({ route }) {
   };
 
   const handleViewDetails = (organization) => {
-    navigation.navigate('CityOrganizationDetails', { organization, user });
+    navigation.navigate('LinkedOrganizationDetails', { organization, user });
   };
 
   const handlePrimaryAction = (organizationId) => {
