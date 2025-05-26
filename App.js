@@ -44,6 +44,7 @@ import ChooseGlobalOrganizationScreen from './screens/CommunityRep/ChooseGlobalO
 import LinkGlobalOrganizationScreen from './screens/CommunityRep/LinkGlobalOrganizationScreen';
 import CreateOrganizationRepScreen from './screens/CommunityRep/CreateOrganizationRepScreen';
 import CreateCityOrganizationScreen from './screens/CommunityRep/CreateCityOrganization';
+import LinkedOrganizationDetails from './screens/CommunityRep/LinkedOrganizationDetails';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
@@ -206,6 +207,7 @@ export default function App() {
           component={SearchVolunteering}
           options={defaultHeader('חפש התנדבויות')}
         />
+
         <Stack.Screen
           name="LinkGlobalOrganization"
           component={LinkGlobalOrganizationScreen}
@@ -235,6 +237,11 @@ export default function App() {
           name="AdminOrganizationScreen"
           component={AdminOrganizationScreen}
           options={defaultHeader('מנהל עמותות')}
+        />
+        <Stack.Screen
+          name="LinkedOrganizationDetails"
+          component={LinkedOrganizationDetails}
+          options={defaultHeader('פרטי הארגון')}
         />
         <Stack.Screen
           name="AddCityScreen"
