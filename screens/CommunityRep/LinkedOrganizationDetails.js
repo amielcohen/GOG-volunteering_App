@@ -20,6 +20,7 @@ import theColor from '../../constants/theColor';
 import { uploadImageToCloudinary } from '../../utils/cloudinary';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import UpdatingModel from '../../components/ErrorModal';
 
 I18nManager.forceRTL(true);
 
@@ -33,7 +34,9 @@ const LinkedOrganizationDetails = ({ route }) => {
   const [isLocalOnly, setIsLocalOnly] = useState(false);
   const [imageUploaded, setImageUploaded] = useState(false);
 
-  // הסרת סוגריים מהשם להצגה
+  const [updatingModelVisual, setUpdatingModelVisual] = useState(false);
+  const [updatingText, setUpdatingText] = useState('');
+
   const originalName = organization.name.replace(/\s*\([^)]*\)\s*$/, '');
   const [name, setName] = useState(originalName);
   const [description, setDescription] = useState(
@@ -74,7 +77,7 @@ const LinkedOrganizationDetails = ({ route }) => {
   }, [mainorganization]);
 
   const handleSave = async () => {
-    const city = organization.cityName || '';
+    const city = user.city.name || '';
     let finalName = name;
 
     if (!isGlobal && !name.includes('(')) {
@@ -116,7 +119,8 @@ const LinkedOrganizationDetails = ({ route }) => {
       }
 
       const updated = await response.json();
-      alert('העמותה עודכנה בהצלחה!');
+      setUpdatingText('עריכת העמותה בוצעה בהצלחה!');
+      setUpdatingModelVisual(true);
       console.log('✅ עמותה עודכנה:', updated);
     } catch (err) {
       console.error('❌ שגיאה בשמירה:', err);
@@ -267,25 +271,53 @@ const LinkedOrganizationDetails = ({ route }) => {
         )}
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.label}>ניהול נוסף</Text>
+        <View style={styles.extraButtonsRow}>
+          <Button
+            title="ניהול אחראי עמותה"
+            color="#4A90E2"
+            onPress={() =>
+              navigation.navigate('OrgRepScreen', {
+                organization,
+                mainorganization,
+                user,
+              })
+            }
+          />
+          <View style={{ height: 10 }} />
+          <Button
+            title="סטטיסטיקת מטבעות"
+            color="#4A90E2"
+            onPress={() => console.log('TODO: Navigate to Coins Stats')}
+          />
+        </View>
+      </View>
+
       <View style={styles.buttonRow}>
         <Button
           title="שמור שינויים"
           onPress={handleSave}
-          color={theColor.primary || '#4A90E2'}
+          color={theColor.Green || '#4A90E2'}
         />
         <View style={{ width: 10 }} />
         <Button
           title="ביטול"
-          color="#999"
+          color={theColor.CancelRed || '#999'}
           onPress={() => navigation.goBack()}
         />
       </View>
+
+      <UpdatingModel
+        visible={updatingModelVisual}
+        message={updatingText}
+        onClose={() => setUpdatingModelVisual(false)}
+      />
     </ScrollView>
   );
 };
 
 export default LinkedOrganizationDetails;
-
 const styles = StyleSheet.create({
   container: {
     padding: 20,
@@ -362,6 +394,17 @@ const styles = StyleSheet.create({
     height: 48,
   },
   buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginBottom: 30,
+    paddingBottom: 20,
+  },
+  extraButtonsRow: {
+    width: '100%',
+    gap: 5,
+    marginTop: 10,
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
     alignSelf: 'center',

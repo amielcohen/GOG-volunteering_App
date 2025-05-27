@@ -113,7 +113,7 @@ export default function OrganizationManagerScreen({ route }) {
               onPrimaryAction={() => handlePrimaryAction(item._id)}
               onViewDetails={() => handleViewDetails(item)}
               primaryButtonLabel="מחק"
-              viewDetailsLabel="פרטים"
+              viewDetailsLabel="פרטים ועריכה"
             />
           )}
           contentContainerStyle={{ paddingBottom: 16 }}
