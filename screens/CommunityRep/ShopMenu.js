@@ -31,7 +31,7 @@ function ShopMenu({ navigation, route }) {
 
   const fetchGifts = async () => {
     try {
-      const response = await fetch('http://10.100.102.16:5000/shop/all');
+      const response = await fetch(`${config.SERVER_URL}/shop/all`);
       const data = await response.json();
       setGifts(data);
     } catch (err) {

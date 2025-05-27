@@ -203,4 +203,47 @@ router.get('/profile/:id', async (req, res) => {
   }
 });
 
+router.get('/organization-reps', async (req, res) => {
+  const { cityId, organizationId } = req.query;
+
+  if (!cityId || !organizationId) {
+    return res
+      .status(400)
+      .json({ message: 'requierd cityId and organizationId' });
+  }
+
+  try {
+    const reps = await User.find({
+      role: 'OrganizationRep',
+      city: cityId,
+      organization: organizationId,
+    })
+      .populate('city')
+      .populate('organization');
+
+    res.status(200).json(reps);
+  } catch (err) {
+    console.error('שגיאה בשליפת אחראים:', err);
+    res.status(500).json({ message: 'שגיאה בשרת' });
+  }
+});
+
+// מחיקת משתמש לפי ID
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedUser = await User.findByIdAndDelete(id);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'המשתמש לא נמצא' });
+    }
+
+    res.status(200).json({ message: 'המשתמש נמחק בהצלחה' });
+  } catch (err) {
+    console.error('שגיאה במחיקת משתמש:', err);
+    res.status(500).json({ message: 'שגיאה במחיקה מהשרת' });
+  }
+});
+
 module.exports = router;

@@ -45,6 +45,7 @@ import LinkGlobalOrganizationScreen from './screens/CommunityRep/LinkGlobalOrgan
 import CreateOrganizationRepScreen from './screens/CommunityRep/CreateOrganizationRepScreen';
 import CreateCityOrganizationScreen from './screens/CommunityRep/CreateCityOrganization';
 import LinkedOrganizationDetails from './screens/CommunityRep/LinkedOrganizationDetails';
+import OrgRepScreen from './screens/CommunityRep/OrgRepScreen';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
@@ -222,6 +223,12 @@ export default function App() {
           name="ChooseGlobalOrganization"
           component={ChooseGlobalOrganizationScreen}
           options={defaultHeader('קישור עמותה ארצית לעיר')}
+        />
+
+        <Stack.Screen
+          name="OrgRepScreen"
+          component={OrgRepScreen}
+          options={defaultHeader('ניהול אחראי עמותה')}
         />
         <Stack.Screen
           name="AddShopItemScreen"

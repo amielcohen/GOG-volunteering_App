@@ -6,6 +6,7 @@ const Colors = {
   RoyalBlue: '#1E3A8A',
   PaleMint: '#9BFDE1',
   Green: '#19cc47',
+  CancelRed: '#fa511b',
 };
 
 export default Colors;

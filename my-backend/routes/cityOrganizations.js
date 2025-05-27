@@ -124,6 +124,7 @@ router.put('/:id', async (req, res) => {
     externalRewardAllowed,
     maxRewardPerVolunteering,
     isActive,
+    isLocalOnly,
   } = req.body;
 
   try {
@@ -140,6 +141,7 @@ router.put('/:id', async (req, res) => {
         ...(type && { type }),
         ...(tags && { tags }),
         ...(externalRewardAllowed !== undefined && { externalRewardAllowed }),
+        ...(isLocalOnly !== undefined && { isLocalOnly }),
         ...(maxRewardPerVolunteering !== undefined && {
           maxRewardPerVolunteering,
         }),
