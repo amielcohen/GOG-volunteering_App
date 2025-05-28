@@ -8,6 +8,7 @@ import {
   Pressable,
 } from 'react-native';
 import { I18nManager } from 'react-native';
+
 import { useEffect } from 'react';
 
 import { StatusBar } from 'expo-status-bar';
@@ -19,6 +20,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import SplashScreen from './screens/SplashScreen';
+import * as Updates from 'expo-updates';
 
 //User
 import UserHomeScreen from './screens/User/userHomeScreen';
@@ -50,6 +52,8 @@ import OrgRepScreen from './screens/CommunityRep/OrgRepScreen';
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
 import CreateVolunteeringScreen from './screens/OrganizationRep/CreateVolunteeringScreen';
+import FutureVolunteerings from './screens/OrganizationRep/FutureVolunteerings';
+import OpenVolunteerings from './screens/OrganizationRep/OpenVolunteerings';
 
 const Stack = createStackNavigator();
 
@@ -269,6 +273,16 @@ export default function App() {
           name="OrganizationManagerScreen"
           component={OrganizationManagerScreen}
           options={defaultHeader('מנהל עמותות')}
+        />
+        <Stack.Screen
+          name="FutureVolunteerings"
+          component={FutureVolunteerings}
+          options={defaultHeader('התנדבויות עתידיות')}
+        />
+        <Stack.Screen
+          name="OpenVolunteerings"
+          component={OpenVolunteerings}
+          options={defaultHeader('התנדבויות פתוחות')}
         />
         <Stack.Screen
           name="UserHomeScreen"

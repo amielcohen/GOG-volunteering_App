@@ -59,7 +59,10 @@ const volunteeringSchema = new mongoose.Schema({
   imageUrl: { type: String },
   cancelled: { type: Boolean, default: false },
   notesForVolunteers: { type: String },
-
+  isClosed: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
