@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'; // <-- CORRECTED LINE HERE
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import CustomCoinIcon from '../../components/CustomCoinIcon';
 import axios from 'axios';
 import config from '../../config';
-import levelTable from '../../constants/levelsList';
+import levelTable from '../../constants/levelTable';
+
 export default function UserHomeScreen({ route, navigation }) {
   const { user: initialUser } = route.params;
   const [user, setUser] = useState(initialUser);
@@ -22,7 +23,7 @@ export default function UserHomeScreen({ route, navigation }) {
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
   useEffect(() => {
-    console.log('USER INfo Home  ', user);
+    console.log('USER INfo Home  ', user);
     const fetchUser = async () => {
       try {
         const res = await axios.get(
@@ -51,6 +52,17 @@ export default function UserHomeScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* כפתור תיבת הדואר במיקום אבסולוטי */}
+      <TouchableOpacity
+        style={styles.mailIconContainer}
+        onPress={() => {
+          // כרגע לא עושה כלום, בהמשך נוסיף ניווט או פעולה אחרת
+          console.log('Mailbox icon pressed!');
+        }}
+      >
+        <Icon name="mail" size={28} color="#007bff" />
+      </TouchableOpacity>
+
       <ScrollView>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => setImageModalVisible(true)}>
@@ -139,7 +151,19 @@ export default function UserHomeScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  mailIconContainer: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.7)',
+  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     alignItems: 'center',
