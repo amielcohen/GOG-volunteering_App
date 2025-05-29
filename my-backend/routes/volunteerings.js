@@ -5,6 +5,7 @@ const router = express.Router();
 const Volunteering = require('../models/Volunteering');
 const City = require('../models/City');
 const CityOrganization = require('../models/CityOrganization');
+
 const User = require('../models/Users');
 const levelTable = require('../../constants/levelTable');
 const { calculateRewardCoins } = require('../../utils/rewardUtils');
@@ -219,6 +220,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+
 // שליפה לפי משתמש שנרשם להתנדבות
 router.get('/forUser/:userId', async (req, res) => {
   const { userId } = req.params;
@@ -363,6 +365,63 @@ router.put('/:id/attendance', async (req, res) => {
   }
 });
 
+function calculateUserLevelAndExp(totalCumulativeExp) {
+  console.log(levelTable);
+  console.log(
+    `[LEVEL_CALC] 🎯 מתחיל חישוב רמה עבור totalCumulativeExp: ${totalCumulativeExp}`
+  );
+  let currentLevel = 1;
+  let expAccumulatedThroughLevels = 0; // סך ה-EXP שנדרש כדי לסיים את הרמות הקודמות
+
+  for (let i = 1; i <= 20; i++) {
+    // טווח רמות 1 עד 20
+    const requiredExpForThisLevel = levelTable[i]?.requiredExp;
+    console.log(
+      `[LEVEL_CALC]   רמה ${i}: נדרש EXP: ${requiredExpForThisLevel}`
+    );
+    console.log(
+      `[LEVEL_CALC]   EXP מצטבר עד כה: ${expAccumulatedThroughLevels}`
+    );
+
+    // אם הגענו לרמה המקסימלית בטבלה (requiredExp: null)
+    // או אם סך ה-EXP של המשתמש (totalCumulativeExp) קטן מהנדרש כדי לעבור את הרמה הנוכחית (i)
+    if (
+      requiredExpForThisLevel === null ||
+      totalCumulativeExp < expAccumulatedThroughLevels + requiredExpForThisLevel
+    ) {
+      console.log(
+        `[LEVEL_CALC]   🛑 תנאי יציאה: totalCumulativeExp (${totalCumulativeExp}) קטן מהנדרש לעבור רמה ${i} (${expAccumulatedThroughLevels + (requiredExpForThisLevel || 0)}) או שהגענו לרמה מקסימלית.`
+      );
+      const expInCurrentLevel =
+        totalCumulativeExp - expAccumulatedThroughLevels;
+      console.log(
+        `[LEVEL_CALC]   ✅ נמצא: רמה ${i}, EXP בתוך רמה: ${expInCurrentLevel}`
+      );
+      return { level: i, expInCurrentLevel: expInCurrentLevel };
+    }
+
+    // אם המשתמש עבר את הרמה הנוכחית, נוסיף את ה-EXP שלה למצטבר ונמשיך הלאה
+    expAccumulatedThroughLevels += requiredExpForThisLevel;
+    currentLevel = i + 1; // מקדמים את הרמה לבדיקה הבאה
+    console.log(
+      `[LEVEL_CALC]   ➡️ עבר רמה ${i}. EXP מצטבר חדש: ${expAccumulatedThroughLevels}. ממשיך לרמה ${currentLevel}.`
+    );
+  }
+
+  // מקרה קצה: אם המשתמש עבר את כל הרמות עד רמה 20
+  console.log(`[LEVEL_CALC] ⚠️ עבר את כל הרמות בלולאה (עד 20).`);
+  const totalExpNeededToReachLevel20 = Object.values(levelTable)
+    .slice(0, 19)
+    .reduce((sum, item) => sum + (item.requiredExp || 0), 0);
+  const expInMaxLevel = totalCumulativeExp - totalExpNeededToReachLevel20;
+  console.log(`[LEVEL_CALC]   ✅ נמצא: רמה 20, EXP בתוך רמה: ${expInMaxLevel}`);
+  return { level: 20, expInCurrentLevel: expInMaxLevel };
+}
+
+router.put('/:id/close', async (req, res) => {
+  const { id } = req.params;
+  console.log(`\n--- 🚀 מתחיל תהליך סגירת התנדבות ID: ${id} ---`);
+
 router.put('/:id/close', async (req, res) => {
   const { id } = req.params;
 
@@ -371,6 +430,41 @@ router.put('/:id/close', async (req, res) => {
       'registeredVolunteers.userId'
     );
     if (!volunteering) {
+      console.log(`[CLOSE_ROUTE] ❌ התנדבות לא נמצאה: ${id}`);
+      return res.status(404).json({ message: 'Volunteering not found' });
+    }
+    console.log(`[CLOSE_ROUTE] ✅ נמצאה התנדבות: ${volunteering.title}`);
+
+    volunteering.isClosed = true;
+    await volunteering.save();
+    console.log(`[CLOSE_ROUTE] ✅ התנדבות סומנה כסגורה.`);
+
+    const duration = volunteering.durationMinutes || 0;
+    const addedExp = calculateExpFromMinutes(duration);
+    console.log(
+      `[CLOSE_ROUTE] ⏱️ משך התנדבות: ${duration} דקות. EXP שנוסף: ${addedExp}`
+    );
+
+    console.log(`[CLOSE_ROUTE] 🔄 עובר על מתנדבים רשומים...`);
+    for (const v of volunteering.registeredVolunteers) {
+      console.log(`[CLOSE_ROUTE]   מתנדב: ${v.userId?._id || v.userId} (נרשם)`);
+
+      if (v.attended && v.status === 'approved') {
+        console.log(
+          `[CLOSE_ROUTE]   ☑️ מתנדב ${v.userId?.username || v.userId} השתתף ואושר.`
+        );
+        const user = await User.findById(v.userId._id || v.userId);
+        if (!user) {
+          console.log(
+            `[CLOSE_ROUTE]   ⚠️ משתמש ${v.userId?._id || v.userId} לא נמצא. מדלג.`
+          );
+          continue;
+        }
+        console.log(
+          `[CLOSE_ROUTE]   👤 נמצא משתמש: ${user.username}, רמה נוכחית: ${user.level}, EXP נוכחי (לפני הוספה): ${user.exp}`
+        );
+
+
       return res.status(404).json({ message: 'Volunteering not found' });
     }
 
@@ -390,6 +484,57 @@ router.put('/:id/close', async (req, res) => {
           city: user.city,
           organizationId: volunteering.organizationId,
         });
+        console.log(
+          `[CLOSE_ROUTE]   🏢 נמצאה עמותה עירונית: ${cityOrgEntry?.name || 'לא נמצא'}`
+        );
+
+        const GoGs = calculateRewardCoins(volunteering, cityOrgEntry);
+        console.log(`[CLOSE_ROUTE]   💰 גוגואים לתגמול: ${GoGs}`);
+
+        user.GoGs += GoGs;
+        // **הערה חשובה: כאן ה-user.exp צריך לייצג את סך ה-EXP המצטבר של המשתמש.**
+        // אם user.exp במודל שלך שומר רק את ה-EXP בתוך הרמה הנוכחית,
+        // נצטרך לחשב את סך ה-EXP המצטבר באופן זמני עבור הפונקציה calculateUserLevelAndExp.
+        // בואו נניח שהוא סך מצטבר, ונראה מה קורה.
+
+        // אם user.exp הוא EXP בתוך הרמה בלבד, נשתמש בזה:
+        let totalCumulativeExpForCalculation = user.exp; // EXP בתוך הרמה הנוכחית
+        // נוסיף את ה-EXP של הרמות הקודמות
+        for (let i = 1; i < user.level; i++) {
+          totalCumulativeExpForCalculation += levelTable[i]?.requiredExp || 0;
+        }
+        totalCumulativeExpForCalculation += addedExp; // נוסיף את ה-EXP החדש מההתנדבות
+
+        console.log(
+          `[CLOSE_ROUTE]   📈 EXP קיים: ${user.exp}, EXP נוסף: ${addedExp}. Total Cumulative EXP לחישוב: ${totalCumulativeExpForCalculation}`
+        );
+
+        // *** כאן הקסם קורה: חישוב הרמה וה-EXP מחדש על בסיס ה-TOTAL EXP ***
+        const { level: newLevel, expInCurrentLevel: newExpInCurrentLevel } =
+          calculateUserLevelAndExp(totalCumulativeExpForCalculation); // נשלח את סך ה-EXP המצטבר
+
+        console.log(
+          `[CLOSE_ROUTE]   ✨ תוצאות חישוב רמה: רמה חדשה: ${newLevel}, EXP בתוך הרמה החדשה: ${newExpInCurrentLevel}`
+        );
+
+        user.level = newLevel;
+        user.exp = newExpInCurrentLevel; // user.exp יחזור להיות EXP בתוך הרמה הנוכחית
+
+        await user.save();
+        console.log(
+          `[CLOSE_ROUTE]   ✅ ${user.username} קיבל ${GoGs} גוגואים ו-${addedExp} EXP. רמה חדשה: ${user.level}, EXP בתוך הרמה: ${user.exp}. נשמר למסד נתונים.`
+        );
+      } else {
+        console.log(
+          `[CLOSE_ROUTE]   🚫 מתנדב ${v.userId?.username || v.userId} לא השתתף/לא אושר. מדלג על תגמול.`
+        );
+      }
+    }
+
+    console.log(`--- ✅ סיום תהליך סגירת התנדבות ---`);
+    res.status(200).json({ message: 'Volunteering closed' });
+  } catch (err) {
+    console.error(`--- ❌ שגיאה כללית בסגירת התנדבות ---`);
 
         const GoGs = calculateRewardCoins(volunteering, cityOrgEntry);
 
@@ -437,5 +582,6 @@ router.put('/:id/close', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 module.exports = router;
