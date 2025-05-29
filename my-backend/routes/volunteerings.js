@@ -92,12 +92,10 @@ router.post('/create', async (req, res) => {
     });
 
     await newVolunteering.save();
-    res
-      .status(201)
-      .json({
-        message: 'Volunteering created successfully',
-        volunteering: newVolunteering,
-      });
+    res.status(201).json({
+      message: 'Volunteering created successfully',
+      volunteering: newVolunteering,
+    });
   } catch (error) {
     res.status(500).json({ message: 'Error creating volunteering' });
   }
@@ -269,12 +267,10 @@ router.put('/:id/cancel', async (req, res) => {
       return res.status(404).json({ message: 'Volunteering not found' });
     }
 
-    res
-      .status(200)
-      .json({
-        message: 'Volunteering cancelled successfully',
-        volunteering: updated,
-      });
+    res.status(200).json({
+      message: 'Volunteering cancelled successfully',
+      volunteering: updated,
+    });
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -392,6 +388,38 @@ router.put('/:id/close', async (req, res) => {
     }
 
     res.status(200).json({ message: 'Volunteering closed' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// שליפת התנדבויות סגורות מהעבר לפי עיר של אחראי עמותה
+router.get('/history/byCityOfRep/:repId', async (req, res) => {
+  const { repId } = req.params;
+
+  try {
+    const now = new Date();
+    const rep = await User.findById(repId);
+    if (!rep || rep.role !== 'OrganizationRep') {
+      return res.status(404).json({ message: 'OrganizationRep not found' });
+    }
+
+    const repsInCity = await User.find({
+      city: rep.city,
+      role: 'OrganizationRep',
+    });
+    const repIds = repsInCity.map((r) => r._id);
+
+    const volunteerings = await Volunteering.find({
+      createdBy: { $in: repIds },
+      cancelled: { $ne: true },
+      isClosed: true,
+      date: { $lt: now },
+    })
+      .sort({ date: -1 })
+      .populate('registeredVolunteers.userId');
+
+    res.status(200).json(volunteerings);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }

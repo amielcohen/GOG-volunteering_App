@@ -148,7 +148,7 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => handleNavigate('Reports')}
+          onPress={() => handleNavigate('VolunteeringsHistory')}
         >
           <Icon name="bar-chart" size={28} color="#007bff" />
           <Text style={styles.actionText}>צפייה בדוחות</Text>
