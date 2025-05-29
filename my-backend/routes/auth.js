@@ -152,6 +152,26 @@ router.put('/updateProfile', async (req, res) => {
   }
 });
 
+//איפוס הגוגואים
+router.put('/resetGoGs', async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ message: 'Missing userId' });
+
+  try {
+    const updated = await User.findByIdAndUpdate(
+      userId,
+      { GoGs: 0 },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ message: 'GoGs reset' });
+  } catch (err) {
+    console.error('Reset GoGs error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // בדיקת זמינות שם משתמש
 router.get('/checkUsername', async (req, res) => {
   const { username } = req.query;
@@ -180,6 +200,49 @@ router.get('/profile/:id', async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+router.get('/organization-reps', async (req, res) => {
+  const { cityId, organizationId } = req.query;
+
+  if (!cityId || !organizationId) {
+    return res
+      .status(400)
+      .json({ message: 'requierd cityId and organizationId' });
+  }
+
+  try {
+    const reps = await User.find({
+      role: 'OrganizationRep',
+      city: cityId,
+      organization: organizationId,
+    })
+      .populate('city')
+      .populate('organization');
+
+    res.status(200).json(reps);
+  } catch (err) {
+    console.error('שגיאה בשליפת אחראים:', err);
+    res.status(500).json({ message: 'שגיאה בשרת' });
+  }
+});
+
+// מחיקת משתמש לפי ID
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deletedUser = await User.findByIdAndDelete(id);
+
+    if (!deletedUser) {
+      return res.status(404).json({ message: 'המשתמש לא נמצא' });
+    }
+
+    res.status(200).json({ message: 'המשתמש נמחק בהצלחה' });
+  } catch (err) {
+    console.error('שגיאה במחיקת משתמש:', err);
+    res.status(500).json({ message: 'שגיאה במחיקה מהשרת' });
   }
 });
 

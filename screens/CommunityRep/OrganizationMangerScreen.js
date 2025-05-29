@@ -49,7 +49,7 @@ export default function OrganizationManagerScreen({ route }) {
   };
 
   const handleViewDetails = (organization) => {
-    navigation.navigate('CityOrganizationDetails', { organization, user });
+    navigation.navigate('LinkedOrganizationDetails', { organization, user });
   };
 
   const handlePrimaryAction = (organizationId) => {
@@ -113,7 +113,7 @@ export default function OrganizationManagerScreen({ route }) {
               onPrimaryAction={() => handlePrimaryAction(item._id)}
               onViewDetails={() => handleViewDetails(item)}
               primaryButtonLabel="מחק"
-              viewDetailsLabel="פרטים"
+              viewDetailsLabel="פרטים ועריכה"
             />
           )}
           contentContainerStyle={{ paddingBottom: 16 }}

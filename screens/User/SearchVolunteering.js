@@ -15,6 +15,7 @@ import { adaptVolunteeringForCard } from '../../utils/adaptVolunteeringForCard';
 
 export default function SearchVolunteering({ route, navigation }) {
   const { user } = route.params;
+
   const [loading, setLoading] = useState(true);
   const [volunteerings, setVolunteerings] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -29,6 +30,8 @@ export default function SearchVolunteering({ route, navigation }) {
   });
 
   useEffect(() => {
+    console.log('USER INfo search  ', user);
+
     loadData();
   }, []);
 
@@ -49,12 +52,43 @@ export default function SearchVolunteering({ route, navigation }) {
       const cityOrgsData = cityOrgRes.data;
 
       const orgMap = {};
-      cityOrgsData.forEach((co) => {
+      cityOrgRes.data.forEach((co) => {
         const idStr = co.organizationId?.toString?.();
         if (idStr) orgMap[idStr] = co;
       });
 
-      const adapted = rawVols
+      // ✨ סינון: הסרת התנדבויות שהמשתמש כבר רשום אליהן
+      const userIdStr = user._id?.toString?.();
+
+      const filteredVols = rawVols.filter((vol) => {
+        const regList = Array.isArray(vol.registeredVolunteers)
+          ? vol.registeredVolunteers
+          : [];
+        const isRegistered = regList.some((reg) => {
+          const regId =
+            typeof reg.userId === 'object' ? reg.userId._id : reg.userId;
+          return regId?.toString?.() === userIdStr;
+        });
+
+        if (isRegistered) {
+          console.log(
+            `🚫 Skipping volunteering ${vol.title} (already registered)`
+          );
+        }
+
+        return !isRegistered;
+      });
+
+      console.log(
+        `✅ ${filteredVols.length} volunteerings left after filtering`
+      );
+      console.log(
+        '🧾 Titles:',
+        filteredVols.map((v) => v.title)
+      );
+
+      // המשך ההתאמה למסך הקיים
+      const adapted = filteredVols
         .map((v) => {
           const volOrgId = v.organizationId?.toString?.();
           const matchingOrg = orgMap[volOrgId];
@@ -116,6 +150,7 @@ export default function SearchVolunteering({ route, navigation }) {
       volunteering,
       userId: user._id,
       user,
+      isRegistered: false,
     });
   };
 

@@ -8,6 +8,7 @@ import {
   Pressable,
 } from 'react-native';
 import { I18nManager } from 'react-native';
+
 import { useEffect } from 'react';
 
 import { StatusBar } from 'expo-status-bar';
@@ -19,6 +20,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import SplashScreen from './screens/SplashScreen';
+import * as Updates from 'expo-updates';
 
 //User
 import UserHomeScreen from './screens/User/userHomeScreen';
@@ -26,6 +28,7 @@ import GiftShop from './screens/User/GiftShop';
 import EditProfile from './screens/User/EditProfile';
 import SearchVolunteering from './screens/User/SearchVolunteering';
 import VolunteerDetails from './screens/User/VolunteerDetails';
+import MyVolunteerings from './screens/User/MyVolunteerings';
 
 //Admin
 import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
@@ -42,10 +45,15 @@ import OrganizationManagerScreen from './screens/CommunityRep/OrganizationManger
 import ChooseGlobalOrganizationScreen from './screens/CommunityRep/ChooseGlobalOrganizationScreen';
 import LinkGlobalOrganizationScreen from './screens/CommunityRep/LinkGlobalOrganizationScreen';
 import CreateOrganizationRepScreen from './screens/CommunityRep/CreateOrganizationRepScreen';
+import CreateCityOrganizationScreen from './screens/CommunityRep/CreateCityOrganization';
+import LinkedOrganizationDetails from './screens/CommunityRep/LinkedOrganizationDetails';
+import OrgRepScreen from './screens/CommunityRep/OrgRepScreen';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
 import CreateVolunteeringScreen from './screens/OrganizationRep/CreateVolunteeringScreen';
+import FutureVolunteerings from './screens/OrganizationRep/FutureVolunteerings';
+import OpenVolunteerings from './screens/OrganizationRep/OpenVolunteerings';
 
 const Stack = createStackNavigator();
 
@@ -185,6 +193,16 @@ export default function App() {
           options={defaultHeader('תפריט החנות')}
         />
         <Stack.Screen
+          name="CreateCityOrganization"
+          component={CreateCityOrganizationScreen}
+          options={defaultHeader('יציירת עמותות')}
+        />
+        <Stack.Screen
+          name="MyVolunteerings"
+          component={MyVolunteerings}
+          options={defaultHeader('ההתנדבויות שלי')}
+        />
+        <Stack.Screen
           name="VolunteerDetails"
           component={VolunteerDetails}
           options={defaultHeader('פרטי התנדבות')}
@@ -194,6 +212,7 @@ export default function App() {
           component={SearchVolunteering}
           options={defaultHeader('חפש התנדבויות')}
         />
+
         <Stack.Screen
           name="LinkGlobalOrganization"
           component={LinkGlobalOrganizationScreen}
@@ -209,6 +228,12 @@ export default function App() {
           component={ChooseGlobalOrganizationScreen}
           options={defaultHeader('קישור עמותה ארצית לעיר')}
         />
+
+        <Stack.Screen
+          name="OrgRepScreen"
+          component={OrgRepScreen}
+          options={defaultHeader('ניהול אחראי עמותה')}
+        />
         <Stack.Screen
           name="AddShopItemScreen"
           component={AddShopItemScreen}
@@ -223,6 +248,11 @@ export default function App() {
           name="AdminOrganizationScreen"
           component={AdminOrganizationScreen}
           options={defaultHeader('מנהל עמותות')}
+        />
+        <Stack.Screen
+          name="LinkedOrganizationDetails"
+          component={LinkedOrganizationDetails}
+          options={defaultHeader('פרטי הארגון')}
         />
         <Stack.Screen
           name="AddCityScreen"
@@ -243,6 +273,16 @@ export default function App() {
           name="OrganizationManagerScreen"
           component={OrganizationManagerScreen}
           options={defaultHeader('מנהל עמותות')}
+        />
+        <Stack.Screen
+          name="FutureVolunteerings"
+          component={FutureVolunteerings}
+          options={defaultHeader('התנדבויות עתידיות')}
+        />
+        <Stack.Screen
+          name="OpenVolunteerings"
+          component={OpenVolunteerings}
+          options={defaultHeader('התנדבויות פתוחות')}
         />
         <Stack.Screen
           name="UserHomeScreen"

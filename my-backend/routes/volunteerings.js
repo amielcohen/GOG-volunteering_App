@@ -1,15 +1,15 @@
 const express = require('express');
+const mongoose = require('mongoose');
+
 const router = express.Router();
 const Volunteering = require('../models/Volunteering');
 const City = require('../models/City');
 const CityOrganization = require('../models/CityOrganization');
-<<<<<<< Updated upstream
-=======
+
 const User = require('../models/Users');
-const levelTable = require('../../constants/levelTable').default;
+const levelTable = require('../../constants/levelTable');
 const { calculateRewardCoins } = require('../../utils/rewardUtils');
 const { calculateExpFromMinutes } = require('../../utils/expUtils');
->>>>>>> Stashed changes
 
 // יצירת התנדבות חדשה
 router.post('/create', async (req, res) => {
@@ -116,6 +116,34 @@ router.post('/:id/register', async (req, res) => {
   }
 });
 
+router.post('/:volunteeringId/unregister', async (req, res) => {
+  const { volunteeringId } = req.params;
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'userId is required' });
+  }
+
+  try {
+    const updated = await Volunteering.findByIdAndUpdate(
+      volunteeringId,
+      {
+        $pull: { registeredVolunteers: { userId: userId } },
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Volunteering not found' });
+    }
+
+    res.json({ message: 'Unregistered successfully' });
+  } catch (err) {
+    console.error('❌ Error unregistering from volunteering:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // שליפת כל ההתנדבויות לעיר לפי מחרוזת
 router.get('/', async (req, res) => {
   const { city } = req.query;
@@ -192,8 +220,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-<<<<<<< Updated upstream
-=======
+
 // שליפה לפי משתמש שנרשם להתנדבות
 router.get('/forUser/:userId', async (req, res) => {
   const { userId } = req.params;
@@ -395,6 +422,9 @@ router.put('/:id/close', async (req, res) => {
   const { id } = req.params;
   console.log(`\n--- 🚀 מתחיל תהליך סגירת התנדבות ID: ${id} ---`);
 
+router.put('/:id/close', async (req, res) => {
+  const { id } = req.params;
+
   try {
     const volunteering = await Volunteering.findById(id).populate(
       'registeredVolunteers.userId'
@@ -434,6 +464,22 @@ router.put('/:id/close', async (req, res) => {
           `[CLOSE_ROUTE]   👤 נמצא משתמש: ${user.username}, רמה נוכחית: ${user.level}, EXP נוכחי (לפני הוספה): ${user.exp}`
         );
 
+
+      return res.status(404).json({ message: 'Volunteering not found' });
+    }
+
+    volunteering.isClosed = true;
+    await volunteering.save();
+
+    const duration = volunteering.durationMinutes || 0;
+    const addedExp = calculateExpFromMinutes(duration); // ה-EXP שנוסף מההתנדבות
+
+    for (const v of volunteering.registeredVolunteers) {
+      if (v.attended && v.status === 'approved') {
+        const user = await User.findById(v.userId._id || v.userId);
+        if (!user) continue;
+
+        // מציאת עמותה עירונית מתאימה
         const cityOrgEntry = await CityOrganization.findOne({
           city: user.city,
           organizationId: volunteering.organizationId,
@@ -489,10 +535,53 @@ router.put('/:id/close', async (req, res) => {
     res.status(200).json({ message: 'Volunteering closed' });
   } catch (err) {
     console.error(`--- ❌ שגיאה כללית בסגירת התנדבות ---`);
+
+        const GoGs = calculateRewardCoins(volunteering, cityOrgEntry);
+
+        // הוספת גוגואים
+        user.GoGs += GoGs;
+        // הוספת ה-EXP שנצבר ל-EXP הקיים של המשתמש ברמה הנוכחית
+        user.exp += addedExp;
+
+        // *** כאן התיקון המדויק ללוגיקת עליית הרמה ***
+        // לולאה שמטפלת בעליית רמות מרובות אם נצבר מספיק EXP
+        while (true) {
+          // *** קבל את ה-requiredExp לרמה הנוכחית של המשתמש ***
+          const requiredExpForCurrentLevel =
+            levelTable[user.level]?.requiredExp;
+
+          // תנאי יציאה:
+          // 1. אם הגענו לרמה המקסימלית (requiredExp הוא null)
+          // 2. אם אין נתונים לרמה הנוכחית בטבלה (מקרה חריג)
+          // 3. אם ה-EXP של המשתמש קטן מהנדרש לעלות רמה
+          if (
+            requiredExpForCurrentLevel === null ||
+            requiredExpForCurrentLevel === undefined ||
+            user.exp < requiredExpForCurrentLevel
+          ) {
+            break; // יוצא מהלולאה, המשתמש לא יכול לעלות רמה נוספת כרגע
+          }
+
+          // אם יש מספיק EXP לעלות רמה:
+          user.exp -= requiredExpForCurrentLevel; // הפחת את ה-EXP שנדרש כדי לעלות רמה
+          user.level++; // העלה את רמת המשתמש
+          // הלולאה תמשיך לאיטרציה הבאה, ותבדוק את הרמה החדשה עם ה-EXP הנותר
+        }
+
+        await user.save();
+
+        console.log(
+          `✅ ${user.username} קיבל ${GoGs} גוגואים ו-${addedExp} EXP. רמה חדשה: ${user.level}, EXP בתוך הרמה: ${user.exp}`
+        );
+      }
+    }
+
+    res.status(200).json({ message: 'Volunteering closed' });
+  } catch (err) {
     console.error('❌ Error closing volunteering:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
->>>>>>> Stashed changes
+
 module.exports = router;

@@ -42,12 +42,46 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
   const goToNextStep = () => setCurrentStep((prev) => prev + 1);
   const goToPrevStep = () => setCurrentStep((prev) => prev - 1);
 
+  const getPredictedReward = async () => {
+    try {
+      const predictionInput = {
+        duration: parseInt(formData.durationMinutes),
+        weekday: new Date(formData.date).getDay(),
+        hour: new Date(formData.date).getHours(),
+        max_participants: parseInt(formData.maxParticipants),
+        tags: formData.tags,
+        organization: user.organization?.name || 'עמינדב',
+      };
+
+      const response = await fetch(`${config.PREDICTION_MODEL_URL}/predict`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(predictionInput),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.predicted_reward_ratio !== undefined) {
+        return Math.round(data.predicted_reward_ratio * 100); // נחשב אחוז
+      } else {
+        console.warn('⚠️ חיזוי נכשל, reward = 0');
+        return 0;
+      }
+    } catch (error) {
+      console.error('❌ שגיאה בעת חיזוי תגמול:', error);
+      return 0;
+    }
+  };
+
   const handleSubmit = async () => {
     try {
-      const reward =
-        formData.rewardType === 'percent'
-          ? parseInt(formData.percentageReward) || 0
-          : 0;
+      let reward = 0;
+
+      if (formData.rewardType === 'model') {
+        reward = await getPredictedReward();
+      } else if (formData.rewardType === 'percent') {
+        reward = parseInt(formData.percentageReward) || 0;
+      }
 
       const preparedFormData = {
         title: formData.title,
@@ -57,15 +91,18 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
         maxParticipants: parseInt(formData.maxParticipants) || null,
         isRecurring: formData.isRecurring,
         recurringDay: formData.recurringDay,
-        createdBy: formData.createdBy,
-        organizationId: formData.organizationId,
+        createdBy: user._id,
+        organizationId:
+          typeof user.organization === 'object'
+            ? user.organization._id
+            : user.organization,
         tags: formData.tags,
         city: formData.city,
         address: formData.address,
         notesForVolunteers: formData.notesForVolunteers,
         imageUrl: formData.imageUrl,
         rewardType: formData.rewardType,
-        reward, // ← זה מה שישמר במונגו
+        reward, // ← אחוז מחושב או ידני
         customRewardByCity: formData.customRewardByCity || {},
         usePredictionModel: formData.usePredictionModel || false,
       };
@@ -74,9 +111,7 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
         `${config.SERVER_URL}/volunteerings/create`,
         {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(preparedFormData),
         }
       );
@@ -85,8 +120,8 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
 
       if (response.ok) {
         console.log('response:', data.volunteering.notesForVolunteers);
+        console.log('✅ ההתנדבות נשמרה בהצלחה:', data);
 
-        console.log('ההתנדבות נשמרה בהצלחה:', data);
         navigation.reset({
           index: 0,
           routes: [{ name: 'OrganizationRepHomeScreen', params: { user } }],

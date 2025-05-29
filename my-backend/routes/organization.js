@@ -37,7 +37,8 @@ router.get('/unlinked/:cityId', async (req, res) => {
 
 // הוספת עמותה גלובלית
 router.post('/', async (req, res) => {
-  const { name, description, type, imageUrl, contactEmail, phone } = req.body;
+  const { name, description, type, imageUrl, contactEmail, phone, isGlobal } =
+    req.body;
 
   if (!name || !type) {
     return res.status(400).json({ message: 'שם וסוג העמותה הם שדות חובה' });
@@ -51,7 +52,7 @@ router.post('/', async (req, res) => {
       imageUrl,
       contactEmail,
       phone,
-      isGlobal: true,
+      isGlobal,
     });
 
     await newOrg.save();

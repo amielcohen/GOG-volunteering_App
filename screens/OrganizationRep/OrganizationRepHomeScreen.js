@@ -132,7 +132,7 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => handleNavigate('ManageVolunteering')}
+          onPress={() => handleNavigate('FutureVolunteerings')}
         >
           <Icon name="event" size={28} color="#007bff" />
           <Text style={styles.actionText}>התנדבויות פעילות ועתידיות</Text>
@@ -140,7 +140,7 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => handleNavigate('Attendance')}
+          onPress={() => handleNavigate('OpenVolunteerings')}
         >
           <Icon name="check-circle" size={28} color="#007bff" />
           <Text style={styles.actionText}>סימון נוכחות</Text>
