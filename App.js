@@ -54,6 +54,7 @@ import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRep
 import CreateVolunteeringScreen from './screens/OrganizationRep/CreateVolunteeringScreen';
 import FutureVolunteerings from './screens/OrganizationRep/FutureVolunteerings';
 import OpenVolunteerings from './screens/OrganizationRep/OpenVolunteerings';
+import VolunteeringsHistory from './screens/OrganizationRep/VolunteeringsHistory';
 
 const Stack = createStackNavigator();
 
@@ -283,6 +284,11 @@ export default function App() {
           name="OpenVolunteerings"
           component={OpenVolunteerings}
           options={defaultHeader('התנדבויות פתוחות')}
+        />
+        <Stack.Screen
+          name="VolunteeringsHistory"
+          component={VolunteeringsHistory}
+          options={defaultHeader('היסטוריית התנדבות')}
         />
         <Stack.Screen
           name="UserHomeScreen"
