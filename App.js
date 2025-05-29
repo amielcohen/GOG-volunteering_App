@@ -48,6 +48,7 @@ import CreateOrganizationRepScreen from './screens/CommunityRep/CreateOrganizati
 import CreateCityOrganizationScreen from './screens/CommunityRep/CreateCityOrganization';
 import LinkedOrganizationDetails from './screens/CommunityRep/LinkedOrganizationDetails';
 import OrgRepScreen from './screens/CommunityRep/OrgRepScreen';
+import EditShopItemScreen from './screens/CommunityRep/EditShopItemScreen';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
@@ -192,6 +193,12 @@ export default function App() {
           name="ShopMenu"
           component={ShopMenu}
           options={defaultHeader('תפריט החנות')}
+        />
+
+        <Stack.Screen
+          name="EditShopItemScreen"
+          component={EditShopItemScreen}
+          options={defaultHeader('עריכת מוצר')}
         />
         <Stack.Screen
           name="CreateCityOrganization"

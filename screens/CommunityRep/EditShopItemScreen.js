@@ -1,3 +1,4 @@
+// מבוסס על AddShopItemScreen עם שינויים לעריכה
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -16,16 +17,18 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import config from '../../config';
 
-export default function AddShopItemScreen({ navigation, route }) {
-  const { user } = route.params;
+export default function EditShopItemScreen({ navigation, route }) {
+  const { user, item } = route.params;
 
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [quantity, setQuantity] = useState('');
-  const [level, setLevel] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [name, setName] = useState(item.name);
+  const [price, setPrice] = useState(item.price.toString());
+  const [quantity, setQuantity] = useState(item.quantity.toString());
+  const [level, setLevel] = useState(item.level?.toString() || '');
+  const [description, setDescription] = useState(item.description || '');
+  const [imageUrl, setImageUrl] = useState(item.imageUrl || '');
+  const [selectedCategories, setSelectedCategories] = useState(
+    item.categories || []
+  );
   const [availableCategories, setAvailableCategories] = useState([]);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
@@ -105,7 +108,7 @@ export default function AddShopItemScreen({ navigation, route }) {
     }
   };
 
-  const handleAddItem = async () => {
+  const handleUpdateItem = async () => {
     if (!name || !price || !quantity) {
       Alert.alert('נא למלא את כל שדות החובה');
       return;
@@ -113,48 +116,30 @@ export default function AddShopItemScreen({ navigation, route }) {
 
     setIsLoading(true);
 
-    const newItem = {
+    const updatedItem = {
       name,
       price: Number(price),
       quantity: Number(quantity),
       level: level ? Number(level) : 0,
       description: description || '',
       imageUrl: imageUrl || '',
-      city: user.city,
       categories: selectedCategories.length > 0 ? selectedCategories : ['אחר'],
     };
 
     try {
-      const response = await fetch(`${config.SERVER_URL}/shop/add`, {
-        method: 'POST',
+      const response = await fetch(`${config.SERVER_URL}/shop/${item._id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newItem),
+        body: JSON.stringify(updatedItem),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setName('');
-        setPrice('');
-        setQuantity('');
-        setLevel('');
-        setDescription('');
-        setImageUrl('');
-        setSelectedCategories([]);
         setIsLoading(false);
-
-        navigation.reset({
-          index: 1,
-          routes: [
-            { name: 'CommunityRepHomeScreen', params: { user } },
-            {
-              name: 'ShopMenu',
-              params: { user, message: `הפריט "${data.name}" נשמר בהצלחה ✅` },
-            },
-          ],
-        });
+        navigation.goBack();
       } else {
-        Alert.alert('שגיאה', data.error || 'שמירת הפריט נכשלה');
+        Alert.alert('שגיאה', data.error || 'עדכון הפריט נכשל');
       }
     } catch (err) {
       console.error('שגיאה:', err.message);
@@ -246,8 +231,8 @@ export default function AddShopItemScreen({ navigation, route }) {
           style={{ marginTop: 20 }}
         />
       ) : (
-        <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
-          <Text style={styles.addButtonText}>➕ הוסף פריט</Text>
+        <TouchableOpacity style={styles.addButton} onPress={handleUpdateItem}>
+          <Text style={styles.addButtonText}>💾 עדכן פריט</Text>
         </TouchableOpacity>
       )}
 
