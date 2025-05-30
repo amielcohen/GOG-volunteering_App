@@ -30,18 +30,24 @@ export default function ManageCategoriesScreen({ route }) {
   const [toastMessage, setToastMessage] = useState(null);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
 
+  const user = route.params?.user;
+
   const fetchCategories = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${config.SERVER_URL}/categories/all`);
+      const response = await fetch(
+        `${config.SERVER_URL}/shops/${user.city._id}/all`
+      );
       const data = await response.json();
-      setCategories(data);
+
+      if (response.ok) {
+        setCategories(data);
+      } else {
+        throw new Error(data.error || 'שגיאה בטעינת קטגוריות');
+      }
     } catch (err) {
-      console.error('שגיאה בטעינה:', err);
-      setErrorText({
-        title: 'שגיאה',
-        message: 'בעיה בחיבור לשרת',
-      });
+      console.error('שגיאה בטעינת קטגוריות:', err);
+      setErrorText({ title: 'שגיאה', message: 'שגיאה בטעינת קטגוריות מהשרת' });
       setErrorVisible(true);
     } finally {
       setLoading(false);
@@ -56,18 +62,19 @@ export default function ManageCategoriesScreen({ route }) {
     if (!newCategory.trim()) return;
     setLoading(true);
     try {
-      const response = await fetch(`${config.SERVER_URL}/categories/add`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newCategory.trim() }),
-      });
+      const response = await fetch(
+        `${config.SERVER_URL}/shops/${user.city._id}/add`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newCategory.trim() }),
+        }
+      );
 
       if (response.ok) {
         setNewCategory('');
         fetchCategories();
-        if (route.params?.onCategoriesUpdated) {
-          route.params.onCategoriesUpdated();
-        }
+        route.params?.onCategoriesUpdated?.();
       } else {
         const error = await response.json();
         setErrorText({
@@ -77,10 +84,7 @@ export default function ManageCategoriesScreen({ route }) {
         setErrorVisible(true);
       }
     } catch (err) {
-      setErrorText({
-        title: 'שגיאה',
-        message: 'בעיה בחיבור לשרת',
-      });
+      setErrorText({ title: 'שגיאה', message: 'בעיה בחיבור לשרת' });
       setErrorVisible(true);
     } finally {
       setLoading(false);
@@ -97,7 +101,7 @@ export default function ManageCategoriesScreen({ route }) {
     setLoading(true);
     try {
       const response = await fetch(
-        `${config.SERVER_URL}/categories/${categoryToDelete._id}`,
+        `${config.SERVER_URL}/shops/${user.city._id}/${categoryToDelete.name}`,
         { method: 'DELETE' }
       );
 
@@ -105,9 +109,7 @@ export default function ManageCategoriesScreen({ route }) {
         const data = await response.json();
         setErrorText({
           title: 'לא ניתן למחוק',
-          message:
-            data.error ||
-            'קטגוריה זו משויכת לפריטים, הסר אותה מהפריטים ונסה שוב.',
+          message: data.error,
         });
         setErrorVisible(true);
       } else if (!response.ok) {
@@ -119,15 +121,10 @@ export default function ManageCategoriesScreen({ route }) {
       } else {
         setToastMessage('הקטגוריה נמחקה בהצלחה');
         fetchCategories();
-        if (route.params?.onCategoriesUpdated) {
-          route.params.onCategoriesUpdated();
-        }
+        route.params?.onCategoriesUpdated?.();
       }
     } catch (err) {
-      setErrorText({
-        title: 'שגיאה',
-        message: 'בעיה בחיבור לשרת',
-      });
+      setErrorText({ title: 'שגיאה', message: 'בעיה בחיבור לשרת' });
       setErrorVisible(true);
     } finally {
       setLoading(false);
@@ -136,23 +133,24 @@ export default function ManageCategoriesScreen({ route }) {
     }
   };
 
-  const updateCategory = async (id) => {
+  const updateCategory = async (oldName) => {
     if (!editedName.trim()) return;
     setLoading(true);
     try {
-      const response = await fetch(`${config.SERVER_URL}/categories/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editedName.trim() }),
-      });
+      const response = await fetch(
+        `${config.SERVER_URL}/shops/${user.city._id}/${oldName}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: editedName.trim() }),
+        }
+      );
 
       if (response.ok) {
         setEditingCategoryId(null);
         setEditedName('');
         fetchCategories();
-        if (route.params?.onCategoriesUpdated) {
-          route.params.onCategoriesUpdated();
-        }
+        route.params?.onCategoriesUpdated?.();
       } else {
         const error = await response.json();
         setErrorText({
@@ -162,19 +160,16 @@ export default function ManageCategoriesScreen({ route }) {
         setErrorVisible(true);
       }
     } catch (err) {
-      setErrorText({
-        title: 'שגיאה',
-        message: 'בעיה בחיבור לשרת',
-      });
+      setErrorText({ title: 'שגיאה', message: 'בעיה בחיבור לשרת' });
       setErrorVisible(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.categoryItem}>
-      {editingCategoryId === item._id ? (
+  const renderItem = (item) => (
+    <View key={item.name} style={styles.categoryItem}>
+      {editingCategoryId === item.name ? (
         <TextInput
           style={styles.editInput}
           value={editedName}
@@ -188,15 +183,15 @@ export default function ManageCategoriesScreen({ route }) {
       )}
 
       <View style={styles.actions}>
-        {editingCategoryId === item._id ? (
-          <Pressable onPress={() => updateCategory(item._id)}>
+        {editingCategoryId === item.name ? (
+          <Pressable onPress={() => updateCategory(item.name)}>
             <Icon name="check" size={30} color="green" />
           </Pressable>
         ) : (
           <>
             <Pressable
               onPress={() => {
-                setEditingCategoryId(item._id);
+                setEditingCategoryId(item.name);
                 setEditedName(item.name);
               }}
               style={{ marginLeft: 12 }}
@@ -245,9 +240,7 @@ export default function ManageCategoriesScreen({ route }) {
             contentContainerStyle={{ paddingBottom: 30 }}
             keyboardShouldPersistTaps="handled"
           >
-            {categories.map((item) => (
-              <View key={item._id}>{renderItem({ item })}</View>
-            ))}
+            {categories.map((item) => renderItem(item))}
           </ScrollView>
         )}
 

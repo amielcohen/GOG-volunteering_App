@@ -8,6 +8,8 @@ const shopItemSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   imageUrl: { type: String, default: '' },
   categories: { type: [String], default: ['אחר'] },
+  city: { type: mongoose.Schema.Types.ObjectId, ref: 'City', required: true },
+
   createdAt: { type: Date, default: Date.now },
 });
 

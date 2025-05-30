@@ -26,8 +26,11 @@ mongoose
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
 
-const shopRoutes = require('./routes/shop');
+const shopRoutes = require('./routes/ShopItem');
 app.use('/shop', shopRoutes);
+
+const cityShopRoutes = require('./routes/cityShops');
+app.use('/shops', cityShopRoutes);
 
 const categoryRoutes = require('./routes/categories');
 app.use('/categories', categoryRoutes);

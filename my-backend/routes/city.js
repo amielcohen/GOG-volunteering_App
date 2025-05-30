@@ -1,5 +1,7 @@
 const express = require('express');
 const City = require('../models/City');
+const Shop = require('../models/Shop');
+
 const router = express.Router();
 
 // יצירת עיר חדשה
@@ -11,16 +13,30 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'יש להזין שם עיר' });
     }
 
+    const trimmedName = name.trim();
+
+    // יצירת העיר
     const city = new City({
-      name: name.trim(),
+      name: trimmedName,
       state: state ? state.trim() : undefined,
       imageUrl: imageUrl ? imageUrl.trim() : '',
     });
 
     await city.save();
-    res.status(201).json(city);
+
+    // יצירת חנות ריקה עם קישור לעיר החדשה
+    const shop = new Shop({
+      name: `חנות של ${trimmedName}`,
+      city: city._id,
+      items: [],
+      categories: ['אחר'],
+    });
+
+    await shop.save();
+
+    res.status(201).json({ city, shop });
   } catch (error) {
-    console.error('Error creating city:', error);
+    console.error('Error creating city and shop:', error);
     res.status(400).json({ error: error.message });
   }
 });
