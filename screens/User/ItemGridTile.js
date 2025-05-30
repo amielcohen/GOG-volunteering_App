@@ -101,7 +101,7 @@ function ItemGridTile({
       >
         <View style={styles.innerContainer}>
           <Text style={styles.title}>{title}</Text>
-          <Text>מחיר {price} ₪</Text>
+          <Text>מחיר {price} </Text>
 
           <View style={styles.imageContainer}>
             <Image

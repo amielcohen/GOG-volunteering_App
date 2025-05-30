@@ -28,7 +28,8 @@ router.post('/', async (req, res) => {
     const shop = new Shop({
       name: `חנות של ${trimmedName}`,
       city: city._id,
-      items: [], // ריק בהתחלה
+      items: [],
+      categories: ['אחר'],
     });
 
     await shop.save();

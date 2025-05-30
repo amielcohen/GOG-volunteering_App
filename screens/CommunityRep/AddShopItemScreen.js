@@ -35,9 +35,16 @@ export default function AddShopItemScreen({ navigation, route }) {
   const fetchCategories = async () => {
     setLoadingCategories(true);
     try {
-      const res = await fetch(`${config.SERVER_URL}/categories/all`);
+      const res = await fetch(
+        `${config.SERVER_URL}/shops/${user.city._id}/all`
+      );
       const data = await res.json();
-      setAvailableCategories(data);
+      if (res.ok) {
+        // data הוא מערך של אובייקטים: { name, count }
+        setAvailableCategories(data);
+      } else {
+        throw new Error(data.error || 'שגיאה בטעינת קטגוריות');
+      }
     } catch (err) {
       console.error('שגיאה בטעינת קטגוריות', err);
     } finally {
@@ -260,6 +267,7 @@ export default function AddShopItemScreen({ navigation, route }) {
               onPress={() => {
                 setCategoryModalVisible(false);
                 navigation.navigate('ManageCategoriesScreen', {
+                  user,
                   onCategoriesUpdated: fetchCategories,
                 });
               }}
@@ -270,7 +278,7 @@ export default function AddShopItemScreen({ navigation, route }) {
             <ScrollView style={{ maxHeight: 300 }}>
               {availableCategories.map((cat) => (
                 <TouchableOpacity
-                  key={cat._id}
+                  key={cat.name}
                   style={styles.checkboxRow}
                   onPress={() => toggleCategory(cat.name)}
                 >
