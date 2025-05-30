@@ -40,7 +40,6 @@ export default function AddShopItemScreen({ navigation, route }) {
       );
       const data = await res.json();
       if (res.ok) {
-        // data הוא מערך של אובייקטים: { name, count }
         setAvailableCategories(data);
       } else {
         throw new Error(data.error || 'שגיאה בטעינת קטגוריות');
