@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'; // <-- CORRECTED LINE HERE
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,9 @@ import {
   Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useFocusEffect } from '@react-navigation/native';
+
 import CustomCoinIcon from '../../components/CustomCoinIcon';
 import axios from 'axios';
 import config from '../../config';
@@ -22,22 +25,32 @@ export default function UserHomeScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [imageModalVisible, setImageModalVisible] = useState(false);
 
+  const fetchUser = async () => {
+    try {
+      const res = await axios.get(
+        `${config.SERVER_URL}/auth/profile/${initialUser._id}`
+      );
+      setUser(res.data);
+    } catch (err) {
+      console.error('שגיאה בטעינת המשתמש:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    console.log('USER INfo Home  ', user);
-    const fetchUser = async () => {
-      try {
-        const res = await axios.get(
-          `${config.SERVER_URL}/auth/profile/${initialUser._id}`
-        );
-        setUser(res.data);
-      } catch (err) {
-        console.error('שגיאה בטעינת המשתמש:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUser();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (route.params?.refresh) {
+        setLoading(true);
+        fetchUser();
+        route.params.refresh = false; // אופציונלי: למנוע רענון חוזר
+      }
+    }, [route.params?.refresh])
+  );
 
   if (loading) {
     return (
@@ -52,11 +65,9 @@ export default function UserHomeScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* כפתור תיבת הדואר במיקום אבסולוטי */}
       <TouchableOpacity
         style={styles.mailIconContainer}
         onPress={() => {
-          // כרגע לא עושה כלום, בהמשך נוסיף ניווט או פעולה אחרת
           console.log('Mailbox icon pressed!');
         }}
       >
@@ -113,9 +124,17 @@ export default function UserHomeScreen({ route, navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => navigation.navigate('UserCodes', { user })}
+        >
+          <Icon2 name="gift" size={28} color="#007bff" />
+          <Text style={styles.actionText}>ההזמנות שלי </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.secondaryCard}
           onPress={() => {
-            console.log(' edit profile press');
+            console.log('edit profile press');
             navigation.navigate('EditProfile', { user });
           }}
         >
@@ -124,7 +143,6 @@ export default function UserHomeScreen({ route, navigation }) {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* מודל לתמונה מוגדלת */}
       <Modal
         visible={imageModalVisible}
         transparent={true}
@@ -164,7 +182,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.7)',
   },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
     alignItems: 'center',
     padding: 24,
@@ -172,16 +194,22 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
-  profileImage: { width: 80, height: 80, borderRadius: 40, marginBottom: 12 },
-  greeting: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-  level: { fontSize: 16, color: '#666', marginBottom: 8 },
-  gogsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 12,
   },
-  gogs: { fontSize: 16, color: '#444', marginRight: 6, marginLeft: 8 },
-  gogoIcon: { marginLeft: 16 },
+  greeting: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  level: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+  },
   progressBar: {
     width: '80%',
     height: 10,
@@ -189,7 +217,24 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     overflow: 'hidden',
   },
-  progressFill: { height: '100%', backgroundColor: '#4CAF50' },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#4CAF50',
+  },
+  gogsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  gogs: {
+    fontSize: 16,
+    color: '#444',
+    marginRight: 6,
+    marginLeft: 8,
+  },
+  gogoIcon: {
+    marginLeft: 16,
+  },
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',

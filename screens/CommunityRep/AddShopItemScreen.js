@@ -1,3 +1,4 @@
+// AddShopItemScreen.js
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -19,6 +20,7 @@ import config from '../../config';
 export default function AddShopItemScreen({ navigation, route }) {
   const { user } = route.params;
 
+  const [deliveryType, setDeliveryType] = useState('pickup');
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('');
@@ -28,6 +30,9 @@ export default function AddShopItemScreen({ navigation, route }) {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [availableCategories, setAvailableCategories] = useState([]);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
+  const [pickupLocation, setPickupLocation] = useState('');
+  const [donationTarget, setDonationTarget] = useState('');
+  const [donationAmount, setDonationAmount] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
@@ -112,15 +117,26 @@ export default function AddShopItemScreen({ navigation, route }) {
   };
 
   const handleAddItem = async () => {
-    if (!name || !price || !quantity) {
+    if (
+      (deliveryType !== 'donation' && !name) ||
+      !price ||
+      !quantity ||
+      (deliveryType === 'pickup' && !pickupLocation) ||
+      (deliveryType === 'donation' && (!donationTarget || !donationAmount))
+    ) {
       Alert.alert('נא למלא את כל שדות החובה');
       return;
     }
 
+    const generatedName =
+      deliveryType === 'donation'
+        ? `תרומה על סך ${donationAmount} ₪ ל${donationTarget}`
+        : name;
+
     setIsLoading(true);
 
     const newItem = {
-      name,
+      name: generatedName,
       price: Number(price),
       quantity: Number(quantity),
       level: level ? Number(level) : 0,
@@ -128,6 +144,11 @@ export default function AddShopItemScreen({ navigation, route }) {
       imageUrl: imageUrl || '',
       city: user.city,
       categories: selectedCategories.length > 0 ? selectedCategories : ['אחר'],
+      deliveryType,
+      pickupLocation: deliveryType === 'pickup' ? pickupLocation : '',
+      donationTarget: deliveryType === 'donation' ? donationTarget : '',
+      donationAmount:
+        deliveryType === 'donation' ? Number(donationAmount) : null,
     };
 
     try {
@@ -147,6 +168,10 @@ export default function AddShopItemScreen({ navigation, route }) {
         setDescription('');
         setImageUrl('');
         setSelectedCategories([]);
+        setPickupLocation('');
+        setDonationTarget('');
+        setDonationAmount('');
+        setDeliveryType('pickup');
         setIsLoading(false);
 
         navigation.reset({
@@ -172,13 +197,33 @@ export default function AddShopItemScreen({ navigation, route }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.label}>שם הפריט *</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="כדורגל"
-      />
+      <Text style={styles.label}>סוג הפריט *</Text>
+      <View style={styles.radioGroup}>
+        {['pickup', 'donation'].map((type) => (
+          <TouchableOpacity
+            key={type}
+            style={styles.radioOption}
+            onPress={() => setDeliveryType(type)}
+          >
+            <Text style={styles.radioText}>
+              {deliveryType === type ? '🔘' : '⚪'}{' '}
+              {type === 'pickup' ? 'איסוף מהחנות' : 'תרומה בשם המשתמש'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {deliveryType !== 'donation' && (
+        <>
+          <Text style={styles.label}>שם הפריט *</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="כדורגל"
+          />
+        </>
+      )}
 
       <Text style={styles.label}>מחיר *</Text>
       <TextInput
@@ -215,6 +260,39 @@ export default function AddShopItemScreen({ navigation, route }) {
         placeholder="תיאור של הפריט..."
         multiline
       />
+
+      {deliveryType === 'pickup' && (
+        <>
+          <Text style={styles.label}>מיקום לאיסוף *</Text>
+          <TextInput
+            style={styles.input}
+            value={pickupLocation}
+            onChangeText={setPickupLocation}
+            placeholder="שם בית העסק וכתובת מדויקת"
+          />
+        </>
+      )}
+
+      {deliveryType === 'donation' && (
+        <>
+          <Text style={styles.label}>יעד תרומה *</Text>
+          <TextInput
+            style={styles.input}
+            value={donationTarget}
+            onChangeText={setDonationTarget}
+            placeholder="שם עמותה או גוף"
+          />
+
+          <Text style={styles.label}>סכום התרומה *</Text>
+          <TextInput
+            style={styles.input}
+            value={donationAmount}
+            onChangeText={setDonationAmount}
+            placeholder="100"
+            keyboardType="numeric"
+          />
+        </>
+      )}
 
       <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
         <Text style={styles.imageButtonText}>📷 בחר תמונה</Text>
@@ -302,15 +380,8 @@ export default function AddShopItemScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
-  label: {
-    fontSize: 16,
-    marginTop: 12,
-    marginBottom: 5,
-    textAlign: 'right',
-  },
+  container: { padding: 20 },
+  label: { fontSize: 16, marginTop: 12, marginBottom: 5, textAlign: 'right' },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -395,5 +466,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textDecorationLine: 'underline',
     fontWeight: '500',
+  },
+  radioGroup: {
+    flexDirection: 'column',
+    marginVertical: 10,
+  },
+  radioOption: {
+    paddingVertical: 6,
+  },
+  radioText: {
+    fontSize: 16,
+    textAlign: 'right',
   },
 });

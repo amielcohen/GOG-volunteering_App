@@ -7,7 +7,7 @@ const City = require('../models/City'); // נדרש כדי למצוא עיר ל�
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const user = await User.findOne({ username, password });
+    const user = await User.findOne({ username, password }).populate('city');
     if (user) {
       res.status(200).json(user);
     } else {

@@ -2,7 +2,9 @@ const express = require('express');
 const router = express.Router();
 const ShopItem = require('../models/ShopItem');
 const Shop = require('../models/Shop');
-
+const User = require('../models/Users');
+const RedeemCode = require('../models/RedeemCode');
+const mongoose = require('mongoose');
 // הוספת פריט חדש לחנות העירונית
 router.post('/add', async (req, res) => {
   try {
@@ -15,12 +17,37 @@ router.post('/add', async (req, res) => {
       imageUrl,
       categories,
       city,
+      deliveryType,
+      pickupLocation,
+      donationTarget,
+      donationAmount,
     } = req.body;
 
-    if (!name || !price || !quantity || !city) {
+    // בדיקת שדות חובה
+    if (!name || !price || !quantity || !city || !deliveryType) {
+      return res.status(400).json({
+        error: 'נא לוודא שכל השדות הדרושים מולאו, כולל סוג פריט ועיר',
+      });
+    }
+    if (deliveryType === 'donation' && typeof donationAmount !== 'number') {
+      return res.status(400).json({
+        error: 'סכום התרומה חייב להיות מספר',
+      });
+    }
+
+    // אם נדרש מיקום איסוף – נוודא שהוא קיים
+    if (deliveryType === 'pickup' && !pickupLocation) {
       return res
         .status(400)
-        .json({ error: 'נא לוודא שכל השדות הדרושים מולאו, כולל עיר' });
+        .json({ error: 'יש לספק מיקום לאיסוף עבור פריטים מסוג איסוף מהחנות' });
+    }
+
+    if (deliveryType === 'donation') {
+      if (!donationTarget || !donationAmount) {
+        return res.status(400).json({
+          error: 'יש לספק יעד תרומה וסכום תרומה עבור פריטים מסוג תרומה',
+        });
+      }
     }
 
     const newItem = new ShopItem({
@@ -31,7 +58,11 @@ router.post('/add', async (req, res) => {
       description: description || '',
       imageUrl: imageUrl || '',
       categories: categories?.length ? categories : ['אחר'],
-      city, // מזהה העיר
+      city,
+      deliveryType,
+      pickupLocation: deliveryType === 'pickup' ? pickupLocation : '',
+      donationTarget: deliveryType === 'donation' ? donationTarget : '',
+      donationAmount: deliveryType === 'donation' ? donationAmount : null,
     });
 
     const savedItem = await newItem.save();
@@ -82,24 +113,38 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// GET /shop/by-city/:cityId/items
 router.get('/by-city/:cityId/items', async (req, res) => {
   try {
     const { cityId } = req.params;
-    const sortDirection = req.query.sort === 'desc' ? -1 : 1;
+    const { sort = 'level', order = 'asc', category } = req.query;
+
+    const sortField = ['price', 'level'].includes(sort) ? sort : 'level';
+    const sortDirection = order === 'desc' ? -1 : 1;
 
     const shop = await Shop.findOne({ city: cityId });
     if (!shop) {
       return res.status(404).json({ error: 'לא נמצאה חנות לעיר זו' });
     }
 
-    // שליפת הפריטים המלאים עם מיון לפי level
-    const items = await ShopItem.find({ _id: { $in: shop.items } }).sort({
-      level: sortDirection,
+    // שליפת כל הפריטים של החנות
+    const filter = {
+      _id: { $in: shop.items },
+      quantity: { $gt: 0 }, // ✅ שלוף רק פריטים עם כמות גדולה מ־0
+    };
+
+    // הוספת סינון לפי קטגוריה אם נבחרה
+    if (category) {
+      filter.categories = category;
+    }
+
+    const items = await ShopItem.find(filter).sort({
+      [sortField]: sortDirection,
     });
 
     res.json(items);
   } catch (error) {
-    console.error('שגיאה בשליפת פריטים ממויינים לפי רמה:', error.message);
+    console.error('שגיאה בשליפת פריטים:', error.message);
     res.status(500).json({ error: 'שגיאה בשרת בעת שליפת פריטים' });
   }
 });
@@ -120,6 +165,112 @@ router.put('/:id', async (req, res) => {
   } catch (err) {
     console.error('שגיאה בעדכון פריט:', err);
     res.status(500).json({ error: 'שגיאה בעדכון הפריט' });
+  }
+});
+
+// שליפת מידע על החנות לפי עיר
+router.get('/by-city/:cityId', async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ city: req.params.cityId });
+    if (!shop) {
+      return res.status(404).json({ error: 'לא נמצאה חנות לעיר זו' });
+    }
+
+    res.json(shop); // כולל: items, categories, וכו'
+  } catch (error) {
+    console.error('שגיאה בשליפת חנות לפי עיר:', error.message);
+    res.status(500).json({ error: 'שגיאה בשרת' });
+  }
+}); // ודא שמיובא למעלה
+
+// ללא סינון
+
+router.get('/by-city/:cityId/raw-items', async (req, res) => {
+  try {
+    const { cityId } = req.params;
+    console.log('cityId param:', cityId);
+
+    const shop = await Shop.findOne({ city: cityId });
+    if (!shop) {
+      return res.status(404).json({ error: 'לא נמצאה חנות לעיר זו' });
+    }
+
+    // הדפסת תוכן shop.items
+    console.log('shop.items:', shop.items);
+
+    // המרה בטוחה של מזהים
+    const itemIds = (shop.items || [])
+      .filter((id) => id) // מסנן undefined/null
+      .map((id) => {
+        if (typeof id === 'object' && id.$oid) {
+          return new mongoose.Types.ObjectId(id.$oid);
+        } else {
+          return new mongoose.Types.ObjectId(id);
+        }
+      });
+
+    const items = await ShopItem.find({ _id: { $in: itemIds } });
+
+    res.json(items);
+  } catch (error) {
+    console.error('שגיאה בשליפת פריטים raw:', error.message);
+    res.status(500).json({ error: 'שגיאה בשרת בעת שליפת פריטים' });
+  }
+});
+
+const generateCode = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789!?';
+  let code = '';
+  for (let i = 0; i < 12; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+};
+
+router.post('/purchase/:id', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const itemId = req.params.id;
+
+    const item = await ShopItem.findById(itemId);
+    const user = await User.findById(userId);
+
+    if (!item || !user) {
+      return res.status(404).json({ error: 'משתמש או פריט לא נמצא' });
+    }
+
+    if (item.quantity <= 0) {
+      return res.status(400).json({ error: 'המוצר אזל מהמלאי' });
+    }
+
+    if (user.GoGs < item.price) {
+      return res.status(400).json({ error: 'אין לך מספיק גוגואים' });
+    }
+
+    // עדכון כמויות
+    item.quantity -= 1;
+    user.GoGs -= item.price;
+    await item.save();
+    await user.save();
+
+    // יצירת קוד
+    const code = generateCode();
+    const isDonation = item.deliveryType === 'donation';
+
+    const newCode = new RedeemCode({
+      code,
+      item,
+      user,
+      status: isDonation ? 'redeemed' : 'pending',
+      createdAt: new Date(),
+      city: item.city, // בהנחה שזה קיים בפריט
+    });
+
+    await newCode.save();
+    res.status(201).json({ code });
+  } catch (err) {
+    console.error('שגיאה ברכישה:', err);
+    res.status(500).json({ error: 'שגיאה ברכישת הפריט' });
   }
 });
 

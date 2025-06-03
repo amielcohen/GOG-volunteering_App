@@ -23,6 +23,10 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
   const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
+    console.log(user);
+  }, []);
+
+  useEffect(() => {
     if (user.city) {
       const cityId = typeof user.city === 'object' ? user.city._id : user.city;
       fetchCityName(cityId);

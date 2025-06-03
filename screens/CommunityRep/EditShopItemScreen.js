@@ -1,3 +1,4 @@
+// EditShopItemScreen.js
 // מבוסס על AddShopItemScreen עם שינויים לעריכה
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -32,15 +33,34 @@ export default function EditShopItemScreen({ navigation, route }) {
   const [availableCategories, setAvailableCategories] = useState([]);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
 
+  const [deliveryType, setDeliveryType] = useState(
+    item.deliveryType || 'pickup'
+  );
+  const [pickupLocation, setPickupLocation] = useState(
+    item.pickupLocation || ''
+  );
+  const [donationTarget, setDonationTarget] = useState(
+    item.donationTarget || ''
+  );
+  const [donationAmount, setDonationAmount] = useState(
+    item.donationAmount?.toString() || ''
+  );
+
   const [isLoading, setIsLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
 
   const fetchCategories = async () => {
     setLoadingCategories(true);
     try {
-      const res = await fetch(`${config.SERVER_URL}/categories/all`);
+      const res = await fetch(
+        `${config.SERVER_URL}/shops/${user.city._id}/all`
+      );
       const data = await res.json();
-      setAvailableCategories(data);
+      if (res.ok) {
+        setAvailableCategories(data);
+      } else {
+        throw new Error(data.error || 'שגיאה בטעינת קטגוריות');
+      }
     } catch (err) {
       console.error('שגיאה בטעינת קטגוריות', err);
     } finally {
@@ -109,8 +129,15 @@ export default function EditShopItemScreen({ navigation, route }) {
   };
 
   const handleUpdateItem = async () => {
-    if (!name || !price || !quantity) {
-      Alert.alert('נא למלא את כל שדות החובה');
+    if (
+      !name ||
+      !price ||
+      !quantity ||
+      !deliveryType ||
+      (deliveryType === 'pickup' && !pickupLocation) ||
+      (deliveryType === 'donation' && (!donationTarget || !donationAmount))
+    ) {
+      Alert.alert('נא למלא את כל שדות החובה בהתאם לסוג הפריט');
       return;
     }
 
@@ -124,6 +151,11 @@ export default function EditShopItemScreen({ navigation, route }) {
       description: description || '',
       imageUrl: imageUrl || '',
       categories: selectedCategories.length > 0 ? selectedCategories : ['אחר'],
+      deliveryType,
+      pickupLocation: deliveryType === 'pickup' ? pickupLocation : '',
+      donationTarget: deliveryType === 'donation' ? donationTarget : '',
+      donationAmount:
+        deliveryType === 'donation' ? Number(donationAmount) : null,
     };
 
     try {
@@ -151,20 +183,59 @@ export default function EditShopItemScreen({ navigation, route }) {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.label}>סוג הפריט *</Text>
+      <View style={styles.radioGroup}>
+        {['pickup', 'donation'].map((type) => (
+          <TouchableOpacity
+            key={type}
+            style={styles.radioOption}
+            onPress={() => setDeliveryType(type)}
+          >
+            <Text style={styles.radioText}>
+              {deliveryType === type ? '🔘' : '⚪'}{' '}
+              {type === 'pickup' ? 'איסוף מהחנות' : 'תרומה בשם המשתמש'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {deliveryType === 'donation' && (
+        <>
+          <Text style={styles.label}>יעד התרומה *</Text>
+          <TextInput
+            style={styles.input}
+            value={donationTarget}
+            onChangeText={(text) => {
+              setDonationTarget(text);
+              if (donationAmount) {
+                setName(`תרומה על סך ${donationAmount} ₪ ל-${text}`);
+              }
+            }}
+          />
+
+          <Text style={styles.label}>סכום התרומה (₪) *</Text>
+          <TextInput
+            style={styles.input}
+            value={donationAmount}
+            keyboardType="numeric"
+            onChangeText={(amount) => {
+              setDonationAmount(amount);
+              if (donationTarget) {
+                setName(`תרומה על סך ${amount} ₪ ל-${donationTarget}`);
+              }
+            }}
+          />
+        </>
+      )}
+
       <Text style={styles.label}>שם הפריט *</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="כדורגל"
-      />
+      <TextInput style={styles.input} value={name} onChangeText={setName} />
 
       <Text style={styles.label}>מחיר *</Text>
       <TextInput
         style={styles.input}
         value={price}
         onChangeText={setPrice}
-        placeholder="120"
         keyboardType="numeric"
       />
 
@@ -173,7 +244,6 @@ export default function EditShopItemScreen({ navigation, route }) {
         style={styles.input}
         value={quantity}
         onChangeText={setQuantity}
-        placeholder="5"
         keyboardType="numeric"
       />
 
@@ -182,7 +252,6 @@ export default function EditShopItemScreen({ navigation, route }) {
         style={styles.input}
         value={level}
         onChangeText={setLevel}
-        placeholder="0"
         keyboardType="numeric"
       />
 
@@ -191,9 +260,20 @@ export default function EditShopItemScreen({ navigation, route }) {
         style={[styles.input, { height: 80 }]}
         value={description}
         onChangeText={setDescription}
-        placeholder="תיאור של הפריט..."
         multiline
       />
+
+      {deliveryType === 'pickup' && (
+        <>
+          <Text style={styles.label}>מיקום לאיסוף *</Text>
+          <TextInput
+            style={styles.input}
+            value={pickupLocation}
+            onChangeText={setPickupLocation}
+            placeholder="שם בית העסק וכתובת מדוייקת"
+          />
+        </>
+      )}
 
       <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
         <Text style={styles.imageButtonText}>📷 בחר תמונה</Text>
@@ -246,16 +326,16 @@ export default function EditShopItemScreen({ navigation, route }) {
                 setCategoryModalVisible(false);
                 navigation.navigate('ManageCategoriesScreen', {
                   onCategoriesUpdated: fetchCategories,
+                  user,
                 });
               }}
             >
               <Text style={styles.manageLinkText}>נהל קטגוריות</Text>
             </Pressable>
-
             <ScrollView style={{ maxHeight: 300 }}>
               {availableCategories.map((cat) => (
                 <TouchableOpacity
-                  key={cat._id}
+                  key={cat.name}
                   style={styles.checkboxRow}
                   onPress={() => toggleCategory(cat.name)}
                 >
@@ -280,15 +360,8 @@ export default function EditShopItemScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
-  label: {
-    fontSize: 16,
-    marginTop: 12,
-    marginBottom: 5,
-    textAlign: 'right',
-  },
+  container: { padding: 20 },
+  label: { fontSize: 16, marginTop: 12, marginBottom: 5, textAlign: 'right' },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -351,12 +424,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#eee',
   },
-  checkboxLabel: {
-    flex: 1,
-    textAlign: 'right',
-    paddingRight: 8,
-    fontSize: 16,
-  },
+  checkboxLabel: { flex: 1, textAlign: 'right', paddingRight: 8, fontSize: 16 },
   modalClose: {
     backgroundColor: '#6200EE',
     padding: 12,
@@ -364,14 +432,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 16,
   },
-  manageLink: {
-    alignSelf: 'flex-end',
-    marginBottom: 10,
-  },
+  manageLink: { alignSelf: 'flex-end', marginBottom: 10 },
   manageLinkText: {
     color: '#2196F3',
     fontSize: 16,
     textDecorationLine: 'underline',
     fontWeight: '500',
   },
+  radioGroup: { flexDirection: 'column', marginVertical: 10 },
+  radioOption: { paddingVertical: 6 },
+  radioText: { fontSize: 16, textAlign: 'right' },
 });

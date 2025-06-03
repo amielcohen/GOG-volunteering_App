@@ -16,7 +16,7 @@ import Confirm from '../../components/ErrorModal';
 
 export default function VolunteerDetailsScreen() {
   const route = useRoute();
-  const { volunteering, userId, user, isRegistered } = route.params;
+  const { volunteering, userId, user, isRegistered, past } = route.params;
 
   const navigation = useNavigation();
 
@@ -123,14 +123,16 @@ export default function VolunteerDetailsScreen() {
         )}
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.registerButton}
-        onPress={isRegistered ? handleUnregister : handleRegister}
-      >
-        <Text style={styles.registerText}>
-          {isRegistered ? 'ביטול הרשמה' : 'הצטרפות להתנדבות'}
-        </Text>
-      </TouchableOpacity>
+      {!past && (
+        <TouchableOpacity
+          style={styles.registerButton}
+          onPress={isRegistered ? handleUnregister : handleRegister}
+        >
+          <Text style={styles.registerText}>
+            {isRegistered ? 'ביטול הרשמה' : 'הצטרפות להתנדבות'}
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <Confirm
         visible={confirmVisible}
