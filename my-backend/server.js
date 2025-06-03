@@ -50,6 +50,9 @@ app.use('/organizationReps', organizationRepsRoutes);
 const volunteeringsRouter = require('./routes/volunteerings');
 app.use('/volunteerings', volunteeringsRouter);
 
+const redeemCodesRoutes = require('./routes/redeemCode');
+app.use('/redeem-codes', redeemCodesRoutes);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');

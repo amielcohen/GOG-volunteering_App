@@ -8,7 +8,7 @@ import {
   Pressable,
 } from 'react-native';
 import { I18nManager } from 'react-native';
-
+import { Platform } from 'react-native';
 import { useEffect } from 'react';
 
 import { StatusBar } from 'expo-status-bar';
@@ -29,6 +29,8 @@ import EditProfile from './screens/User/EditProfile';
 import SearchVolunteering from './screens/User/SearchVolunteering';
 import VolunteerDetails from './screens/User/VolunteerDetails';
 import MyVolunteerings from './screens/User/MyVolunteerings';
+import UserCodes from './screens/User/UserCodes';
+import PurchaseScreen from './screens/User/PurchaseScreen';
 
 //Admin
 import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
@@ -194,7 +196,11 @@ export default function App() {
           component={ShopMenu}
           options={defaultHeader('תפריט החנות')}
         />
-
+        <Stack.Screen
+          name="PurchaseScreen"
+          component={PurchaseScreen}
+          options={defaultHeader('רכוש מוצר')}
+        />
         <Stack.Screen
           name="EditShopItemScreen"
           component={EditShopItemScreen}
@@ -222,6 +228,31 @@ export default function App() {
         />
 
         <Stack.Screen
+          name="UserCodes"
+          component={UserCodes}
+          options={{
+            // נגדיר את האפשרויות ישירות כאן
+            headerShown: true, // ודא שהכותרת מוצגת (כולל כפתור חזור)
+            title: '', // הכותרת שתופיע
+            headerStyle: {
+              backgroundColor: '#1C1C3A', // צבע רקע כחול כהה
+              shadowColor: 'transparent', // מבטל צל תחתון
+              elevation: 0, // מבטל צל תחתון באנדרואיד
+              borderBottomWidth: 0, // מבטל קו תחתון
+            },
+            headerTintColor: '#87CEEB', // צבע כפתור החזור (החץ)
+            headerTitleStyle: {
+              fontSize: 20, // גודל גופן לכותרת
+              fontWeight: 'bold', // עובי גופן לכותרת
+              color: '#87CEEB', // צבע טקסט הכותרת
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right', // יישור (iOS מרכז, אנדרואיד ימין ל-RTL)
+              flex: 1, // מאפשר יישור נכון
+              paddingRight: Platform.OS === 'android' ? 20 : 0, // ריפוד ימין באנדרואיד ב-RTL
+            },
+            headerTitleAlign: 'center', // יישור כותרת ב-iOS
+          }}
+        />
+        <Stack.Screen
           name="LinkGlobalOrganization"
           component={LinkGlobalOrganizationScreen}
           options={defaultHeader('קישור עמותה לעיר')}
@@ -236,7 +267,6 @@ export default function App() {
           component={ChooseGlobalOrganizationScreen}
           options={defaultHeader('קישור עמותה ארצית לעיר')}
         />
-
         <Stack.Screen
           name="OrgRepScreen"
           component={OrgRepScreen}

@@ -31,7 +31,6 @@ export default function SearchVolunteering({ route, navigation }) {
 
   useEffect(() => {
     console.log('USER INfo search  ', user);
-
     loadData();
   }, []);
 
@@ -48,19 +47,30 @@ export default function SearchVolunteering({ route, navigation }) {
         ),
       ]);
 
-      const rawVols = volRes.data;
-      const cityOrgsData = cityOrgRes.data;
+      const now = new Date();
 
+      const rawVols = volRes.data;
+
+      // סינון לפי תאריך, ביטול וסגירה
+      const validVols = rawVols.filter((vol) => {
+        const volDate = new Date(vol.date);
+        const notClosed = !vol.isClosed;
+        const notCancelled = !vol.cancelled;
+        const inFuture = volDate > now;
+
+        return notClosed && notCancelled && inFuture;
+      });
+
+      const cityOrgsData = cityOrgRes.data;
       const orgMap = {};
-      cityOrgRes.data.forEach((co) => {
+      cityOrgsData.forEach((co) => {
         const idStr = co.organizationId?.toString?.();
         if (idStr) orgMap[idStr] = co;
       });
 
-      // ✨ סינון: הסרת התנדבויות שהמשתמש כבר רשום אליהן
+      // סינון: המשתמש לא רשום כבר
       const userIdStr = user._id?.toString?.();
-
-      const filteredVols = rawVols.filter((vol) => {
+      const filteredVols = validVols.filter((vol) => {
         const regList = Array.isArray(vol.registeredVolunteers)
           ? vol.registeredVolunteers
           : [];
@@ -87,7 +97,7 @@ export default function SearchVolunteering({ route, navigation }) {
         filteredVols.map((v) => v.title)
       );
 
-      // המשך ההתאמה למסך הקיים
+      // התאמה לתצוגה בכרטיסים
       const adapted = filteredVols
         .map((v) => {
           const volOrgId = v.organizationId?.toString?.();
@@ -126,7 +136,6 @@ export default function SearchVolunteering({ route, navigation }) {
     } = filters;
 
     const result = volunteerings.filter((item) => {
-      console.log('item ', item);
       const tagMatch = !tag || item.tags?.includes(tag);
       const expMatch =
         (!minExp || item.exp >= parseInt(minExp)) &&
@@ -151,6 +160,7 @@ export default function SearchVolunteering({ route, navigation }) {
       userId: user._id,
       user,
       isRegistered: false,
+      past: false,
     });
   };
 
@@ -178,7 +188,9 @@ export default function SearchVolunteering({ route, navigation }) {
           <VolunteerCard volunteering={item} onPress={handlePress} />
         )}
         ListEmptyComponent={
-          <Text style={styles.empty}>לא נמצאו התנדבויות</Text>
+          <Text style={styles.empty}>
+            לא נמצאו התנדבויות פעילות שעומדות בקריטריונים
+          </Text>
         }
       />
 

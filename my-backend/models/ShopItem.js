@@ -10,7 +10,24 @@ const shopItemSchema = new mongoose.Schema({
   categories: { type: [String], default: ['אחר'] },
   city: { type: mongoose.Schema.Types.ObjectId, ref: 'City', required: true },
 
+  deliveryType: {
+    type: String,
+    enum: ['pickup', 'donation'],
+    default: 'pickup',
+    required: true,
+  },
+
+  pickupLocation: { type: String, default: '' },
+
+  donationTarget: {
+    type: String,
+    default: '',
+  },
+
+  donationAmount: {
+    type: Number,
+    default: null,
+  },
   createdAt: { type: Date, default: Date.now },
 });
-
 module.exports = mongoose.model('ShopItem', shopItemSchema);
