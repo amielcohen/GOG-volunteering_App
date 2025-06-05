@@ -259,11 +259,15 @@ router.post('/purchase/:id', async (req, res) => {
 
     const newCode = new RedeemCode({
       code,
-      item,
       user,
+      city: item.city,
+      itemId: item._id,
+      itemName: item.name,
+      deliveryType: item.deliveryType,
+      pickupLocation: item.pickupLocation || '',
+      donationTarget: item.donationTarget || '',
+      donationAmount: item.donationAmount || null,
       status: isDonation ? 'redeemed' : 'pending',
-      createdAt: new Date(),
-      city: item.city, // בהנחה שזה קיים בפריט
     });
 
     await newCode.save();
@@ -271,6 +275,24 @@ router.post('/purchase/:id', async (req, res) => {
   } catch (err) {
     console.error('שגיאה ברכישה:', err);
     res.status(500).json({ error: 'שגיאה ברכישת הפריט' });
+  }
+});
+//בדיקה אם קיים איסוף לפני מחיקת עסק
+router.get('/checkPickUp/:cityId', async (req, res) => {
+  try {
+    const { cityId } = req.params;
+    console.log(cityId);
+
+    const shop = await Shop.findOne({ city: cityId });
+    if (!shop || !Array.isArray(shop.items) || shop.items.length === 0) {
+      return res.json([]); // ✅ מחזיר מערך ריק במקום שגיאה
+    }
+
+    const items = await ShopItem.find({ _id: { $in: shop.items } });
+    res.json(items); // ✅ חייב להחזיר מערך!
+  } catch (err) {
+    console.error('שגיאה בשליפת פריטים לפי עיר:', err);
+    res.status(500).json({ error: 'שגיאה בשליפת הפריטים לעיר' });
   }
 });
 

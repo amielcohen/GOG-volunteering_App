@@ -53,6 +53,12 @@ app.use('/volunteerings', volunteeringsRouter);
 const redeemCodesRoutes = require('./routes/redeemCode');
 app.use('/redeem-codes', redeemCodesRoutes);
 
+const businessPartnersRoutes = require('./routes/businessPartners');
+app.use('/business-partners', businessPartnersRoutes);
+
+const donationOrganizationsRoutes = require('./routes/donationOrganizations');
+app.use('/donation-organizations', donationOrganizationsRoutes);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');

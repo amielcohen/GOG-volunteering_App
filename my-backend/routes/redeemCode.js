@@ -46,9 +46,15 @@ router.post('/', async (req, res) => {
 
     const newCode = new RedeemCode({
       code,
-      user: userId,
-      item: itemId,
-      city: cityId,
+      user,
+      city: item.city,
+      itemId: item._id,
+      itemName: item.name,
+      deliveryType: item.deliveryType,
+      pickupLocation: item.pickupLocation || '',
+      donationTarget: item.donationTarget || '',
+      donationAmount: item.donationAmount || null,
+      status: isDonation ? 'redeemed' : 'pending',
     });
 
     const saved = await newCode.save();
@@ -74,7 +80,6 @@ router.get('/user/:userId', async (req, res) => {
     const codes = await RedeemCode.find(query)
       .sort({ createdAt: -1 })
       .populate('user')
-      .populate('item')
       .populate('city');
     res.json(codes);
   } catch (err) {
