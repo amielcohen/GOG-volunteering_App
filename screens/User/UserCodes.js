@@ -26,14 +26,14 @@ export default function UserCodes({ route }) {
   const [codes, setCodes] = useState([]);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [selectedCode, setSelectedCode] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // חדש
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchUserCodes();
   }, [statusFilter]);
 
   const fetchUserCodes = async () => {
-    setIsLoading(true); // התחלת טעינה
+    setIsLoading(true);
     try {
       const res = await fetch(
         `${config.SERVER_URL}/redeem-codes/user/${user._id}?status=${statusFilter}`
@@ -43,7 +43,7 @@ export default function UserCodes({ route }) {
     } catch (err) {
       console.error('שגיאה בטעינת הקודים:', err);
     } finally {
-      setIsLoading(false); // סיום טעינה
+      setIsLoading(false);
     }
   };
 
@@ -81,7 +81,7 @@ export default function UserCodes({ route }) {
               { width: (width - 40 - 20) / 3 },
             ]}
             onPress={() => {
-              setSelectedCode(null); // ניקוי המודל
+              setSelectedCode(null);
               setStatusFilter(status.key);
             }}
           >
@@ -115,15 +115,17 @@ export default function UserCodes({ route }) {
                 styles.itemCard,
                 entry.status === 'redeemed' && styles.redeemedCard,
                 entry.status === 'expired' && styles.expiredCard,
-                entry.item?.deliveryType === 'donation' && styles.donationCard,
+                (entry.item?.deliveryType || entry.deliveryType) ===
+                  'donation' && styles.donationCard,
               ]}
               onPress={() => setSelectedCode(entry)}
             >
               <Text style={styles.itemTitle}>
-                {entry.item?.name || 'מוצר לא ידוע'}
+                {entry.item?.name || entry.itemName || 'מוצר לא ידוע'}
               </Text>
 
-              {entry.item?.deliveryType !== 'donation' && (
+              {(entry.item?.deliveryType || entry.deliveryType) !==
+                'donation' && (
                 <>
                   <Text style={styles.itemCodeLabel}>קוד המימוש שלך:</Text>
                   <Text style={styles.itemCode}>{formatCode(entry.code)}</Text>
@@ -158,20 +160,29 @@ export default function UserCodes({ route }) {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>
-              {selectedCode?.item?.name || 'קוד מימוש'}
+              {selectedCode?.item?.name ||
+                selectedCode?.itemName ||
+                'קוד מימוש'}
             </Text>
 
-            {selectedCode?.item?.deliveryType === 'donation' ? (
+            {(selectedCode?.item?.deliveryType ||
+              selectedCode?.deliveryType) === 'donation' ? (
               <Text style={styles.modalSubtitle}>
-                תרומה על סך {selectedCode.item?.donationAmount} ₪ עברה בשמך
-                לעמותה {selectedCode.item?.donationTarget}.{'\n'}תודה רבה על
-                תרומתך!
+                תרומה על סך{' '}
+                {selectedCode.item?.donationAmount ||
+                  selectedCode.donationAmount}{' '}
+                ₪ עברה בשמך לעמותה{' '}
+                {selectedCode.item?.donationTarget ||
+                  selectedCode.donationTarget}
+                .{'\n'}תודה רבה על תרומתך!
               </Text>
             ) : (
               <>
-                {selectedCode?.item?.pickupLocation && (
+                {(selectedCode?.item?.pickupLocation ||
+                  selectedCode?.pickupLocation) && (
                   <Text style={styles.modalPickupLocation}>
-                    {selectedCode.item.pickupLocation}
+                    {selectedCode.item?.pickupLocation ||
+                      selectedCode.pickupLocation}
                   </Text>
                 )}
                 <Text style={styles.modalSubtitle}>

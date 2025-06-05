@@ -51,6 +51,9 @@ import CreateCityOrganizationScreen from './screens/CommunityRep/CreateCityOrgan
 import LinkedOrganizationDetails from './screens/CommunityRep/LinkedOrganizationDetails';
 import OrgRepScreen from './screens/CommunityRep/OrgRepScreen';
 import EditShopItemScreen from './screens/CommunityRep/EditShopItemScreen';
+import ManageShopInfo from './screens/CommunityRep/ManageShopInfo';
+import ManageBusinessesScreen from './screens/CommunityRep/ManageBusinessesScreen';
+import ManageDonation from './screens/CommunityRep/ManageDonation';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
@@ -197,6 +200,30 @@ export default function App() {
           options={defaultHeader('תפריט החנות')}
         />
         <Stack.Screen
+          name="ManageBusinessesScreen"
+          component={ManageBusinessesScreen}
+          options={{
+            headerShown: true,
+            title: '',
+            headerStyle: {
+              backgroundColor: '#1A2A3A',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#87CEEB',
+            headerTitleStyle: {
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#87CEEB',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+            },
+            headerTitleAlign: 'center',
+          }}
+        />
+        <Stack.Screen
           name="PurchaseScreen"
           component={PurchaseScreen}
           options={defaultHeader('רכוש מוצר')}
@@ -226,7 +253,6 @@ export default function App() {
           component={SearchVolunteering}
           options={defaultHeader('חפש התנדבויות')}
         />
-
         <Stack.Screen
           name="UserCodes"
           component={UserCodes}
@@ -253,6 +279,30 @@ export default function App() {
           }}
         />
         <Stack.Screen
+          name="ManageDonation"
+          component={ManageDonation}
+          options={{
+            headerShown: true,
+            title: '',
+            headerStyle: {
+              backgroundColor: '#0A0A1A',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#87CEEB',
+            headerTitleStyle: {
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#87CEEB',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+            },
+            headerTitleAlign: 'center',
+          }}
+        />
+        <Stack.Screen
           name="LinkGlobalOrganization"
           component={LinkGlobalOrganizationScreen}
           options={defaultHeader('קישור עמותה לעיר')}
@@ -266,6 +316,31 @@ export default function App() {
           name="ChooseGlobalOrganization"
           component={ChooseGlobalOrganizationScreen}
           options={defaultHeader('קישור עמותה ארצית לעיר')}
+        />
+        <Stack.Screen
+          name="ManageShopInfo"
+          component={ManageShopInfo}
+          options={{
+            headerShown: true,
+            title: 'ניהול פרטי חנות',
+            headerStyle: {
+              backgroundColor: '#87CEEB',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#1C1C3A',
+            headerTitleStyle: {
+              fontSize: 25,
+              fontWeight: 'bold',
+              color: '#000',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right', // יישור (iOS מרכז, אנדרואיד ימין ל-RTL)
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+              paddingTop: Platform.OS === 'android' ? 20 : 0,
+            },
+            headerTitleAlign: 'center', // יישור כותרת ב-iOS
+          }}
         />
         <Stack.Screen
           name="OrgRepScreen"

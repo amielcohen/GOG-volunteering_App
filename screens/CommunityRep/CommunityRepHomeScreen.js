@@ -85,10 +85,10 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => handleNavigate('ManageCategoriesScreen')}
+          onPress={() => handleNavigate('ManageShopInfo')}
         >
           <Icon name="category" size={28} color="#007bff" />
-          <Text style={styles.actionText}>ניהול קטגוריות</Text>
+          <Text style={styles.actionText}>ניהול פרטי חנות</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
