@@ -59,6 +59,9 @@ app.use('/business-partners', businessPartnersRoutes);
 const donationOrganizationsRoutes = require('./routes/donationOrganizations');
 app.use('/donation-organizations', donationOrganizationsRoutes);
 
+const userMessagesRoutes = require('./routes/userMessages');
+app.use('/user-messages', userMessagesRoutes);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');
