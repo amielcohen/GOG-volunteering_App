@@ -6,6 +6,9 @@ const Volunteering = require('../models/Volunteering');
 const City = require('../models/City');
 const CityOrganization = require('../models/CityOrganization');
 const User = require('../models/Users');
+const UserMessage = require('../models/UserMessage');
+const Organization = require('../models/Organization');
+
 const levelTable = require('../../constants/levelTable').default;
 const { calculateRewardCoins } = require('../../utils/rewardUtils');
 const { calculateExpFromMinutes } = require('../../utils/expUtils');
@@ -341,12 +344,26 @@ router.put('/:id/attendance', async (req, res) => {
 // סגירת התנדבות וחישוב תגמולים
 router.put('/:id/close', async (req, res) => {
   const { id } = req.params;
+
   try {
     const volunteering = await Volunteering.findById(id).populate(
       'registeredVolunteers.userId'
     );
     if (!volunteering) {
       return res.status(404).json({ message: 'Volunteering not found' });
+    }
+
+    // שליפת שם העמותה בצורה בטוחה
+    let organizationName = 'עמותה לא ידועה';
+    try {
+      const organization = await Organization.findById(
+        volunteering.organizationId
+      );
+      if (organization?.name) {
+        organizationName = organization.name;
+      }
+    } catch (orgErr) {
+      console.warn('[CLOSE_ROUTE] שגיאה בשליפת עמותה:', orgErr.message);
     }
 
     volunteering.isClosed = true;
@@ -356,10 +373,10 @@ router.put('/:id/close', async (req, res) => {
     const addedExp = calculateExpFromMinutes(duration);
 
     for (const v of volunteering.registeredVolunteers) {
-      if (v.attended && v.status === 'approved') {
-        const user = await User.findById(v.userId._id || v.userId);
-        if (!user) continue;
+      const user = await User.findById(v.userId._id || v.userId);
+      if (!user) continue;
 
+      if (v.attended && v.status === 'approved') {
         const cityOrgEntry = await CityOrganization.findOne({
           city: user.city,
           organizationId: volunteering.organizationId,
@@ -368,28 +385,55 @@ router.put('/:id/close', async (req, res) => {
         const GoGs = calculateRewardCoins(volunteering, cityOrgEntry);
         user.GoGs += GoGs;
 
-        let totalCumulativeExpForCalculation = user.exp;
+        let totalCumulativeExp = user.exp;
         for (let i = 1; i < user.level; i++) {
-          totalCumulativeExpForCalculation += levelTable[i]?.requiredExp || 0;
+          totalCumulativeExp += levelTable[i]?.requiredExp || 0;
         }
-        totalCumulativeExpForCalculation += addedExp;
+        totalCumulativeExp += addedExp;
 
-        const { level: newLevel, expInCurrentLevel: newExpInCurrentLevel } =
-          calculateUserLevelAndExp(totalCumulativeExpForCalculation);
+        const { level: newLevel, expInCurrentLevel: newExpInLevel } =
+          calculateUserLevelAndExp(totalCumulativeExp);
+        const oldLevel = user.level;
 
         user.level = newLevel;
-        user.exp = newExpInCurrentLevel;
+        user.exp = newExpInLevel;
+        if (newLevel > oldLevel) {
+          user.showLevelUpModal = true;
+        }
         await user.save();
 
+        // הודעה על הצלחה
+        await new UserMessage({
+          userId: user._id,
+          title: `התנדבות "${volunteering.title}" הושלמה!`,
+          message: `כל הכבוד על ההשתתפות! צברת ${GoGs} גוגואים ו-${addedExp} נק״נ.`,
+          type: 'success',
+          source: organizationName,
+        }).save();
+
         console.log(
-          `[CLOSE_ROUTE]   ✅ ${user.username} קיבל ${GoGs} גוגואים ו-${addedExp} EXP. רמה חדשה: ${user.level}, EXP בתוך הרמה: ${user.exp}. נשמר למסד נתונים.`
+          `[CLOSE_ROUTE] ✅ ${user.username} קיבל ${GoGs} גוגואים ו-${addedExp} EXP. רמה חדשה: ${user.level}`
+        );
+      } else {
+        // הודעה על אי־השתתפות
+        await new UserMessage({
+          userId: user._id,
+          title: `לא נכחת בהתנדבות "${volunteering.title}"`,
+          message: `לא הגעת להתנדבות. לא נצברו נקודות.`,
+          type: 'warning',
+          source: organizationName,
+        }).save();
+
+        console.log(
+          `[CLOSE_ROUTE] ⚠️ ${user.username} לא נכח בהתנדבות - נשלחה אזהרה`
         );
       }
     }
 
-    res.status(200).json({ message: 'Volunteering closed' });
+    res.status(200).json({ message: 'Volunteering closed successfully' });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('[CLOSE_ROUTE] שגיאה:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
