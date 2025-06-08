@@ -82,6 +82,11 @@ export default function LoginScreen({ navigation }) {
             index: 0,
             routes: [{ name: 'OrganizationRepHomeScreen', params: { user } }],
           });
+        } else if (user.role === 'BusinessPartner') {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'BusinessPartnerHomeScreen', params: { user } }],
+          });
         } else {
           navigation.reset({
             index: 0,

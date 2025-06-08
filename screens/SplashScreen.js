@@ -19,7 +19,9 @@ export default function SplashScreen() {
               ? 'CommunityRepHomeScreen'
               : user.role === 'OrganizationRep'
                 ? 'OrganizationRepHomeScreen'
-                : 'UserHomeScreen';
+                : user.role === 'BusinessPartner'
+                  ? 'BusinessPartnerHomeScreen'
+                  : 'UserHomeScreen';
 
         navigation.reset({
           index: 0,

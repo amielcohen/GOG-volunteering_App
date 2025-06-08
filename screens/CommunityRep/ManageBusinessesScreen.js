@@ -1,3 +1,5 @@
+// גרסה מתוקנת ומלאה של ManageBusinessesScreen בהתאם למודל החדש של BusinessPartner
+
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -8,6 +10,8 @@ import {
   FlatList,
   ActivityIndicator,
   StatusBar,
+  Modal,
+  Alert,
 } from 'react-native';
 import config from '../../config';
 import ErrorModal from '../../components/ErrorModal';
@@ -18,13 +22,18 @@ export default function ManageBusinessesScreen({ route }) {
 
   const [businesses, setBusinesses] = useState([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState([]);
-  const [newLocation, setNewLocation] = useState('');
   const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
+
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [businessName, setBusinessName] = useState('');
+  const [address, setAddress] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     fetchBusinesses();
@@ -37,7 +46,7 @@ export default function ManageBusinessesScreen({ route }) {
       const lower = searchText.toLowerCase();
       setFilteredBusinesses(
         businesses.filter((b) =>
-          b.locationDescription.toLowerCase().includes(lower)
+          b.locationDescription?.toLowerCase().includes(lower)
         )
       );
     }
@@ -60,31 +69,72 @@ export default function ManageBusinessesScreen({ route }) {
     }
   };
 
-  const handleAddBusiness = async () => {
-    if (!newLocation.trim()) {
-      setErrorMessage('אנא הזן שם וכתובת עבור בית העסק.');
-      setErrorModalVisible(true);
-      return;
-    }
-    try {
-      const res = await fetch(`${config.SERVER_URL}/business-partners`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          city: user.city._id,
-          locationDescription: newLocation.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setBusinesses((prev) => [data, ...prev]);
-      setNewLocation('');
-    } catch (err) {
-      console.error('שגיאה בהוספה:', err);
-      setErrorMessage(
-        err.message || 'שגיאה בהוספת העסק. ייתכן שהעסק כבר קיים.'
+  const generateRandomCredentials = async () => {
+    const genUser = () => 'biz' + Math.floor(1000 + Math.random() * 9000);
+    const genPass = () => Math.random().toString(36).slice(-8);
+
+    let tempUsername;
+    let tries = 0;
+
+    while (true) {
+      tempUsername = genUser();
+      const res = await fetch(
+        `${config.SERVER_URL}/auth/checkUsername?username=${tempUsername}`
       );
-      setErrorModalVisible(true);
+      const json = await res.json();
+
+      if (!json.exists) break;
+      if (++tries > 10)
+        return Alert.alert('שגיאה', 'לא הצלחנו להגריל שם משתמש');
+    }
+
+    setUsername(tempUsername);
+    setPassword(genPass());
+  };
+
+  const showError = (msg) => {
+    setErrorMessage(msg);
+    setErrorModalVisible(true);
+  };
+
+  const handleCreateBusiness = async () => {
+    if (!businessName.trim()) return showError('יש להזין שם עסק');
+    if (!address.trim()) return showError('יש להזין כתובת');
+    if (!username) return showError('יש להזין שם משתמש');
+    if (!password) return showError('יש להזין סיסמה');
+    if (password.length < 6)
+      return showError('הסיסמה חייבת להכיל לפחות 6 תווים');
+
+    try {
+      const res = await fetch(
+        `${config.SERVER_URL}/auth/create-business-partner`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            businessName: businessName.trim(),
+            address: address.trim(),
+            city: user.city._id,
+            username,
+            password,
+          }),
+        }
+      );
+
+      const text = await res.text();
+      const data = JSON.parse(text);
+
+      if (!res.ok) throw new Error(data.message || 'שגיאה בהוספת בית העסק');
+
+      setBusinesses((prev) => [data.businessPartner, ...prev]);
+      setBusinessName('');
+      setAddress('');
+      setUsername('');
+      setPassword('');
+      setCreateModalVisible(false);
+    } catch (err) {
+      console.error('שגיאה בהוספת עסק:', err);
+      showError(err.message || 'שגיאה בלתי צפויה');
     }
   };
 
@@ -109,12 +159,10 @@ export default function ManageBusinessesScreen({ route }) {
       const used = items.find(
         (item) => item.pickupLocation === locationDescription
       );
-
       if (used) {
-        setErrorMessage(
+        showError(
           'לא ניתן למחוק. יש מוצר שמקושר לעסק זה. יש למחוק או לערוך את המוצר קודם.'
         );
-        setErrorModalVisible(true);
         setConfirmVisible(false);
         return;
       }
@@ -130,8 +178,7 @@ export default function ManageBusinessesScreen({ route }) {
       setBusinesses((prev) => prev.filter((b) => b._id !== _id));
     } catch (err) {
       console.error('שגיאה במחיקה:', err);
-      setErrorMessage(err.message || 'שגיאה במחיקת העסק.');
-      setErrorModalVisible(true);
+      showError(err.message || 'שגיאה במחיקת העסק.');
     } finally {
       setConfirmVisible(false);
       setPendingDelete(null);
@@ -155,18 +202,12 @@ export default function ManageBusinessesScreen({ route }) {
         style={styles.searchInput}
       />
 
-      <View style={styles.inputRow}>
-        <TextInput
-          value={newLocation}
-          onChangeText={setNewLocation}
-          placeholder="שם בית העסק וכתובת מלאה"
-          placeholderTextColor="#C0C0C0"
-          style={styles.input}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddBusiness}>
-          <Text style={styles.addButtonText}>הוסף</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => setCreateModalVisible(true)}
+      >
+        <Text style={styles.addButtonText}>+ הוסף בית עסק</Text>
+      </TouchableOpacity>
 
       {loading ? (
         <ActivityIndicator
@@ -188,7 +229,7 @@ export default function ManageBusinessesScreen({ route }) {
           renderItem={({ item }) => (
             <View style={styles.itemRow}>
               <Text style={styles.locationText} numberOfLines={2}>
-                {item.locationDescription}
+                {`${item.businessName} - ${item.address}`}
               </Text>
               <TouchableOpacity
                 onPress={() => requestDelete(item)}
@@ -200,6 +241,68 @@ export default function ManageBusinessesScreen({ route }) {
           )}
         />
       )}
+
+      {/* מודל יצירה */}
+      <Modal visible={createModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>הוסף בית עסק חדש</Text>
+
+            <TextInput
+              placeholder="שם בית העסק"
+              value={businessName}
+              onChangeText={setBusinessName}
+              style={styles.modalInput}
+            />
+            <TextInput
+              placeholder="כתובת"
+              value={address}
+              onChangeText={setAddress}
+              style={styles.modalInput}
+            />
+            <TextInput
+              placeholder="שם משתמש"
+              value={username}
+              onChangeText={setUsername}
+              style={styles.modalInput}
+            />
+            <TextInput
+              placeholder="סיסמה"
+              value={password}
+              onChangeText={setPassword}
+              style={styles.modalInput}
+            />
+
+            <TouchableOpacity
+              style={styles.randomButton}
+              onPress={generateRandomCredentials}
+            >
+              <Text style={styles.randomButtonText}>🎲 הגרל שם וסיסמה</Text>
+            </TouchableOpacity>
+
+            <View
+              style={{
+                flexDirection: 'row-reverse',
+                justifyContent: 'space-between',
+                marginTop: 15,
+              }}
+            >
+              <TouchableOpacity
+                style={styles.modalConfirm}
+                onPress={handleCreateBusiness}
+              >
+                <Text style={styles.modalConfirmText}>צור</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => setCreateModalVisible(false)}
+              >
+                <Text style={styles.modalCancelText}>ביטול</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <ErrorModal
         visible={errorModalVisible}
@@ -232,9 +335,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 25,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
   searchInput: {
     backgroundColor: '#E0FFFF',
@@ -246,44 +346,13 @@ const styles = StyleSheet.create({
     borderColor: '#ADD8E6',
     fontSize: 16,
     textAlign: 'right',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  inputRow: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ADD8E6',
-    backgroundColor: '#E0FFFF',
-    borderRadius: 25,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    marginRight: 10,
-    fontSize: 16,
-    textAlign: 'right',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
   },
   addButton: {
     backgroundColor: '#66CDAA',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 4,
+    alignSelf: 'center',
   },
   addButtonText: {
     color: '#fff',
@@ -298,11 +367,6 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 15,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
   },
   locationText: {
     color: '#F0F8FF',
@@ -324,5 +388,65 @@ const styles = StyleSheet.create({
     marginTop: 30,
     fontSize: 16,
     fontStyle: 'italic',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    width: '90%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 5,
+    textAlign: 'right',
+  },
+  randomButton: {
+    backgroundColor: '#2196F3',
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  randomButtonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  modalConfirm: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 10,
+    flex: 1,
+    marginLeft: 5,
+  },
+  modalCancel: {
+    backgroundColor: '#ccc',
+    padding: 10,
+    borderRadius: 10,
+    flex: 1,
+    marginRight: 5,
+  },
+  modalConfirmText: {
+    color: 'white',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  modalCancelText: {
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });

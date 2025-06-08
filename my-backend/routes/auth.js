@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/Users');
 const City = require('../models/City'); // נדרש כדי למצוא עיר לפי שם
+const BusinessPartner = require('../models/BusinessPartner');
 
 // ראוט התחברות
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const user = await User.findOne({ username, password }).populate('city');
+    const user = await User.findOne({ username, password })
+      .populate('city')
+      .populate('businessPartner');
     if (user) {
       res.status(200).json(user);
     } else {
@@ -194,7 +197,8 @@ router.get('/profile/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .populate('city')
-      .populate('organization');
+      .populate('organization')
+      .populate('businessPartner');
 
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.status(200).json(user);
@@ -243,6 +247,41 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('שגיאה במחיקת משתמש:', err);
     res.status(500).json({ message: 'שגיאה במחיקה מהשרת' });
+  }
+});
+
+router.post('/create-business-partner', async (req, res) => {
+  try {
+    const { businessName, address, city, username, password } = req.body;
+
+    if (!businessName || !address || !city || !username || !password) {
+      return res.status(400).json({ message: 'חסרים שדות חובה' });
+    }
+
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ message: 'שם המשתמש כבר קיים' });
+    }
+
+    const businessPartner = await BusinessPartner.create({
+      businessName,
+      address,
+      city,
+    });
+
+    const user = await User.create({
+      username,
+      password,
+      city,
+      role: 'BusinessPartner',
+      businessPartner: businessPartner._id,
+      firstName: businessName,
+    });
+
+    res.status(201).json({ user, businessPartner });
+  } catch (err) {
+    console.error('שגיאה ביצירת בית עסק:', err);
+    res.status(500).json({ message: err.message });
   }
 });
 

@@ -415,8 +415,8 @@ export default function EditShopItemScreen({ navigation, route }) {
               {availablePickupLocations.map((loc) => (
                 <Picker.Item
                   key={loc._id}
-                  label={loc.locationDescription}
-                  value={loc.locationDescription}
+                  label={`${loc.businessName} - ${loc.address}`}
+                  value={`${loc.businessName} - ${loc.address}`}
                 />
               ))}
             </Picker>

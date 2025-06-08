@@ -20,7 +20,13 @@ const UserSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ['admin', 'user', 'CommunityRep', 'OrganizationRep'],
+      enum: [
+        'admin',
+        'user',
+        'CommunityRep',
+        'OrganizationRep',
+        'BusinessPartner',
+      ],
       default: 'user',
     },
 
@@ -54,6 +60,12 @@ const UserSchema = new mongoose.Schema(
     organization: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Organization',
+      default: null,
+    },
+
+    businessPartner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BusinessPartner',
       default: null,
     },
 

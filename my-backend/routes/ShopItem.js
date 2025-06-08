@@ -296,4 +296,19 @@ router.get('/checkPickUp/:cityId', async (req, res) => {
   }
 });
 
+// שליפת פריט לפי מזהה (למשל לצפייה בפרטי קוד)
+router.get('/shop-item/:id', async (req, res) => {
+  try {
+    const item = await ShopItem.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ error: 'פריט לא נמצא' });
+    }
+
+    res.json(item);
+  } catch (err) {
+    console.error('שגיאה בשליפת פריט:', err.message);
+    res.status(500).json({ error: 'שגיאה בשרת בעת שליפת פריט' });
+  }
+});
+
 module.exports = router;

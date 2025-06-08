@@ -206,7 +206,7 @@ export default function AddShopItemScreen({ navigation, route }) {
       quantity: Number(quantity),
       level: level ? Number(level) : 0,
       description: description.trim() || '',
-      imageUrl: imageUrl || '', // Now imageUrl is optional
+      imageUrl: imageUrl || '',
       city: user.city,
       categories: selectedCategories.length > 0 ? selectedCategories : ['אחר'],
       deliveryType,
@@ -411,8 +411,8 @@ export default function AddShopItemScreen({ navigation, route }) {
               {availablePickupLocations.map((loc) => (
                 <Picker.Item
                   key={loc._id}
-                  label={loc.locationDescription}
-                  value={loc.locationDescription}
+                  label={`${loc.businessName} - ${loc.address}`}
+                  value={`${loc.businessName} - ${loc.address}`}
                 />
               ))}
             </Picker>

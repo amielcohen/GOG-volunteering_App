@@ -10,8 +10,10 @@ import {
   I18nManager,
   Dimensions,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import config from '../../config';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 if (!I18nManager.isRTL) {
   I18nManager.forceRTL(true);
@@ -61,8 +63,15 @@ export default function UserCodes({ route }) {
     return expiryDate;
   };
 
+  const isDonation = (codeEntry) => {
+    return (
+      (codeEntry?.item?.deliveryType || codeEntry?.deliveryType) === 'donation'
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor="#0A0A1A" />
       <View style={styles.headerContainer}>
         <Text style={styles.screenTitle}>ההזמנות שלי</Text>
       </View>
@@ -99,7 +108,7 @@ export default function UserCodes({ route }) {
 
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         {isLoading ? (
-          <View style={{ marginTop: 40, alignItems: 'center' }}>
+          <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#87CEEB" />
             <Text style={styles.emptyText}>טוען נתונים...</Text>
           </View>
@@ -115,36 +124,99 @@ export default function UserCodes({ route }) {
                 styles.itemCard,
                 entry.status === 'redeemed' && styles.redeemedCard,
                 entry.status === 'expired' && styles.expiredCard,
-                (entry.item?.deliveryType || entry.deliveryType) ===
-                  'donation' && styles.donationCard,
+                isDonation(entry) && styles.donationCard,
               ]}
               onPress={() => setSelectedCode(entry)}
             >
-              <Text style={styles.itemTitle}>
-                {entry.item?.name || entry.itemName || 'מוצר לא ידוע'}
-              </Text>
+              <View style={styles.cardContentWrapper}>
+                <Text style={styles.itemTitle}>
+                  {entry?.item?.name || entry?.itemName || 'מוצר לא ידוע'}
+                </Text>
 
-              {(entry.item?.deliveryType || entry.deliveryType) !==
-                'donation' && (
-                <>
-                  <Text style={styles.itemCodeLabel}>קוד המימוש שלך:</Text>
-                  <Text style={styles.itemCode}>{formatCode(entry.code)}</Text>
+                {!isDonation(entry) && (
+                  <>
+                    <Text style={styles.itemCodeLabel}>קוד המימוש שלך:</Text>
+                    <Text
+                      style={[
+                        styles.itemCode,
+                        entry.status === 'expired' && styles.strikethroughCode,
+                      ]}
+                    >
+                      {formatCode(entry?.code)}
+                    </Text>
 
-                  {entry.status === 'pending' && entry.createdAt && (
-                    <Text style={styles.itemExpiryDate}>
-                      תוקף עד:{' '}
-                      {calculateExpiryDate(entry.createdAt).toLocaleDateString(
-                        'he-IL'
-                      )}
+                    {entry.status === 'pending' && entry.createdAt && (
+                      <Text style={styles.itemExpiryDate}>
+                        <Text style={{ fontWeight: 'bold' }}>תוקף עד:</Text>{' '}
+                        {calculateExpiryDate(
+                          entry.createdAt
+                        )?.toLocaleDateString('he-IL')}
+                      </Text>
+                    )}
+                    {entry.status === 'redeemed' && entry.redeemedAt && (
+                      <Text style={styles.itemRedeemedDate}>
+                        <Text style={{ fontWeight: 'bold' }}>מומש בתאריך:</Text>{' '}
+                        {new Date(entry.redeemedAt)?.toLocaleDateString(
+                          'he-IL'
+                        )}
+                      </Text>
+                    )}
+                    {entry.status === 'expired' && entry.createdAt && (
+                      <Text style={styles.itemExpiredText}>
+                        <Text style={{ fontWeight: 'bold' }}>תוקף פג ב:</Text>{' '}
+                        {calculateExpiryDate(
+                          entry.createdAt
+                        )?.toLocaleDateString('he-IL')}
+                      </Text>
+                    )}
+                  </>
+                )}
+                {isDonation(entry) && (
+                  <Text style={styles.donationTextCard}>
+                    <Text>תרומה על סך</Text>{' '}
+                    <Text style={{ fontWeight: 'bold' }}>
+                      {entry?.item?.donationAmount || entry?.donationAmount}{' '}
+                      <Text>₪</Text>
+                    </Text>{' '}
+                    <Text>לעמותה</Text>{' '}
+                    <Text style={{ fontWeight: 'bold' }}>
+                      {entry?.item?.donationTarget || entry?.donationTarget}
                     </Text>
-                  )}
-                  {entry.status === 'redeemed' && entry.redeemedAt && (
-                    <Text style={styles.itemRedeemedDate}>
-                      מומש בתאריך:{' '}
-                      {new Date(entry.redeemedAt).toLocaleDateString('he-IL')}
-                    </Text>
-                  )}
-                </>
+                  </Text>
+                )}
+              </View>
+              {/* Conditional Icons based on status */}
+              {entry.status === 'pending' && !isDonation(entry) && (
+                <Icon
+                  name="hourglass-empty"
+                  size={30}
+                  color="#87CEEB"
+                  style={styles.cardIcon}
+                />
+              )}
+              {entry.status === 'redeemed' && (
+                <Icon
+                  name="check-circle"
+                  size={30}
+                  color="#6A5ACD"
+                  style={styles.cardIcon}
+                />
+              )}
+              {entry.status === 'expired' && (
+                <Icon
+                  name="cancel"
+                  size={30}
+                  color="#DC143C"
+                  style={styles.cardIcon}
+                />
+              )}
+              {isDonation(entry) && (
+                <Icon
+                  name="volunteer-activism"
+                  size={30}
+                  color="#ADD8E6"
+                  style={styles.cardIcon}
+                />
               )}
             </TouchableOpacity>
           ))
@@ -165,39 +237,71 @@ export default function UserCodes({ route }) {
                 'קוד מימוש'}
             </Text>
 
-            {(selectedCode?.item?.deliveryType ||
-              selectedCode?.deliveryType) === 'donation' ? (
+            {isDonation(selectedCode) ? (
               <Text style={styles.modalSubtitle}>
-                תרומה על סך{' '}
-                {selectedCode.item?.donationAmount ||
-                  selectedCode.donationAmount}{' '}
-                ₪ עברה בשמך לעמותה{' '}
-                {selectedCode.item?.donationTarget ||
-                  selectedCode.donationTarget}
-                .{'\n'}תודה רבה על תרומתך!
+                <Text>תרומה על סך</Text>{' '}
+                <Text style={{ fontWeight: 'bold' }}>
+                  {selectedCode?.item?.donationAmount ||
+                    selectedCode?.donationAmount}{' '}
+                  <Text>₪</Text>
+                </Text>
+                <Text> עברה בשמך לעמותה</Text>{' '}
+                <Text style={{ fontWeight: 'bold' }}>
+                  {selectedCode?.item?.donationTarget ||
+                    selectedCode?.donationTarget}
+                </Text>
+                .{'\n'}
+                <Text>תודה רבה על תרומתך!</Text>
+                {'\n'}
+                <Text style={{ fontWeight: 'bold' }}>תאריך התרומה:</Text>{' '}
+                {new Date(selectedCode.createdAt)?.toLocaleDateString('he-IL')}
               </Text>
             ) : (
               <>
                 {(selectedCode?.item?.pickupLocation ||
                   selectedCode?.pickupLocation) && (
                   <Text style={styles.modalPickupLocation}>
-                    {selectedCode.item?.pickupLocation ||
-                      selectedCode.pickupLocation}
+                    {selectedCode?.item?.pickupLocation ||
+                      selectedCode?.pickupLocation}
                   </Text>
                 )}
                 <Text style={styles.modalSubtitle}>
                   הצג קוד זה בבית העסק למימוש:
                 </Text>
-                <Text style={styles.bigCode}>
+                <Text
+                  style={[
+                    styles.bigCode,
+                    selectedCode?.status === 'expired' &&
+                      styles.strikethroughCodeModal,
+                  ]}
+                >
                   {formatCode(selectedCode?.code || '')}
                 </Text>
                 {selectedCode?.status === 'pending' &&
                   selectedCode?.createdAt && (
                     <Text style={styles.modalExpiryDate}>
-                      תוקף עד:{' '}
+                      <Text style={{ fontWeight: 'bold' }}>תוקף עד:</Text>{' '}
                       {calculateExpiryDate(
                         selectedCode.createdAt
-                      ).toLocaleDateString('he-IL')}
+                      )?.toLocaleDateString('he-IL')}
+                    </Text>
+                  )}
+                {selectedCode?.status === 'redeemed' &&
+                  selectedCode?.redeemedAt && (
+                    <Text style={styles.modalRedeemedDate}>
+                      <Text style={{ fontWeight: 'bold' }}>מומש בתאריך:</Text>{' '}
+                      {new Date(selectedCode.redeemedAt)?.toLocaleDateString(
+                        'he-IL'
+                      )}
+                    </Text>
+                  )}
+                {selectedCode?.status === 'expired' &&
+                  selectedCode?.createdAt && (
+                    <Text style={styles.modalExpiredText}>
+                      <Text style={{ fontWeight: 'bold' }}>תוקף פג ב:</Text>{' '}
+                      {calculateExpiryDate(
+                        selectedCode.createdAt
+                      )?.toLocaleDateString('he-IL')}
                     </Text>
                   )}
               </>
@@ -290,6 +394,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingBottom: 20,
   },
+  loadingContainer: {
+    marginTop: 40,
+    alignItems: 'center',
+  },
   itemCard: {
     backgroundColor: '#2C2C5A',
     padding: 20,
@@ -302,6 +410,9 @@ const styles = StyleSheet.create({
     elevation: 12,
     borderLeftWidth: 5,
     borderColor: '#4CAF50',
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   redeemedCard: {
     borderColor: '#6A5ACD',
@@ -312,14 +423,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#222244',
   },
   donationCard: {
-    borderColor: '#6A5ACD', // סגול-כחול עמוק לגבול (SlateBlue)
-    backgroundColor: '#1E1E3A', // כחול כהה יותר, קרוב לרקע הכללי, אבל עם נימה שונה
-
+    borderColor: '#6A5ACD',
+    backgroundColor: '#1E1E3A',
     shadowColor: '#6A5ACD',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.4,
     shadowRadius: 5,
     elevation: 8,
+  },
+  cardContentWrapper: {
+    flex: 1,
+    paddingRight: 10,
+    alignItems: 'flex-end',
+  },
+  cardIcon: {
+    marginLeft: 10,
   },
   itemTitle: {
     fontSize: 20,
@@ -345,6 +463,10 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 10,
   },
+  strikethroughCode: {
+    textDecorationLine: 'line-through',
+    color: '#9E9E9E',
+  },
   itemExpiryDate: {
     fontSize: 13,
     color: '#B0C4DE',
@@ -357,6 +479,21 @@ const styles = StyleSheet.create({
     color: '#A0B0C0',
     textAlign: 'right',
     fontStyle: 'italic',
+    marginTop: 5,
+  },
+  itemExpiredText: {
+    fontSize: 13,
+    color: '#FF6347',
+    textAlign: 'right',
+    fontStyle: 'italic',
+    marginTop: 5,
+    fontWeight: 'bold',
+  },
+  donationTextCard: {
+    fontSize: 15,
+    color: '#B0C4DE',
+    textAlign: 'right',
+    lineHeight: 22,
     marginTop: 5,
   },
   emptyText: {
@@ -419,6 +556,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
+  strikethroughCodeModal: {
+    textDecorationLine: 'line-through',
+    color: '#9E9E9E',
+  },
   modalExpiryDate: {
     fontSize: 14,
     color: '#B0C4DE',
@@ -426,6 +567,23 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 10,
     marginBottom: 20,
+  },
+  modalRedeemedDate: {
+    fontSize: 14,
+    color: '#A0B0C0',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  modalExpiredText: {
+    fontSize: 14,
+    color: '#FF6347',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginTop: 10,
+    marginBottom: 20,
+    fontWeight: 'bold',
   },
   closeButton: {
     backgroundColor: '#4682B4',

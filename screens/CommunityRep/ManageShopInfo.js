@@ -18,19 +18,6 @@ export default function ManageShopInfo({ route }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.buttonsGrid}>
-        {/* כפתור ניהול קטגוריות */}
-        <Text style={styles.descriptionText}>
-          ניהול הקטגוריות מתייחס למוצרים בחנות העירונית.
-        </Text>
-        <TouchableOpacity
-          style={styles.gridButton}
-          onPress={() =>
-            navigation.navigate('ManageCategoriesScreen', { user })
-          }
-        >
-          <Text style={styles.buttonText}>ניהול קטגוריות</Text>
-        </TouchableOpacity>
-
         {/* כפתור ניהול עסקים */}
         <Text style={styles.descriptionText}>
           ניהול העסקים קובע מי יכבד את קודי המימוש של המוצרים בחנות.
@@ -54,6 +41,19 @@ export default function ManageShopInfo({ route }) {
           onPress={() => navigation.navigate('ManageDonation', { user })}
         >
           <Text style={styles.buttonText}>ניהול עמותות לתרומה</Text>
+        </TouchableOpacity>
+
+        {/* כפתור ניהול קטגוריות */}
+        <Text style={styles.descriptionText}>
+          ניהול הקטגוריות מתייחס למוצרים בחנות העירונית.
+        </Text>
+        <TouchableOpacity
+          style={styles.gridButton}
+          onPress={() =>
+            navigation.navigate('ManageCategoriesScreen', { user })
+          }
+        >
+          <Text style={styles.buttonText}>ניהול קטגוריות</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
