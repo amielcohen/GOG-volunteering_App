@@ -18,12 +18,15 @@ import CustomCoinIcon from '../../components/CustomCoinIcon';
 import axios from 'axios';
 import config from '../../config';
 import levelTable from '../../constants/levelTable';
+import LevelUpModal from '../../components/LevelUpModal'; // ייבוא מודל עליית הרמה
 
 export default function UserHomeScreen({ route, navigation }) {
   const { user: initialUser } = route.params;
   const [user, setUser] = useState(initialUser);
   const [loading, setLoading] = useState(true);
   const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [levelUpModalVisible, setLevelUpModalVisible] = useState(false); // סטייט לנראות מודל עליית רמה
 
   const fetchUser = async () => {
     try {
@@ -34,23 +37,76 @@ export default function UserHomeScreen({ route, navigation }) {
     } catch (err) {
       console.error('שגיאה בטעינת המשתמש:', err);
     } finally {
-      setLoading(false);
+      setLoading(false); // חשוב לוודא שזה תמיד נקרא
+    }
+  };
+
+  // --- Logic for Messages ---
+  const checkUnreadMessages = async () => {
+    try {
+      const res = await axios.get(
+        `${config.SERVER_URL}/user-messages/${initialUser._id}/unread`
+      );
+      setHasUnreadMessages(res.data.length > 0);
+    } catch (err) {
+      console.error('שגיאה בבדיקת הודעות:', err);
     }
   };
 
   useEffect(() => {
-    fetchUser();
+    checkUnreadMessages();
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      if (route.params?.refresh) {
-        setLoading(true);
-        fetchUser();
-        route.params.refresh = false; // אופציונלי: למנוע רענון חוזר
-      }
-    }, [route.params?.refresh])
+      checkUnreadMessages();
+    }, [])
   );
+  // --- End Messages Logic ---
+
+  // --- START FIX for infinite loading ---
+  // A single useEffect for initial fetch AND refresh
+  useEffect(() => {
+    fetchUser(); // Initial fetch when component mounts
+  }, []); // Empty dependency array means it runs once on mount
+
+  // useFocusEffect to handle refreshing when navigating back
+  useFocusEffect(
+    useCallback(() => {
+      if (route.params?.refresh) {
+        // Only trigger fetch if 'refresh' param is true
+        setLoading(true); // Show loader during refresh
+        fetchUser(); // Re-fetch user data
+        // --- THIS IS THE CRUCIAL LINE ---
+        // Reset the refresh param to false so it doesn't trigger again
+        navigation.setParams({ refresh: false });
+      }
+    }, [route.params?.refresh]) // Dependency on refresh param
+  );
+  // --- END FIX for infinite loading ---
+
+  // --- Logic for Level Up Modal ---
+  useEffect(() => {
+    if (user && user.showLevelUpModal) {
+      setLevelUpModalVisible(true);
+    }
+  }, [user?.showLevelUpModal]); // Watch for changes in showLevelUpModal
+
+  const handleCloseLevelUpModal = async () => {
+    setLevelUpModalVisible(false);
+    try {
+      // Send an API request to reset showLevelUpModal to false on the backend
+      await axios.patch(
+        `${config.SERVER_URL}/auth/profile/${user._id}/reset-level-up-modal`
+      );
+      // Update local state to reflect the change immediately
+      setUser((prevUser) => ({ ...prevUser, showLevelUpModal: false }));
+    } catch (err) {
+      console.error('שגיאה באיפוס showLevelUpModal:', err);
+      // Optionally, show an alert to the user
+    }
+  };
+  // --- End Level Up Modal Logic ---
 
   if (loading) {
     return (
@@ -67,11 +123,24 @@ export default function UserHomeScreen({ route, navigation }) {
     <View style={styles.container}>
       <TouchableOpacity
         style={styles.mailIconContainer}
-        onPress={() => {
-          console.log('Mailbox icon pressed!');
-        }}
+        onPress={() => navigation.navigate('UserMessagesScreen', { user })}
       >
-        <Icon name="mail" size={28} color="#007bff" />
+        <View>
+          <Icon name="mail" size={28} color="#007bff" />
+          {hasUnreadMessages && (
+            <View
+              style={{
+                position: 'absolute',
+                top: -2,
+                right: -2,
+                width: 10,
+                height: 10,
+                backgroundColor: 'red',
+                borderRadius: 5,
+              }}
+            />
+          )}
+        </View>
       </TouchableOpacity>
 
       <ScrollView>
@@ -164,6 +233,14 @@ export default function UserHomeScreen({ route, navigation }) {
           />
         </Pressable>
       </Modal>
+
+      {/* הוספת מודל עליית הרמה כאן */}
+      <LevelUpModal
+        visible={levelUpModalVisible}
+        level={user.level}
+        username={user.firstName}
+        onClose={handleCloseLevelUpModal}
+      />
     </View>
   );
 }

@@ -4,6 +4,8 @@ const ShopItem = require('../models/ShopItem');
 const Shop = require('../models/Shop');
 const User = require('../models/Users');
 const RedeemCode = require('../models/RedeemCode');
+const UserMessage = require('../models/UserMessage');
+
 const mongoose = require('mongoose');
 // הוספת פריט חדש לחנות העירונית
 router.post('/add', async (req, res) => {
@@ -29,13 +31,13 @@ router.post('/add', async (req, res) => {
         error: 'נא לוודא שכל השדות הדרושים מולאו, כולל סוג פריט ועיר',
       });
     }
+
     if (deliveryType === 'donation' && typeof donationAmount !== 'number') {
       return res.status(400).json({
         error: 'סכום התרומה חייב להיות מספר',
       });
     }
 
-    // אם נדרש מיקום איסוף – נוודא שהוא קיים
     if (deliveryType === 'pickup' && !pickupLocation) {
       return res
         .status(400)
@@ -74,6 +76,29 @@ router.post('/add', async (req, res) => {
 
     shop.items.push(savedItem._id);
     await shop.save();
+
+    // 🔔 שליחת הודעות לכל משתמשי העיר על הפריט החדש
+    try {
+      const usersInCity = await User.find({ city });
+      const notifyAll = usersInCity.map((user) =>
+        new UserMessage({
+          userId: user._id,
+          title: 'פריט חדש בחנות 🎁',
+          message: `המוצר "${name}" נוסף לחנות העירונית במחיר ${price} גוגואים.`,
+          type: 'info',
+          source: 'החנות העירונית',
+        }).save()
+      );
+      await Promise.all(notifyAll);
+      console.log(
+        `[SHOP_ADD] ✅ נשלחו הודעות ל-${usersInCity.length} משתמשים בעיר ${city}`
+      );
+    } catch (notifyErr) {
+      console.warn(
+        '[SHOP_ADD] ⚠️ שגיאה בשליחת הודעות למשתמשי העיר:',
+        notifyErr.message
+      );
+    }
 
     res.status(201).json(savedItem);
   } catch (err) {

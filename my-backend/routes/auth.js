@@ -285,4 +285,20 @@ router.post('/create-business-partner', async (req, res) => {
   }
 });
 
+// Example in your user routes (e.g., auth.routes.js or user.routes.js)
+router.patch('/profile/:id/reset-level-up-modal', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    user.showLevelUpModal = false;
+    await user.save();
+    res.status(200).json({ message: 'showLevelUpModal reset successfully' });
+  } catch (error) {
+    console.error('Error resetting showLevelUpModal:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

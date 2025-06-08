@@ -31,6 +31,7 @@ import VolunteerDetails from './screens/User/VolunteerDetails';
 import MyVolunteerings from './screens/User/MyVolunteerings';
 import UserCodes from './screens/User/UserCodes';
 import PurchaseScreen from './screens/User/PurchaseScreen';
+import UserMessagesScreen from './screens/User/UserMessagesScreen';
 
 //Admin
 import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
@@ -85,6 +86,31 @@ export default function App() {
             headerTitle: 'חנות המתנות',
           }}
         />
+
+        <Stack.Screen
+          name="UserMessagesScreen"
+          component={UserMessagesScreen}
+          options={{
+            headerShown: true,
+            title: '',
+            headerStyle: {
+              backgroundColor: '#1A2B42',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#87CEEB',
+            headerTitleStyle: {
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#1A2B42',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+            },
+            headerTitleAlign: 'center',
+          }}
+        />
         <Stack.Screen
           name="RedeemHistory"
           component={RedeemHistory}
@@ -135,7 +161,6 @@ export default function App() {
             headerTitleAlign: 'center',
           }}
         />
-
         <Stack.Screen
           name="BusinessPartnerHomeScreen"
           component={BusinessPartnerHomeScreen}
@@ -165,7 +190,6 @@ export default function App() {
             ),
           })}
         />
-
         <Stack.Screen
           name="AdminHomeScreen"
           component={AdminHomeScreen}
