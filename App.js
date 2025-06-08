@@ -62,6 +62,10 @@ import FutureVolunteerings from './screens/OrganizationRep/FutureVolunteerings';
 import OpenVolunteerings from './screens/OrganizationRep/OpenVolunteerings';
 import VolunteeringsHistory from './screens/OrganizationRep/VolunteeringsHistory';
 
+//Business
+import BusinessPartnerHomeScreen from './screens/Business/BusinessPartnerHomeScreen';
+import RedeemHistory from './screens/Business/RedeemHistory';
+
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -79,6 +83,30 @@ export default function App() {
           options={{
             headerTitleAlign: 'center',
             headerTitle: 'חנות המתנות',
+          }}
+        />
+        <Stack.Screen
+          name="RedeemHistory"
+          component={RedeemHistory}
+          options={{
+            headerShown: true,
+            title: '',
+            headerStyle: {
+              backgroundColor: '#1A2B42',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#87CEEB',
+            headerTitleStyle: {
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#1A2B42',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+            },
+            headerTitleAlign: 'center',
           }}
         />
         <Stack.Screen
@@ -107,6 +135,37 @@ export default function App() {
             headerTitleAlign: 'center',
           }}
         />
+
+        <Stack.Screen
+          name="BusinessPartnerHomeScreen"
+          component={BusinessPartnerHomeScreen}
+          options={({ navigation }) => ({
+            headerTitle: 'מסך הבית',
+            headerStyle: {
+              backgroundColor: '#1A2B42',
+            },
+            headerTitleStyle: {
+              color: '#fff',
+              fontWeight: 'bold',
+              fontSize: 20,
+            },
+            headerTitleAlign: 'center',
+            headerLeft: () => (
+              <Pressable
+                onPress={() => {
+                  navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Login' }],
+                  });
+                }}
+                style={{ marginLeft: 15 }}
+              >
+                <Text style={{ color: '#fff', fontSize: 16 }}>Logout</Text>
+              </Pressable>
+            ),
+          })}
+        />
+
         <Stack.Screen
           name="AdminHomeScreen"
           component={AdminHomeScreen}
@@ -171,7 +230,7 @@ export default function App() {
           options={({ navigation }) => ({
             headerTitle: 'מסך הבית',
             headerStyle: {
-              backgroundColor: '#F5767A',
+              backgroundColor: '#317834',
             },
             headerTitleStyle: {
               color: '#fff',

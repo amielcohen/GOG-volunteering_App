@@ -6,7 +6,12 @@ const businessPartnerSchema = new mongoose.Schema({
     ref: 'City',
     required: true,
   },
-  locationDescription: {
+  businessName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  address: {
     type: String,
     required: true,
     trim: true,

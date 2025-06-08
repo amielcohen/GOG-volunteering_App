@@ -3,15 +3,21 @@ const router = express.Router();
 const BusinessPartner = require('../models/BusinessPartner');
 
 // יצירת עסק חדש
+// יצירת עסק חדש
 router.post('/', async (req, res) => {
   try {
-    const { city, locationDescription } = req.body;
+    const { city, businessName, address } = req.body;
 
-    if (!city || !locationDescription) {
-      return res.status(400).json({ error: 'נא לספק עיר ומיקום' });
+    if (!city || !businessName || !address) {
+      return res.status(400).json({ error: 'נא לספק עיר, שם עסק וכתובת' });
     }
 
-    const newBusiness = new BusinessPartner({ city, locationDescription });
+    const newBusiness = new BusinessPartner({
+      city,
+      businessName: businessName.trim(),
+      address: address.trim(),
+    });
+
     await newBusiness.save();
     res.status(201).json(newBusiness);
   } catch (err) {

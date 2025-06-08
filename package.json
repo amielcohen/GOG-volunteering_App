@@ -21,12 +21,16 @@
     "dotenv": "^16.4.7",
     "expo": "~53.0.7",
     "expo-dev-client": "~5.1.8",
+    "expo-file-system": "~18.1.10",
     "expo-image-picker": "~16.1.4",
     "expo-linear-gradient": "~14.1.4",
+    "expo-sharing": "~13.1.5",
     "expo-status-bar": "~2.2.3",
+    "expo-updates": "~0.28.13",
     "express": "^4.21.2",
     "mongodb": "^6.12.0",
     "mongoose": "^8.13.0",
+    "node-cron": "^4.1.0",
     "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-dotenv": "^3.4.11",
@@ -37,8 +41,7 @@
     "react-native-root-toast": "^4.0.1",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.10.0",
-    "react-native-svg": "15.11.2",
-    "expo-updates": "~0.28.13"
+    "react-native-svg": "15.11.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
