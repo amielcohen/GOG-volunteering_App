@@ -1,38 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
   Pressable,
   Image,
-  Alert,
-  StatusBar, // ייבוא StatusBar לניהול סרגל המצב
+  StatusBar,
+  StyleSheet,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
 import config from '../../config';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function CommunityRepHomeScreen({ navigation, route }) {
-  const { user } = route.params;
+  const [currentUser, setCurrentUser] = useState(route.params.user);
   const [cityName, setCityName] = useState('');
   const [cityImageUrl, setCityImageUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
 
-  useEffect(() => {
-    // console.log(user); // נשאר כפי שהיה
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUser = async () => {
+        try {
+          const res = await axios.get(
+            `${config.SERVER_URL}/auth/profile/${currentUser._id}`
+          );
+          if (res.data) setCurrentUser(res.data);
+        } catch (err) {
+          console.warn('שגיאה בטעינת המשתמש מחדש:', err.message);
+        }
+      };
+
+      fetchUser();
+    }, [currentUser._id])
+  );
 
   useEffect(() => {
-    if (user.city) {
-      const cityId = typeof user.city === 'object' ? user.city._id : user.city;
+    if (currentUser.city) {
+      const cityId =
+        typeof currentUser.city === 'object'
+          ? currentUser.city._id
+          : currentUser.city;
       fetchCityName(cityId);
     }
-  }, [user.city]);
+  }, [currentUser.city]);
 
   const fetchCityName = async (cityId) => {
     try {
@@ -50,7 +66,7 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
   };
 
   const handleNavigate = (screen) => {
-    navigation.navigate(screen, { user });
+    navigation.navigate(screen, { user: currentUser });
   };
 
   return (
@@ -104,7 +120,7 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
         style={styles.actionCard}
         onPress={() =>
           navigation.navigate('OrganizationManagerScreen', {
-            user,
+            user: currentUser,
             cityName,
           })
         }
@@ -115,15 +131,18 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.actionCard} // ניתן להשתמש באותו סגנון כרטיס
-        onPress={() => Alert.alert('פעולה', 'עריכת התנדבויות')}
+        style={styles.actionCard}
+        onPress={() =>
+          navigation.navigate('EditCityProfileScreen', {
+            user: currentUser,
+            cityData: currentUser.city,
+          })
+        }
       >
         <Icon name="edit" size={28} color="#9C27B0" style={styles.cardIcon} />
-        <Text style={styles.actionText}>עריכת התנדבויות</Text>
+        <Text style={styles.actionText}>עריכת פרטים</Text>
         <Icon name="arrow-forward-ios" size={20} color="#757575" />
       </TouchableOpacity>
-
-      {/* ייתכן שתרצה להוסיף כאן כרטיסים נוספים בעתיד באותו סגנון */}
 
       <Modal
         visible={modalVisible}
@@ -139,7 +158,7 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
             source={
               cityImageUrl
                 ? { uri: cityImageUrl }
-                : require('../../images/defaultProfile.png') // נתיב תמונת ברירת המחדל המקורית שלך
+                : require('../../images/defaultProfile.png')
             }
             style={styles.enlargedImage}
           />

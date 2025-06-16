@@ -73,10 +73,19 @@ export default function LoginScreen({ navigation }) {
         if (user.role === 'admin') {
           navigation.navigate('AdminHomeScreen');
         } else if (user.role === 'CommunityRep') {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'CommunityRepHomeScreen', params: { user } }],
-          });
+          if (user.city.isActive) {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'CommunityRepHomeScreen', params: { user } }],
+            });
+          } else {
+            setErrorText({
+              title: 'לא פעיל',
+              message:
+                'העיר שלך אינה פעילה כרגע ולכן אין לך גישה למערכת. לבירורים, אנא פנה ל-GOG@gmail.com',
+            });
+            setErrorVisible(true);
+          }
         } else if (user.role === 'OrganizationRep') {
           navigation.reset({
             index: 0,

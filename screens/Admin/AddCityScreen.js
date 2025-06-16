@@ -10,6 +10,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
@@ -31,10 +34,18 @@ export default function AddCityScreen({ navigation }) {
   const [name, setName] = useState('');
   const [state, setState] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState({
+    username: '',
+    password: '',
+  });
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -55,8 +66,12 @@ export default function AddCityScreen({ navigation }) {
   };
 
   const handleAddCity = async () => {
-    if (!name.trim()) {
-      setError('נא להזין שם עיר');
+    if (!name.trim() || !username.trim() || !password.trim() || !email.trim()) {
+      setError('יש למלא את כל שדות העיר ואחראי העיר');
+      return;
+    }
+    if (password.trim().length < 6) {
+      setError('סיסמה קצרה מדי – נדרש לפחות 6 תווים');
       return;
     }
 
@@ -65,180 +80,323 @@ export default function AddCityScreen({ navigation }) {
       setError('');
       setSuccess(false);
 
-      await axios.post(`${config.SERVER_URL}/cities`, {
+      const cityRes = await axios.post(`${config.SERVER_URL}/cities`, {
         name: name.trim(),
         state: state || undefined,
         imageUrl: imageUrl || undefined,
       });
 
+      const cityId = cityRes.data.city._id;
+
+      await axios.post(`${config.SERVER_URL}/auth/register`, {
+        username,
+        password,
+        email,
+        role: 'CommunityRep',
+        city: cityId,
+      });
+
+      setCreatedCredentials({ username, password });
+      setShowModal(true);
       setSuccess(true);
       setName('');
       setState('');
       setImageUrl('');
+      setUsername('');
+      setPassword('');
+      setEmail('');
     } catch (err) {
       console.error('Error:', err.response?.data || err.message);
-      setError(err.response?.data?.error || 'שגיאה ביצירת העיר');
+      setError(err.response?.data?.message || 'שגיאה ביצירת העיר או המשתמש');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>הוסף עיר חדשה</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="שם עיר"
-        value={name}
-        onChangeText={setName}
-      />
-
-      <Text style={styles.label}>בחר מחוז (לא חובה)</Text>
-      <View style={styles.chipsContainer}>
-        {ISRAEL_DISTRICTS.map((district, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.chip, state === district && styles.selectedChip]}
-            onPress={() => setState(district)}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                state === district && styles.selectedChipText,
-              ]}
-            >
-              {district || 'ללא מחוז'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
-        <Text style={styles.imageButtonText}>📷 בחר תמונה לעיר</Text>
-      </TouchableOpacity>
-
-      {uploadingImage ? (
-        <ActivityIndicator
-          size="large"
-          color="#6200EE"
-          style={{ marginTop: 20 }}
-        />
-      ) : imageUrl ? (
-        <Image source={{ uri: imageUrl }} style={styles.previewImage} />
-      ) : (
-        <Text style={{ textAlign: 'center', marginVertical: 10 }}>
-          לא נבחרה תמונה
-        </Text>
-      )}
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {success ? (
-        <Text style={styles.success}>✅ העיר נוספה בהצלחה!</Text>
-      ) : null}
-
-      <Pressable
-        style={styles.button}
-        onPress={handleAddCity}
-        disabled={loading}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 20}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
+        <Text style={styles.title}>הוסף עיר חדשה</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="שם עיר"
+          placeholderTextColor="#A0A0A0"
+          value={name}
+          onChangeText={setName}
+        />
+
+        <Text style={styles.label}>בחר מחוז (לא חובה)</Text>
+        <View style={styles.chipsContainer}>
+          {ISRAEL_DISTRICTS.map((district, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[styles.chip, state === district && styles.selectedChip]}
+              onPress={() => setState(district)}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  state === district && styles.selectedChipText,
+                ]}
+              >
+                {district || 'ללא מחוז'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+          <Text style={styles.imageButtonText}>📷 בחר תמונה לעיר</Text>
+        </TouchableOpacity>
+
+        {uploadingImage ? (
+          <ActivityIndicator
+            size="large"
+            color="#607D8B"
+            style={{ marginTop: 20 }}
+          />
+        ) : imageUrl ? (
+          <Image source={{ uri: imageUrl }} style={styles.previewImage} />
         ) : (
-          <Text style={styles.buttonText}>הוסף עיר</Text>
+          <Text style={styles.noImageText}>לא נבחרה תמונה</Text>
         )}
-      </Pressable>
-    </ScrollView>
+
+        <Text style={styles.sectionTitle}>פרטי אחראי עיר</Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder="שם משתמש"
+          placeholderTextColor="#A0A0A0"
+          value={username}
+          onChangeText={setUsername}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="סיסמה"
+          placeholderTextColor="#A0A0A0"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="אימייל"
+          placeholderTextColor="#A0A0A0"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+        />
+
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {success ? (
+          <Text style={styles.success}>✅ העיר ואחראי העיר נוספו בהצלחה!</Text>
+        ) : null}
+
+        <Pressable
+          style={styles.button}
+          onPress={handleAddCity}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>הוסף עיר + אחראי</Text>
+          )}
+        </Pressable>
+
+        <Modal transparent visible={showModal} animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>📝 פרטי התחברות</Text>
+              <Text style={styles.modalMessage}>
+                שם משתמש: {createdCredentials.username}
+              </Text>
+              <Text style={styles.modalMessage}>
+                סיסמה: {createdCredentials.password}
+              </Text>
+              <Text style={styles.modalNote}>
+                אנא צלם מסך או רשום את הפרטים – לא ניתן יהיה לשחזר אותם!
+              </Text>
+              <Pressable
+                style={[styles.button, { marginTop: 20 }]}
+                onPress={() => setShowModal(false)}
+              >
+                <Text style={styles.buttonText}>הבנתי</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Modal>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#F8F8F8',
     flexGrow: 1,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 25,
     fontWeight: 'bold',
+    color: '#333333',
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginVertical: 25,
+    textAlign: 'center',
+    color: '#444444',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
+    borderColor: '#E0E0E0',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 18,
     textAlign: 'right',
+    fontSize: 16,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   label: {
-    fontSize: 16,
+    fontSize: 15,
     marginBottom: 10,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    textAlign: 'right',
+    fontWeight: '600',
+    color: '#555555',
   },
   chipsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     marginBottom: 20,
   },
   chip: {
-    backgroundColor: '#eee',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    margin: 5,
+    backgroundColor: '#F0F0F0',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 25,
+    margin: 6,
+    borderWidth: 1,
+    borderColor: '#E8E8E8',
   },
   selectedChip: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#BBDEFB',
+    borderColor: '#90CAF9',
   },
   chipText: {
-    color: '#333',
+    color: '#666666',
+    fontSize: 14,
   },
   selectedChipText: {
-    color: '#fff',
+    color: '#212121',
     fontWeight: 'bold',
   },
   imageButton: {
-    backgroundColor: '#6200EE',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10,
+    backgroundColor: '#E3F2FD',
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 15,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   imageButtonText: {
     fontSize: 16,
-    color: '#fff',
+    color: '#3F51B5',
     fontWeight: 'bold',
   },
   previewImage: {
     width: '100%',
     height: 200,
     marginTop: 15,
-    borderRadius: 8,
+    borderRadius: 10,
+    resizeMode: 'cover',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  noImageText: {
+    textAlign: 'center',
+    marginVertical: 15,
+    color: '#888888',
+    fontSize: 14,
   },
   button: {
-    backgroundColor: '#007BFF',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: '#BBDEFB',
+    padding: 18,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 30,
+    marginTop: 35,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 3,
   },
   buttonText: {
-    color: '#fff',
+    color: '#1A237E',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 18,
   },
   error: {
-    color: 'red',
-    marginBottom: 10,
+    color: '#D32F2F',
+    marginBottom: 12,
+    marginTop: 8,
     textAlign: 'center',
+    fontSize: 14,
   },
   success: {
-    color: 'green',
-    marginBottom: 10,
+    color: '#388E3C',
+    marginBottom: 12,
+    marginTop: 8,
     textAlign: 'center',
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 24,
+    borderRadius: 12,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  modalMessage: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  modalNote: {
+    fontSize: 14,
+    textAlign: 'center',
+    color: '#D32F2F',
+    marginTop: 10,
   },
 });
