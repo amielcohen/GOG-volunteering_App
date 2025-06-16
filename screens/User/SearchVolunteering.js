@@ -29,6 +29,7 @@ export default function SearchVolunteering({ route, navigation }) {
     location: '',
     organizationName: '',
     onlyWithAvailableSpots: false,
+    onlyMatchingLevel: false,
   });
 
   useEffect(() => {
@@ -72,6 +73,7 @@ export default function SearchVolunteering({ route, navigation }) {
             typeof reg.userId === 'object' ? reg.userId._id : reg.userId;
           return regId?.toString?.() === userIdStr;
         });
+
         return !isRegistered;
       });
 
@@ -83,6 +85,7 @@ export default function SearchVolunteering({ route, navigation }) {
 
           return adaptVolunteeringForCard(v, {
             cityOrganizationEntry: matchingOrg,
+            user, // ✅ נוספה תמיכה ב־user כדי לחשב isLockedByLevel
           });
         })
         .filter((v) => v !== null);
@@ -110,6 +113,7 @@ export default function SearchVolunteering({ route, navigation }) {
       location,
       organizationName,
       onlyWithAvailableSpots,
+      onlyMatchingLevel,
     } = filters;
 
     const result = volunteerings.filter((item) => {
@@ -123,12 +127,16 @@ export default function SearchVolunteering({ route, navigation }) {
       const locationMatch = !location || item.city?.includes(location);
       const orgMatch =
         !organizationName || item.organizationName?.includes(organizationName);
-
-      // ✅ זה התנאי החשוב החדש
       const hasAvailableSpot =
         !onlyWithAvailableSpots ||
-        item.totalSpots === 0 || // אם לא הוגדר בכלל
+        item.totalSpots === 0 ||
         item.registeredSpots < item.totalSpots;
+
+      // ✅ תוספת: התאמה לפי רמת משתמש
+      const levelMatch =
+        !onlyMatchingLevel ||
+        item.minLevel === 0 ||
+        user.level >= item.minLevel;
 
       return (
         tagMatch &&
@@ -136,7 +144,8 @@ export default function SearchVolunteering({ route, navigation }) {
         coinMatch &&
         locationMatch &&
         orgMatch &&
-        hasAvailableSpot
+        hasAvailableSpot &&
+        levelMatch
       );
     });
 

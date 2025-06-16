@@ -43,7 +43,11 @@ const volunteeringSchema = new mongoose.Schema({
   },
 
   maxParticipants: { type: Number },
-
+  minlevel: {
+    type: Number, // 0–6 (א'–שבת)
+    min: 0,
+    max: 20,
+  },
   registeredVolunteers: [
     {
       userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

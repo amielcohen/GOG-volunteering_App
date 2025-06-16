@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import HelpModal from '../../components/HelpModal';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +9,8 @@ const daysOfWeek = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמי�
 
 export default function VolunteeringStep1({ formData, setFormData, onNext }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
+  const [showHelpRecurring, setShowHelpRecurring] = useState(false);
+  const [showHelpMinLevel, setShowHelpMinLevel] = useState(false);
 
   const handleConfirmDate = (date) => {
     setShowDatePicker(false);
@@ -94,10 +96,40 @@ export default function VolunteeringStep1({ formData, setFormData, onNext }) {
         textAlign="right"
       />
 
+      {/* רמת משתמש מינימלית */}
+      <View style={styles.pickerRow}>
+        <Text style={styles.labelWithIcon}>רמת משתמש מינימלית</Text>
+        <Pressable
+          onPress={() => setShowHelpMinLevel(true)}
+          style={{ marginStart: 8 }}
+        >
+          <Ionicons name="help-circle-outline" size={20} color="#555" />
+        </Pressable>
+      </View>
+
+      <View style={styles.pickerWrapper}>
+        <Picker
+          selectedValue={formData.minlevel || 0}
+          onValueChange={(value) =>
+            setFormData((prev) => ({ ...prev, minlevel: value }))
+          }
+          mode="dropdown"
+        >
+          {[...Array(21).keys()].map((level) => (
+            <Picker.Item
+              key={level}
+              label={level === 0 ? 'ללא הגבלה' : `רמה ${level}`}
+              value={level}
+            />
+          ))}
+        </Picker>
+      </View>
+
+      {/* טוגל התנדבות קבועה */}
       <View style={styles.toggleRow}>
         <Text style={styles.toggleLabel}>התנדבות קבועה?</Text>
 
-        <Pressable onPress={() => setShowHelp(true)}>
+        <Pressable onPress={() => setShowHelpRecurring(true)}>
           <Ionicons
             name="help-circle-outline"
             size={20}
@@ -135,9 +167,18 @@ export default function VolunteeringStep1({ formData, setFormData, onNext }) {
         <Text style={styles.nextText}>המשך לשלב הבא</Text>
       </Pressable>
 
+      {/* מודל עזרה – רמה */}
       <HelpModal
-        visible={showHelp}
-        onClose={() => setShowHelp(false)}
+        visible={showHelpMinLevel}
+        onClose={() => setShowHelpMinLevel(false)}
+        title="מה המשמעות של רמה מינימלית?"
+        message="הגבלת ההתנדבות לרמת משתמש מסוימת עוזרת למשוך מתנדבים מנוסים ואמינים יותר. עם זאת, רמות גבוהות יגבילו את כמות המשתמשים שיכולים להירשם בפועל."
+      />
+
+      {/* מודל עזרה – התנדבות קבועה */}
+      <HelpModal
+        visible={showHelpRecurring}
+        onClose={() => setShowHelpRecurring(false)}
         title="מה זה התנדבות קבועה?"
         message="התנדבות קבועה נוצרת אוטומטית מחדש כל שבוע, ביום ובשעה שקבעת, עם אותם פרטים בדיוק."
       />
@@ -216,5 +257,22 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     fontWeight: 'bold',
+  },
+  pickerWrapper: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  pickerRow: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  labelWithIcon: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
   },
 });
