@@ -27,10 +27,11 @@ export default function SearchVolunteering({ route, navigation }) {
     minCoins: '',
     maxCoins: '',
     location: '',
+    organizationName: '',
+    onlyWithAvailableSpots: false,
   });
 
   useEffect(() => {
-    console.log('USER INfo search  ', user);
     loadData();
   }, []);
 
@@ -48,27 +49,19 @@ export default function SearchVolunteering({ route, navigation }) {
       ]);
 
       const now = new Date();
-
       const rawVols = volRes.data;
 
-      // סינון לפי תאריך, ביטול וסגירה
       const validVols = rawVols.filter((vol) => {
         const volDate = new Date(vol.date);
-        const notClosed = !vol.isClosed;
-        const notCancelled = !vol.cancelled;
-        const inFuture = volDate > now;
-
-        return notClosed && notCancelled && inFuture;
+        return !vol.isClosed && !vol.cancelled && volDate > now;
       });
 
-      const cityOrgsData = cityOrgRes.data;
       const orgMap = {};
-      cityOrgsData.forEach((co) => {
+      cityOrgRes.data.forEach((co) => {
         const idStr = co.organizationId?.toString?.();
         if (idStr) orgMap[idStr] = co;
       });
 
-      // סינון: המשתמש לא רשום כבר
       const userIdStr = user._id?.toString?.();
       const filteredVols = validVols.filter((vol) => {
         const regList = Array.isArray(vol.registeredVolunteers)
@@ -79,30 +72,13 @@ export default function SearchVolunteering({ route, navigation }) {
             typeof reg.userId === 'object' ? reg.userId._id : reg.userId;
           return regId?.toString?.() === userIdStr;
         });
-
-        if (isRegistered) {
-          console.log(
-            `🚫 Skipping volunteering ${vol.title} (already registered)`
-          );
-        }
-
         return !isRegistered;
       });
 
-      console.log(
-        `✅ ${filteredVols.length} volunteerings left after filtering`
-      );
-      console.log(
-        '🧾 Titles:',
-        filteredVols.map((v) => v.title)
-      );
-
-      // התאמה לתצוגה בכרטיסים
       const adapted = filteredVols
         .map((v) => {
           const volOrgId = v.organizationId?.toString?.();
           const matchingOrg = orgMap[volOrgId];
-
           if (!matchingOrg) return null;
 
           return adaptVolunteeringForCard(v, {
@@ -112,7 +88,7 @@ export default function SearchVolunteering({ route, navigation }) {
         .filter((v) => v !== null);
 
       setVolunteerings(adapted);
-      setFiltered(adapted); // ברירת מחדל – הכל מוצג
+      setFiltered(adapted);
     } catch (err) {
       console.error('🚨 Error loading volunteerings:', err);
     } finally {
@@ -133,6 +109,7 @@ export default function SearchVolunteering({ route, navigation }) {
       maxCoins,
       location,
       organizationName,
+      onlyWithAvailableSpots,
     } = filters;
 
     const result = volunteerings.filter((item) => {
@@ -141,20 +118,32 @@ export default function SearchVolunteering({ route, navigation }) {
         (!minExp || item.exp >= parseInt(minExp)) &&
         (!maxExp || item.exp <= parseInt(maxExp));
       const coinMatch =
-        (!minCoins || item.gogos >= parseInt(minCoins)) &&
-        (!maxCoins || item.gogos <= parseInt(maxCoins));
+        (!minCoins || item.rewardCoins >= parseInt(minCoins)) &&
+        (!maxCoins || item.rewardCoins <= parseInt(maxCoins));
       const locationMatch = !location || item.city?.includes(location);
       const orgMatch =
         !organizationName || item.organizationName?.includes(organizationName);
 
-      return tagMatch && expMatch && coinMatch && locationMatch && orgMatch;
+      // ✅ זה התנאי החשוב החדש
+      const hasAvailableSpot =
+        !onlyWithAvailableSpots ||
+        item.totalSpots === 0 || // אם לא הוגדר בכלל
+        item.registeredSpots < item.totalSpots;
+
+      return (
+        tagMatch &&
+        expMatch &&
+        coinMatch &&
+        locationMatch &&
+        orgMatch &&
+        hasAvailableSpot
+      );
     });
 
     setFiltered(result);
   };
 
   const handlePress = (volunteering) => {
-    console.log('volunteer', volunteering);
     navigation.navigate('VolunteerDetails', {
       volunteering,
       userId: user._id,

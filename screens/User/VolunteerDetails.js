@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -73,6 +73,8 @@ export default function VolunteerDetailsScreen() {
     }
   };
 
+  const isFull = volunteering.registeredSpots >= volunteering.totalSpots;
+
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.container}>
@@ -125,11 +127,19 @@ export default function VolunteerDetailsScreen() {
 
       {!past && (
         <TouchableOpacity
-          style={styles.registerButton}
+          style={[
+            styles.registerButton,
+            isFull && !isRegistered && styles.disabledButton,
+          ]}
+          disabled={isFull && !isRegistered}
           onPress={isRegistered ? handleUnregister : handleRegister}
         >
           <Text style={styles.registerText}>
-            {isRegistered ? 'ביטול הרשמה' : 'הצטרפות להתנדבות'}
+            {isRegistered
+              ? 'ביטול הרשמה'
+              : isFull
+                ? 'אין מקומות פנויים'
+                : 'הצטרפות להתנדבות'}
           </Text>
         </TouchableOpacity>
       )}
@@ -223,6 +233,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 5,
     elevation: 3,
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
   },
   registerText: {
     color: '#fff',
