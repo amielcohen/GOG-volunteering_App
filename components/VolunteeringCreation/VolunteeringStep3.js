@@ -54,6 +54,12 @@ export default function VolunteeringStep3({ formData, onBack, onSubmit }) {
         <Text style={styles.bold}>מספר משתתפים מרבי:</Text>{' '}
         {formData.maxParticipants || 'לא הוגדר'}
       </Text>
+      <Text style={styles.item}>
+        <Text style={styles.bold}>רמת משתמש מינימלית:</Text>{' '}
+        {formData.minlevel === 0 || !formData.minlevel
+          ? 'ללא הגבלה'
+          : `רמה ${formData.minlevel}`}
+      </Text>
 
       <Text style={styles.sectionTitle}>מיקום ותגיות:</Text>
       <Text style={styles.item}>

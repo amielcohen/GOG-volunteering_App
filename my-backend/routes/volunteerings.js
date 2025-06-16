@@ -92,6 +92,7 @@ router.post('/create', async (req, res) => {
       maxParticipants: maxParticipants || null,
       imageUrl,
       notesForVolunteers,
+      minlevel: req.body.minlevel ?? 0,
     });
 
     await newVolunteering.save();

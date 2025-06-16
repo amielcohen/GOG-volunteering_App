@@ -19,6 +19,7 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
     date: new Date(),
     durationMinutes: '',
     maxParticipants: '',
+    minlevel: 0,
     isRecurring: false,
     recurringDay: null,
     createdBy: user._id,
@@ -103,6 +104,7 @@ export default function CreateVolunteeringScreen({ route, navigation }) {
         imageUrl: formData.imageUrl,
         rewardType: formData.rewardType,
         reward, // ← אחוז מחושב או ידני
+        minlevel: parseInt(formData.minlevel) || 0,
         customRewardByCity: formData.customRewardByCity || {},
         usePredictionModel: formData.usePredictionModel || false,
       };

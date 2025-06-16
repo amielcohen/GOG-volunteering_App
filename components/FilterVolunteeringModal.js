@@ -28,6 +28,9 @@ export default function FilterVolunteeringModal({
   const [onlyWithAvailableSpots, setOnlyWithAvailableSpots] = useState(
     initialFilters.onlyWithAvailableSpots || false
   );
+  const [onlyMatchingLevel, setOnlyMatchingLevel] = useState(
+    initialFilters.onlyMatchingLevel || false
+  );
 
   const resetFilters = () => {
     setSelectedTag('');
@@ -38,6 +41,7 @@ export default function FilterVolunteeringModal({
     setLocation('');
     setOrganizationName('');
     setOnlyWithAvailableSpots(false);
+    setOnlyMatchingLevel(false);
   };
 
   const applyFilters = () => {
@@ -50,6 +54,7 @@ export default function FilterVolunteeringModal({
       location,
       organizationName,
       onlyWithAvailableSpots,
+      onlyMatchingLevel,
     });
     onClose();
   };
@@ -166,6 +171,19 @@ export default function FilterVolunteeringModal({
                 ]}
               />
             </View>
+
+            <View style={styles.checkboxRow}>
+              <Text style={styles.checkboxLabelText}>
+                הצג רק התנדבויות שמתאימות לרמה שלי
+              </Text>
+              <TouchableOpacity
+                onPress={() => setOnlyMatchingLevel(!onlyMatchingLevel)}
+                style={[
+                  styles.checkbox,
+                  onlyMatchingLevel && styles.checkboxChecked,
+                ]}
+              />
+            </View>
           </ScrollView>
 
           <View style={styles.buttonRow}>
@@ -185,7 +203,6 @@ export default function FilterVolunteeringModal({
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,

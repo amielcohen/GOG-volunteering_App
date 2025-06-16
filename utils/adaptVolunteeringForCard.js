@@ -3,7 +3,7 @@ import { calculateRewardCoins } from './rewardUtils';
 
 export function adaptVolunteeringForCard(
   volunteering,
-  { cityOrganizationEntry }
+  { cityOrganizationEntry, user }
 ) {
   console.log('Adapting volunteering for card:', volunteering.title);
 
@@ -14,6 +14,10 @@ export function adaptVolunteeringForCard(
   const duration = volunteering.durationMinutes || 0;
   const exp = calculateExpFromMinutes(duration);
   const rewardCoins = calculateRewardCoins(volunteering, cityOrganizationEntry);
+
+  const minLevel = volunteering.minlevel || 0;
+  const userLevel = user?.level || 0;
+  const isLockedByLevel = userLevel < minLevel;
 
   return {
     title: volunteering.title,
@@ -33,6 +37,8 @@ export function adaptVolunteeringForCard(
     notesForVolunteers: volunteering.notesForVolunteers || '',
     address: volunteering.address || '',
     _id: volunteering._id || '',
+    minLevel,
+    isLockedByLevel,
   };
 }
 
