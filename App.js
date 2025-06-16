@@ -57,6 +57,7 @@ import ManageShopInfo from './screens/CommunityRep/ManageShopInfo';
 import ManageBusinessesScreen from './screens/CommunityRep/ManageBusinessesScreen';
 import ManageDonation from './screens/CommunityRep/ManageDonation';
 import EditCityProfileScreen from './screens/CommunityRep/EditCityProfileScreen';
+import SendCityMessage from './screens/CommunityRep/SendCityMessage';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
@@ -160,6 +161,15 @@ export default function App() {
           component={RegisterScreen}
           options={{
             headerTitle: 'הרשמה',
+            headerTitleAlign: 'center',
+          }}
+        />
+
+        <Stack.Screen //#BBDEFB
+          name="SendCityMessage"
+          component={SendCityMessage}
+          options={{
+            headerTitle: '',
             headerTitleAlign: 'center',
           }}
         />

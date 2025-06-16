@@ -83,7 +83,7 @@ router.post('/add', async (req, res) => {
       const notifyAll = usersInCity.map((user) =>
         new UserMessage({
           userId: user._id,
-          title: 'פריט חדש בחנות 🎁',
+          title: 'פריט חדש בחנות',
           message: `המוצר "${name}" נוסף לחנות העירונית במחיר ${price} גוגואים, גש לבדוק!`,
           type: 'info',
           source: 'החנות העירונית',

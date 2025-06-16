@@ -133,15 +133,28 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
       <TouchableOpacity
         style={styles.actionCard}
         onPress={() =>
+          navigation.navigate('SendCityMessage', {
+            user: currentUser,
+            cityData: currentUser.city,
+          })
+        }
+      >
+        <Icon name="mail" size={28} color="#9C27B0" style={styles.cardIcon} />
+        <Text style={styles.actionText}>שליחת הודעה למשתמשים</Text>
+        <Icon name="arrow-forward-ios" size={20} color="#757575" />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.secondaryCard}
+        onPress={() =>
           navigation.navigate('EditCityProfileScreen', {
             user: currentUser,
             cityData: currentUser.city,
           })
         }
       >
-        <Icon name="edit" size={28} color="#9C27B0" style={styles.cardIcon} />
+        <Icon name="settings" size={24} color="#999" />
         <Text style={styles.actionText}>עריכת פרטים</Text>
-        <Icon name="arrow-forward-ios" size={20} color="#757575" />
       </TouchableOpacity>
 
       <Modal
@@ -242,5 +255,13 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#FFFFFF',
     borderRadius: 10, // פינות מעוגלות קלות לתמונה מוגדלת
+  },
+  secondaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 30,
+    padding: 12,
+    borderRadius: 10,
   },
 });
