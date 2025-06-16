@@ -1,0 +1,53 @@
+[33mcommit f9039335469b35b9e4fd7b64900b0bd7240ebac7[m[33m ([m[1;31morigin/cityMessage[m[33m, [m[1;32mcityMessage[m[33m)[m
+Author: amielcohen <amiel551999@gmail.com>
+Date:   Tue Jun 17 02:34:35 2025 +0300
+
+    add the abbility to send message from city manger to all user that live in the city
+
+[33mcommit 6ea8feec5aadf1701b3417bc46099795a8d56208[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mvolunteerUpgrade[m[33m, [m[1;31morigin/volunteerUpgrade[m[33m)[m
+Author: amielcohen <amiel551999@gmail.com>
+Date:   Tue Jun 17 00:45:24 2025 +0300
+
+    min level for volunteer, lock unmatch level vol, filter to get only match volunteers
+
+[33mcommit 307bb80f5fb1bf5bc03a8d4ff0b8d3442d7d9cb6[m
+Author: amielcohen <amiel551999@gmail.com>
+Date:   Mon Jun 16 22:25:00 2025 +0300
+
+    fixing max praticipants bug, add validtation , add filter by empty spots and cosmtic improve
+
+[33mcommit 72f0cd81356e7fa30b272c216e290fae89b28c99[m[33m ([m[1;31morigin/env[m[33m)[m
+Author: amielcohen <amiel551999@gmail.com>
+Date:   Mon Jun 16 20:44:59 2025 +0300
+
+    remove senstive file
+
+[33mcommit b912a3d8616f35e4cf130a93e416725ddb7295dd[m[33m ([m[1;31morigin/city[m[33m)[m
+Author: amielcohen <amiel551999@gmail.com>
+Date:   Mon Jun 16 03:35:12 2025 +0300
+
+    admin creat city mangers, add cities on the same screens, the abbility to edit city , select only from knew cities while regester, cosmtic changes, and active deactive logic
+
+[33mcommit 355402dec696caf3491db3dcc25a10d7a478e2b5[m[33m ([m[1;31morigin/messages[m[33m, [m[1;32mmessages[m[33m)[m
+Author: amielcohen <amiel551999@gmail.com>
+Date:   Mon Jun 9 02:24:56 2025 +0300
+
+    add messeage ability and level UP model
+
+[33mcommit 091eb30e331df198291939d3560b6ff486ccea79[m[33m ([m[1;31morigin/redeemCode[m[33m, [m[1;32mredeemCode[m[33m)[m
+Author: amielcohen <amiel551999@gmail.com>
+Date:   Sun Jun 8 23:42:36 2025 +0300
+
+    first step to usermessage
+
+[33mcommit bc9416aa811b98fa524e7a174e0a162400239725[m
+Author: amielcohen <amiel551999@gmail.com>
+Date:   Sun Jun 8 23:03:07 2025 +0300
+
+    finish all redeem code
+
+[33mcommit efd7f740cd4e7b6e37370215d0af158b961bee96[m
+Author: amielcohen <amiel551999@gmail.com>
+Date:   Fri Jun 6 02:04:44 2025 +0300
+
+    add shop item mangement, donation and business, asstatic change to add item and edit item
