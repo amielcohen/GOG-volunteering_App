@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const UserMessage = require('../models/UserMessage');
+const User = require('../models/Users');
 
 // קבלת כל ההודעות של משתמש (כולל נקראות ולא נקראות)
 router.get('/:userId', async (req, res) => {
@@ -77,6 +78,55 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('שגיאה במחיקת הודעה:', err.message);
     res.status(500).json({ error: 'שגיאה במחיקת הודעה' });
+  }
+});
+
+// שליחה המונית לכל משתמשי העיר
+router.post('/send', async (req, res) => {
+  const {
+    city,
+    title,
+    message,
+    type = 'info',
+    sendCoins = false,
+    coins = 0,
+  } = req.body;
+
+  if (!city || !title || !message) {
+    return res.status(400).json({ error: 'נא למלא עיר, כותרת והודעה' });
+  }
+
+  try {
+    const users = await User.find({ city, role: 'user' });
+
+    const operations = users.map(async (user) => {
+      let fullTitle = title;
+      let fullMessage = message;
+
+      if (sendCoins && coins > 0) {
+        fullTitle = `🎁 ${title}`;
+        fullMessage += `\nקיבלת ${coins} גוגואים במתנה!`;
+        user.GoGs = (user.GoGs || 0) + coins;
+        await user.save();
+      }
+
+      const msg = new UserMessage({
+        userId: user._id,
+        title: fullTitle,
+        message: fullMessage,
+        type,
+        source: 'נציג עירוני',
+      });
+
+      await msg.save();
+    });
+
+    await Promise.all(operations);
+
+    res.json({ message: 'ההודעה נשלחה בהצלחה', sentCount: users.length });
+  } catch (err) {
+    console.error('שגיאה בשליחת הודעה עירונית:', err.message);
+    res.status(500).json({ error: 'שגיאה בשליחת הודעה עירונית' });
   }
 });
 
