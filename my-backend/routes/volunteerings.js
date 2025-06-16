@@ -103,7 +103,6 @@ router.post('/create', async (req, res) => {
     res.status(500).json({ message: 'Error creating volunteering' });
   }
 });
-
 // רישום משתמש להתנדבות
 router.post('/:id/register', async (req, res) => {
   const volunteeringId = req.params.id;
@@ -123,7 +122,21 @@ router.post('/:id/register', async (req, res) => {
       return res.status(400).json({ message: 'User already registered' });
     }
 
-    volunteering.registeredVolunteers.push({ userId, status: 'approved' });
+    // בדיקה האם הגיעו למקסימום משתתפים
+    if (
+      volunteering.maxParticipants &&
+      volunteering.registeredVolunteers.length >= volunteering.maxParticipants
+    ) {
+      return res.status(400).json({ message: 'אין מקומות פנויים' });
+    }
+
+    // הוספת המתנדב לרשימה
+    volunteering.registeredVolunteers.push({
+      userId,
+      status: 'approved',
+      attended: false,
+    });
+
     await volunteering.save();
 
     res.json({
@@ -131,6 +144,7 @@ router.post('/:id/register', async (req, res) => {
       volunteering,
     });
   } catch (error) {
+    console.error('Error in registration:', error.message);
     res.status(500).json({ message: 'Error registering to volunteering' });
   }
 });
