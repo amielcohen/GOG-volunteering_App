@@ -21,6 +21,9 @@ const AdminHomeScreen = ({ navigation }) => {
   const navigateToAddCity = () => {
     navigation.navigate('AddCityScreen');
   };
+  const navigateToCityManage = () => {
+    navigation.navigate('ManageCitiesScreen');
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -48,9 +51,9 @@ const AdminHomeScreen = ({ navigation }) => {
 
       <Pressable
         style={[styles.card, styles.orangeCard]}
-        onPress={navigateToAddCity}
+        onPress={navigateToCityManage}
       >
-        <Text style={styles.cardText}>הוספת עיר חדשה</Text>
+        <Text style={styles.cardText}>ניהול ערים וישובים</Text>
       </Pressable>
     </ScrollView>
   );

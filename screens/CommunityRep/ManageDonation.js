@@ -213,7 +213,7 @@ export default function ManageDonation({ route }) {
       <ConfirmModal
         visible={confirmModalVisible}
         title="אישור מחיקה"
-        message={`האם למחוק את "${selectedToDelete?.name}"? הפעולה תהפוך את העמותה ללא פעילה.`}
+        message={`האם למחוק את "${selectedToDelete?.name}"?לאחר הפעולה מתנדבים לא יוכלו לתרום שוב לעמותה.`}
         onCancel={() => setConfirmModalVisible(false)}
         onConfirm={handleDelete}
       />

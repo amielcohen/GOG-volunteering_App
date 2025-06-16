@@ -1,6 +1,8 @@
 const express = require('express');
 const City = require('../models/City');
 const Shop = require('../models/Shop');
+const User = require('../models/Users');
+const UserMessage = require('../models/UserMessage');
 
 const router = express.Router();
 
@@ -65,6 +67,31 @@ router.patch('/:id/activate', async (req, res) => {
       { new: true }
     );
     if (!city) return res.status(404).json({ error: 'עיר לא נמצאה' });
+
+    try {
+      const usersInCity = await User.find({ city: city._id, role: 'user' });
+
+      const notifyAll = usersInCity.map((user) =>
+        new UserMessage({
+          userId: user._id,
+          title: 'העיר חזרה לפעילות ',
+          message:
+            'העיר שלך חזרה להיות פעילה! עדכונים על התנדבויות חדשות ופריטים בחנות העירונית שוב זמינים.',
+          type: 'info',
+          source: 'מערכת GOG',
+        }).save()
+      );
+      await Promise.all(notifyAll);
+      console.log(
+        `[CITY_ACTIVATE] ✅ נשלחו הודעות ל-${usersInCity.length} משתמשים בעיר ${city.name}`
+      );
+    } catch (notifyErr) {
+      console.warn(
+        '[CITY_ACTIVATE] ⚠️ שגיאה בשליחת הודעות:',
+        notifyErr.message
+      );
+    }
+
     res.json(city);
   } catch (error) {
     console.error('Error activating city:', error);
@@ -81,6 +108,33 @@ router.patch('/:id/deactivate', async (req, res) => {
       { new: true }
     );
     if (!city) return res.status(404).json({ error: 'עיר לא נמצאה' });
+
+    try {
+      const usersInCity = await User.find({ city: city._id, role: 'user' });
+
+      const rep = await User.findOne({ city: city._id, role: 'CommunityRep' });
+      const repEmail = rep?.email || 'לא ידוע';
+
+      const notifyAll = usersInCity.map((user) =>
+        new UserMessage({
+          userId: user._id,
+          title: 'העיר הושבתה ⛔️',
+          message: `העיר שלך אינה פעילה כעת. לא יהיו עדכונים חדשים בחנות או בעמותות ההתנדבות.\nלמידע נוסף ניתן לפנות לאחראי העיר במייל: ${repEmail}`,
+          type: 'alert',
+          source: 'מערכת GOG',
+        }).save()
+      );
+      await Promise.all(notifyAll);
+      console.log(
+        `[CITY_DEACTIVATE] ✅ נשלחו הודעות ל-${usersInCity.length} משתמשים בעיר ${city.name}`
+      );
+    } catch (notifyErr) {
+      console.warn(
+        '[CITY_DEACTIVATE] ⚠️ שגיאה בשליחת הודעות:',
+        notifyErr.message
+      );
+    }
+
     res.json(city);
   } catch (error) {
     console.error('Error deactivating city:', error);

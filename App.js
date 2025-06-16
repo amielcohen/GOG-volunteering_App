@@ -38,6 +38,7 @@ import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
 import AdminOrganizationScreen from './screens/Admin/AdminOrganizationScreen';
 import AddOrganizationScreen from './screens/Admin/AddOrganizationScreen';
 import AddCityScreen from './screens/Admin/AddCityScreen';
+import ManageCitiesScreen from './screens/Admin/ManageCitiesScreen';
 
 //CommunityRep
 import CommunityRepHomeScreen from './screens/CommunityRep/CommunityRepHomeScreen';
@@ -55,6 +56,7 @@ import EditShopItemScreen from './screens/CommunityRep/EditShopItemScreen';
 import ManageShopInfo from './screens/CommunityRep/ManageShopInfo';
 import ManageBusinessesScreen from './screens/CommunityRep/ManageBusinessesScreen';
 import ManageDonation from './screens/CommunityRep/ManageDonation';
+import EditCityProfileScreen from './screens/CommunityRep/EditCityProfileScreen';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
@@ -158,6 +160,24 @@ export default function App() {
           component={RegisterScreen}
           options={{
             headerTitle: 'הרשמה',
+            headerTitleAlign: 'center',
+          }}
+        />
+
+        <Stack.Screen
+          name="EditCityProfileScreen"
+          component={EditCityProfileScreen}
+          options={{
+            headerTitle: 'עריכת פרטים',
+            headerTitleAlign: 'center',
+          }}
+        />
+
+        <Stack.Screen
+          name="ManageCitiesScreen"
+          component={ManageCitiesScreen}
+          options={{
+            headerTitle: '',
             headerTitleAlign: 'center',
           }}
         />

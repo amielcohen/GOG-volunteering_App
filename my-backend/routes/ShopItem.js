@@ -79,12 +79,12 @@ router.post('/add', async (req, res) => {
 
     // 🔔 שליחת הודעות לכל משתמשי העיר על הפריט החדש
     try {
-      const usersInCity = await User.find({ city });
+      const usersInCity = await User.find({ city, role: 'user' });
       const notifyAll = usersInCity.map((user) =>
         new UserMessage({
           userId: user._id,
           title: 'פריט חדש בחנות 🎁',
-          message: `המוצר "${name}" נוסף לחנות העירונית במחיר ${price} גוגואים.`,
+          message: `המוצר "${name}" נוסף לחנות העירונית במחיר ${price} גוגואים, גש לבדוק!`,
           type: 'info',
           source: 'החנות העירונית',
         }).save()
