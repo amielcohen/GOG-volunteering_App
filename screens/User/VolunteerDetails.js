@@ -112,7 +112,7 @@ export default function VolunteerDetailsScreen() {
         <View style={styles.mapButtonsHeaderRow}>
           <TouchableOpacity onPress={openInGoogleMaps} style={styles.mapButton}>
             <Image
-              source={require('../../images/google-maps.png')}
+              source={require('../../images/google_maps_icon.png')}
               style={styles.mapIcon}
             />
             <Text style={styles.mapText}>גוגל מפות</Text>
