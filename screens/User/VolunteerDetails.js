@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import CustomCoinIcon from '../../components/CustomCoinIcon';
@@ -22,6 +23,26 @@ export default function VolunteerDetailsScreen() {
 
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+
+  const openInGoogleMaps = () => {
+    const query = encodeURIComponent(
+      `${volunteering.address}, ${volunteering.city}`
+    );
+    const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+    Linking.openURL(url).catch((err) =>
+      console.error("Couldn't load Google Maps", err)
+    );
+  };
+
+  const openInWaze = () => {
+    const query = encodeURIComponent(
+      `${volunteering.address}, ${volunteering.city}`
+    );
+    const url = `https://waze.com/ul?q=${query}&navigate=yes`;
+    Linking.openURL(url).catch((err) =>
+      console.error("Couldn't load Waze", err)
+    );
+  };
 
   const backHome = () => {
     setConfirmVisible(false);
@@ -88,15 +109,33 @@ export default function VolunteerDetailsScreen() {
 
         <Text style={styles.title}>{volunteering.title}</Text>
 
+        <View style={styles.mapButtonsHeaderRow}>
+          <TouchableOpacity onPress={openInGoogleMaps} style={styles.mapButton}>
+            <Image
+              source={require('../../images/google-maps.png')}
+              style={styles.mapIcon}
+            />
+            <Text style={styles.mapText}>גוגל מפות</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={openInWaze} style={styles.mapButton}>
+            <Image
+              source={require('../../images/waze_app_icon.png')}
+              style={styles.mapIcon}
+            />
+            <Text style={styles.mapText}>וויז</Text>
+          </TouchableOpacity>
+        </View>
+        <InfoBox
+          label="מיקום"
+          value={`${volunteering.city || '---'}, ${volunteering.address || '---'}`}
+        />
         <InfoBox
           label="תיאור"
           value={volunteering.description || 'אין תיאור'}
         />
         <InfoBox label="עמותה" value={volunteering.organizationName || '---'} />
-        <InfoBox
-          label="מיקום"
-          value={`${volunteering.city || '---'}, ${volunteering.address || '---'}`}
-        />
+
         <InfoBox
           label="תאריך ושעה"
           value={`${volunteering.date} בשעה ${volunteering.time}`}
@@ -183,11 +222,40 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '800',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
     color: '#333',
+    lineHeight: 36,
+  },
+  mapButtonsHeaderRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 25,
+  },
+  mapButton: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 12,
+    backgroundColor: '#E0F2F7',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 2,
+    minWidth: 120,
+  },
+  mapIcon: {
+    width: 40,
+    height: 40,
+    marginBottom: 8,
+  },
+  mapText: {
+    fontSize: 14,
+    color: '#0D47A1',
+    fontWeight: '700',
   },
   section: {
     backgroundColor: '#fff',
