@@ -97,6 +97,8 @@ cron.schedule('0 3 * * *', async () => {
         isClosed: false,
         cancelled: false,
         createdAt: new Date(),
+        isRecurring: false,
+        recurringDay: null,
       });
 
       await newVol.save();
