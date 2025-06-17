@@ -484,4 +484,61 @@ router.get('/history/byCityOfRep/:repId', async (req, res) => {
   }
 });
 
+// שליפת התנדבויות קבועות (תבניות בלבד) לפי אחראי עמותה
+router.get('/recurring/byRep/:repId', async (req, res) => {
+  const { repId } = req.params;
+
+  try {
+    const rep = await User.findById(repId);
+    if (!rep || rep.role !== 'OrganizationRep') {
+      return res.status(404).json({ message: 'OrganizationRep not found' });
+    }
+
+    // שליפת כל אחראי העמותות באותה עיר
+    const repsInCity = await User.find({
+      city: rep.city,
+      role: 'OrganizationRep',
+    });
+    const repIds = repsInCity.map((r) => r._id);
+
+    const recurringTemplates = await Volunteering.find({
+      isRecurring: true,
+      createdBy: { $in: repIds },
+      cancelled: { $ne: true },
+    }).sort({ recurringDay: 1, title: 1 });
+
+    res.status(200).json(recurringTemplates);
+  } catch (err) {
+    console.error('[GET /recurring/byRep] שגיאה:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+// ביטול קביעות של התנדבות קבועה
+router.put('/:id/removeRecurring', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updated = await Volunteering.findByIdAndUpdate(
+      id,
+      {
+        isRecurring: false,
+        recurringDay: null,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Volunteering not found' });
+    }
+
+    res.status(200).json({
+      message: 'Recurring disabled successfully',
+      volunteering: updated,
+    });
+  } catch (err) {
+    console.error('[PUT /removeRecurring] שגיאה:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

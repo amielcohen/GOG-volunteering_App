@@ -54,7 +54,14 @@ export default function VolunteeringsHistoryScreen({ route }) {
         </View>
         <View style={styles.detailsBox}>
           <Text style={styles.detail}>
-            {new Date(item.date).toLocaleString('he-IL')} 📅
+            {new Date(item.date).toLocaleDateString('he-IL')} 📅
+          </Text>
+          <Text style={styles.detail}>
+            {new Date(item.date).toLocaleTimeString('he-IL', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}{' '}
+            ⏰
           </Text>
           <Text style={styles.detail}>📍 {item.address}</Text>
           <Text style={styles.detail}>
@@ -75,9 +82,18 @@ export default function VolunteeringsHistoryScreen({ route }) {
           <View style={styles.modalContainer}>
             <ScrollView>
               <Text style={styles.modalTitle}>{selectedItem.title}</Text>
+
               <Text style={styles.modalText}>
-                תאריך: {new Date(selectedItem.date).toLocaleString('he-IL')}
+                תאריך: {new Date(selectedItem.date).toLocaleDateString('he-IL')}
               </Text>
+              <Text style={styles.modalText}>
+                שעה:{' '}
+                {new Date(selectedItem.date).toLocaleTimeString('he-IL', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+
               <Text style={styles.modalText}>
                 כתובת: {selectedItem.address}
               </Text>
@@ -90,6 +106,7 @@ export default function VolunteeringsHistoryScreen({ route }) {
               <Text style={styles.modalText}>
                 מספר מתנדבים: {selectedItem.registeredVolunteers?.length || 0}
               </Text>
+
               <Text style={styles.modalText}>שמות מתנדבים:</Text>
               {selectedItem.registeredVolunteers?.map((v, i) => (
                 <Text key={i} style={styles.modalSubItem}>
@@ -97,6 +114,7 @@ export default function VolunteeringsHistoryScreen({ route }) {
                   {v.attended ? '✅ הגיע' : '❌ לא הגיע'}
                 </Text>
               ))}
+
               <Pressable
                 style={styles.closeButton}
                 onPress={() => setSelectedItem(null)}
