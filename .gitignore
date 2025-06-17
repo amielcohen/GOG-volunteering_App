@@ -37,3 +37,4 @@ yarn-error.*
 
 .env
 my-backend/.env
+my-backend/reward_model/.env
