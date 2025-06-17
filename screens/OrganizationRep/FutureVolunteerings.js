@@ -28,6 +28,8 @@ export default function FutureVolunteeringsScreen({ route }) {
   const [confirmCancelRecurringVisible, setConfirmCancelRecurringVisible] =
     useState(false);
 
+  const [selectedItem, setSelectedItem] = useState(null);
+
   const daysOfWeekHebrew = [
     'ראשון',
     'שני',
@@ -150,15 +152,24 @@ export default function FutureVolunteeringsScreen({ route }) {
           <Text style={styles.icon}>👥</Text>
         </Text>
       </View>
-      <Pressable
-        style={styles.cancelButton}
-        onPress={() => {
-          setSelectedVolunteeringId(item._id);
-          setConfirmCancelSingleVisible(true);
-        }}
-      >
-        <Text style={styles.cancelButtonText}>ביטול התנדבות</Text>
-      </Pressable>
+      <View style={styles.buttonRow}>
+        <Pressable
+          style={styles.viewButton}
+          onPress={() => setSelectedItem(item)}
+        >
+          <Text style={styles.cancelButtonText}>צפייה במתנדבים</Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.cancelButton}
+          onPress={() => {
+            setSelectedVolunteeringId(item._id);
+            setConfirmCancelSingleVisible(true);
+          }}
+        >
+          <Text style={styles.cancelButtonText}>ביטול התנדבות</Text>
+        </Pressable>
+      </View>
     </View>
   );
 
@@ -265,7 +276,50 @@ export default function FutureVolunteeringsScreen({ route }) {
           </Pressable>
         </View>
       </Modal>
+      <Modal
+        visible={!!selectedItem}
+        animationType="slide"
+        onRequestClose={() => setSelectedItem(null)}
+        presentationStyle="pageSheet"
+      >
+        <ScrollView contentContainerStyle={styles.detailsModalContainer}>
+          <Text style={styles.detailsModalTitle}>{selectedItem?.title}</Text>
 
+          <View style={styles.detailsModalSection}>
+            <Text style={styles.detailsModalSubtitle}>
+              מספר מתנדבים: {selectedItem?.registeredVolunteers?.length || 0} /{' '}
+              {selectedItem?.maxParticipants || 'ללא הגבלה'}
+            </Text>
+          </View>
+
+          <View style={styles.detailsModalSection}>
+            <Text style={styles.detailsModalSubtitle}>שמות מתנדבים:</Text>
+            {selectedItem?.registeredVolunteers?.length === 0 ? (
+              <Text style={styles.detailsModalEmpty}>
+                אין מתנדבים רשומים להתנדבות זו עדיין.
+              </Text>
+            ) : (
+              selectedItem?.registeredVolunteers?.map((v, i) => (
+                <View key={i} style={styles.detailsModalListItemContainer}>
+                  <Text style={styles.detailsModalListItem}>
+                    {i + 1}. {v.userId.firstName} {v.userId.lastName}
+                  </Text>
+                  {i < selectedItem.registeredVolunteers.length - 1 && (
+                    <View style={styles.detailsModalListDivider} />
+                  )}
+                </View>
+              ))
+            )}
+          </View>
+
+          <Pressable
+            style={styles.detailsModalCloseButton}
+            onPress={() => setSelectedItem(null)}
+          >
+            <Text style={styles.detailsModalCloseButtonText}>סגור</Text>
+          </Pressable>
+        </ScrollView>
+      </Modal>
       <ConfirmModal
         visible={confirmCancelRecurringVisible}
         title="אישור ביטול קביעות"
@@ -287,7 +341,7 @@ export default function FutureVolunteeringsScreen({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F8FA', // A very light, subtle blue-gray background
+    backgroundColor: '#F5F8FA',
     paddingHorizontal: 18,
     paddingTop: 25,
   },
@@ -295,13 +349,13 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   card: {
-    backgroundColor: '#FFFFFF', // Clean white for cards
-    borderRadius: 15, // Slightly more rounded
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
     padding: 20,
     marginBottom: 18,
     borderWidth: 1,
-    borderColor: '#E8EDF2', // Very light border
-    shadowColor: '#AAB8C2', // Soft, subtle shadow color
+    borderColor: '#E8EDF2',
+    shadowColor: '#AAB8C2',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -311,7 +365,7 @@ const styles = StyleSheet.create({
   },
   titleBox: {
     borderBottomWidth: 1,
-    borderColor: '#DDE6ED', // A calm border for the title section
+    borderColor: '#DDE6ED',
     paddingBottom: 10,
     marginBottom: 15,
     width: '100%',
@@ -320,7 +374,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#2C3E50', // Dark, readable title text
+    color: '#2C3E50',
     textAlign: 'right',
   },
   detailsBox: {
@@ -329,35 +383,18 @@ const styles = StyleSheet.create({
   },
   detail: {
     fontSize: 16,
-    color: '#34495E', // Slightly lighter text for details
+    color: '#34495E',
     textAlign: 'right',
-    marginBottom: 8, // More spacing between details
+    marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
   },
   icon: {
     marginRight: 6,
     fontSize: 18,
-    color: '#7F8C8D', // Neutral, elegant icon color
+    color: '#7F8C8D',
   },
-  cancelButton: {
-    marginTop: 20,
-    backgroundColor: '#E74C3C', // Strong red for cancel
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    alignSelf: 'center', // Centered horizontally
-    shadowColor: '#C0392B',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 4,
-  },
-  cancelButtonText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -376,12 +413,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   manageRecurringButton: {
-    backgroundColor: '#4A90E2', // A vibrant blue for primary action
+    backgroundColor: '#4A90E2',
     paddingVertical: 14,
     paddingHorizontal: 25,
     borderRadius: 12,
-    marginBottom: 30, // More space below the button
-    alignSelf: 'center', // Center the button
+    marginBottom: 30,
+    alignSelf: 'center',
     shadowColor: '#346DAE',
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.3,
@@ -396,21 +433,21 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#F5F8FA', // Consistent light background for modal
+    backgroundColor: '#F5F8FA',
     padding: 25,
-    paddingTop: 60, // More top padding to move content down
+    paddingTop: 60,
     alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 28, // Larger and more prominent title
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#2C3E50',
-    marginBottom: 30, // More spacing
+    marginBottom: 30,
     textAlign: 'center',
   },
   scrollViewContent: {
     alignItems: 'center',
-    paddingBottom: 30, // More padding at the bottom of the scroll view
+    paddingBottom: 30,
     width: '100%',
   },
   centeredModalContent: {
@@ -422,7 +459,7 @@ const styles = StyleSheet.create({
   closeModalButton: {
     marginTop: 20,
     backgroundColor: '#7F8C8D',
-    paddingVertical: 12, // גובה הכפתור
+    paddingVertical: 12,
     paddingHorizontal: 45,
     borderRadius: 10,
     shadowColor: '#607080',
@@ -430,7 +467,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 5,
     elevation: 4,
-    alignSelf: 'center', // ממרכז את הכפתור
+    alignSelf: 'center',
   },
   closeModalButtonText: {
     color: '#FFFFFF',
@@ -438,7 +475,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
   },
-
   recurringCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
@@ -453,7 +489,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     flexDirection: 'column',
     alignItems: 'flex-end',
-    width: '95%', // Spreads out more
+    width: '95%',
   },
   recurringCardTitle: {
     fontSize: 20,
@@ -477,5 +513,140 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  buttonRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginTop: 15,
+    paddingLeft: 10,
+  },
+  cancelButton: {
+    marginTop: 20,
+    backgroundColor: '#E74C3C',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignSelf: 'center',
+    shadowColor: '#C0392B',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  cancelButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  viewButton: {
+    marginTop: 20,
+    backgroundColor: '#451274',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignSelf: 'center',
+    shadowColor: '#C0392B',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  viewButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#34495E',
+    textAlign: 'right',
+    marginBottom: 10,
+  },
+  modalSubItem: {
+    fontSize: 15,
+    color: '#2C3E50',
+    textAlign: 'right',
+    marginBottom: 5,
+  },
+  detailsModalContainer: {
+    flexGrow: 1,
+    backgroundColor: '#F5F8FA',
+    padding: 25,
+    paddingTop: 60,
+    alignItems: 'center',
+  },
+  detailsModalTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2C3E50',
+    marginBottom: 30,
+    textAlign: 'center',
+    width: '100%',
+  },
+  detailsModalSection: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#AAB8C2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 6,
+    alignItems: 'flex-end',
+  },
+  detailsModalSubtitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#34495E',
+    marginBottom: 15,
+    textAlign: 'right',
+    width: '100%',
+  },
+  detailsModalListItemContainer: {
+    width: '100%',
+    alignItems: 'flex-end',
+    paddingVertical: 8,
+  },
+  detailsModalListItem: {
+    fontSize: 18,
+    color: '#4A5C6E',
+    textAlign: 'right',
+    paddingHorizontal: 10,
+    marginBottom: 5,
+  },
+  detailsModalListDivider: {
+    height: 1,
+    backgroundColor: '#E8EDF2',
+    width: '90%',
+    alignSelf: 'center',
+    marginTop: 5,
+  },
+  detailsModalEmpty: {
+    fontSize: 18,
+    color: '#8899AA',
+    textAlign: 'center',
+    marginTop: 10,
+    width: '100%',
+  },
+  detailsModalCloseButton: {
+    marginTop: 40,
+    backgroundColor: '#607080',
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 12,
+    shadowColor: '#4A5C6E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+    alignSelf: 'center',
+  },
+  detailsModalCloseButtonText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 18,
   },
 });
