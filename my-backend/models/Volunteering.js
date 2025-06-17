@@ -44,7 +44,7 @@ const volunteeringSchema = new mongoose.Schema({
 
   maxParticipants: { type: Number },
   minlevel: {
-    type: Number, // 0–6 (א'–שבת)
+    type: Number,
     min: 0,
     max: 20,
   },
