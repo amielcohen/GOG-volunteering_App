@@ -59,6 +59,8 @@ import ManageBusinessesScreen from './screens/CommunityRep/ManageBusinessesScree
 import ManageDonation from './screens/CommunityRep/ManageDonation';
 import EditCityProfileScreen from './screens/CommunityRep/EditCityProfileScreen';
 import SendCityMessage from './screens/CommunityRep/SendCityMessage';
+import CommunityLeaderboardScreen from './screens/CommunityRep/CommunityLeaderboardScreen';
+import CityMonthlyPrizesScreen from './screens/CommunityRep/CityMonthlyPrizesScreen';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
@@ -171,6 +173,57 @@ export default function App() {
           component={SendCityMessage}
           options={{
             headerTitle: '',
+            headerTitleAlign: 'center',
+          }}
+        />
+
+        <Stack.Screen
+          name="CommunityLeaderboardScreen"
+          component={CommunityLeaderboardScreen}
+          options={{
+            headerShown: true,
+            title: 'Leader Board',
+            headerStyle: {
+              backgroundColor: '#4A148C',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#FFE5EC',
+            headerTitleStyle: {
+              fontSize: 30,
+              fontWeight: 'bold',
+              color: '#FFE5EC',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+              paddingTop: 8,
+            },
+            headerTitleAlign: 'center',
+          }}
+        />
+        <Stack.Screen
+          name="CityMonthlyPrizesScreen"
+          component={CityMonthlyPrizesScreen}
+          options={{
+            headerShown: true,
+            title: 'Leader Board',
+            headerStyle: {
+              backgroundColor: '#4A148C',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#FFE5EC',
+            headerTitleStyle: {
+              fontSize: 30,
+              fontWeight: 'bold',
+              color: '#FFE5EC',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+              paddingTop: 8,
+            },
             headerTitleAlign: 'center',
           }}
         />

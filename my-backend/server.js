@@ -65,6 +65,9 @@ app.use('/user-messages', userMessagesRoutes);
 const monthlyStatsRoutes = require('./routes/monthlyStats');
 app.use('/monthly-stats', monthlyStatsRoutes);
 
+const monthlyPrizeRoutes = require('./routes/monthlyPrize');
+app.use('/monthly-prizes', monthlyPrizeRoutes);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');
