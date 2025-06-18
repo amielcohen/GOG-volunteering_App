@@ -121,27 +121,37 @@ export default function UserHomeScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.mailIconContainer}
-        onPress={() => navigation.navigate('UserMessagesScreen', { user })}
-      >
-        <View>
-          <Icon name="mail" size={28} color="#007bff" />
-          {hasUnreadMessages && (
-            <View
-              style={{
-                position: 'absolute',
-                top: -2,
-                right: -2,
-                width: 10,
-                height: 10,
-                backgroundColor: 'red',
-                borderRadius: 5,
-              }}
-            />
-          )}
-        </View>
-      </TouchableOpacity>
+      <View style={styles.iconRow}>
+        {/* New Trophy Icon Button - now on the left of mail icon */}
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.navigate('UserLeaderboardScreen', { user })}
+        >
+          <Icon2 name="trophy" size={28} color="#007bff" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => navigation.navigate('UserMessagesScreen', { user })}
+        >
+          <View>
+            <Icon name="mail" size={28} color="#007bff" />
+            {hasUnreadMessages && (
+              <View
+                style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  width: 10,
+                  height: 10,
+                  backgroundColor: 'red',
+                  borderRadius: 5,
+                }}
+              />
+            )}
+          </View>
+        </TouchableOpacity>
+      </View>
 
       <ScrollView>
         <View style={styles.header}>
@@ -250,14 +260,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  mailIconContainer: {
+  iconRow: {
+    flexDirection: 'row',
     position: 'absolute',
     top: 20,
-    right: 20,
+    right: 20, // Position the row to the right
     zIndex: 10,
+  },
+  iconButton: {
     padding: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.7)',
+    marginLeft: 10, // Add margin between buttons
   },
   center: {
     flex: 1,

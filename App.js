@@ -32,6 +32,7 @@ import MyVolunteerings from './screens/User/MyVolunteerings';
 import UserCodes from './screens/User/UserCodes';
 import PurchaseScreen from './screens/User/PurchaseScreen';
 import UserMessagesScreen from './screens/User/UserMessagesScreen';
+import UserLeaderboardScreen from './screens/User/UserLeaderboardScreen';
 
 //Admin
 import AdminHomeScreen from './screens/Admin/AdminHomeScreen';
@@ -170,6 +171,32 @@ export default function App() {
           component={SendCityMessage}
           options={{
             headerTitle: '',
+            headerTitleAlign: 'center',
+          }}
+        />
+
+        <Stack.Screen
+          name="UserLeaderboardScreen"
+          component={UserLeaderboardScreen}
+          options={{
+            headerShown: true,
+            title: 'Leader Board',
+            headerStyle: {
+              backgroundColor: '#880E4F',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#FFE5EC',
+            headerTitleStyle: {
+              fontSize: 30,
+              fontWeight: 'bold',
+              color: '#FFE5EC',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+              paddingTop: 8,
+            },
             headerTitleAlign: 'center',
           }}
         />
