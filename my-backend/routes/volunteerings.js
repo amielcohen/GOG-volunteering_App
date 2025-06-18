@@ -8,6 +8,7 @@ const CityOrganization = require('../models/CityOrganization');
 const User = require('../models/Users');
 const UserMessage = require('../models/UserMessage');
 const Organization = require('../models/Organization');
+const MonthlyStats = require('../models/MonthlyStats');
 
 const levelTable = require('../../constants/levelTable').default;
 const { calculateRewardCoins } = require('../../utils/rewardUtils');
@@ -417,6 +418,24 @@ router.put('/:id/close', async (req, res) => {
           user.showLevelUpModal = true;
         }
         await user.save();
+
+        // 👇 הוספה ל-MonthlyStats
+        const month = volunteering.date.getMonth();
+        const year = volunteering.date.getFullYear();
+
+        await MonthlyStats.findOneAndUpdate(
+          { userId: user._id, month, year },
+          {
+            $inc: {
+              totalMinutes: duration,
+              totalVolunteeringCount: 1,
+            },
+            $setOnInsert: {
+              city: user.city,
+            },
+          },
+          { upsert: true }
+        );
 
         // הודעה על הצלחה
         await new UserMessage({

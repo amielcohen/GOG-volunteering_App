@@ -62,6 +62,9 @@ app.use('/donation-organizations', donationOrganizationsRoutes);
 const userMessagesRoutes = require('./routes/userMessages');
 app.use('/user-messages', userMessagesRoutes);
 
+const monthlyStatsRoutes = require('./routes/monthlyStats');
+app.use('/monthly-stats', monthlyStatsRoutes);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');
