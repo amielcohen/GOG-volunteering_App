@@ -17,7 +17,7 @@ import config from '../../config';
 import ErrorModal from '../../components/ErrorModal';
 
 export default function EditCityProfileScreen({ route, navigation }) {
-  const { user, cityData } = route.params;
+  const { user, cityData, onGoBack } = route.params; // קבל גם את onGoBack מהפרמטרים
 
   const [username, setUsername] = useState(user.username || '');
   const [password, setPassword] = useState('');
@@ -107,6 +107,15 @@ export default function EditCityProfileScreen({ route, navigation }) {
 
       setErrorText({ title: 'הצלחה', message: 'הפרטים עודכנו בהצלחה' });
       setErrorVisible(true);
+
+      // --- הוספה/שינוי בקוד ---
+      // קרא לפונקציית ה-onGoBack אם היא קיימת
+      if (route.params?.onGoBack) {
+        route.params.onGoBack();
+      }
+      // נווט חזרה למסך הקודם
+      navigation.goBack();
+      // --- סוף הוספה/שינוי ---
     } catch (err) {
       console.error('Update error:', err);
       setErrorText({ title: 'שגיאה', message: err.message || 'אירעה שגיאה' });

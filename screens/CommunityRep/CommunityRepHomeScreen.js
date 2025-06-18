@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
@@ -10,6 +9,7 @@ import {
   Image,
   StatusBar,
   StyleSheet,
+  SafeAreaView, // שימוש ב-SafeAreaView עבור אזורים בטוחים
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
@@ -22,6 +22,8 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
   const [cityImageUrl, setCityImageUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  // מצב חדש לשליטה על רענון
+  const [shouldRefresh, setShouldRefresh] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -36,8 +38,13 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
         }
       };
 
-      fetchUser();
-    }, [currentUser._id])
+      // רענן משתמש רק אם shouldRefresh הוא true או בטעינה ראשונית
+      // הוסף !cityName כדי לוודא טעינה ראשונית
+      if (shouldRefresh || !cityName) {
+        fetchUser();
+        setShouldRefresh(false); // אפס את הדגל לאחר הרענון
+      }
+    }, [currentUser._id, shouldRefresh, cityName]) // הוסף את cityName לתלויות
   );
 
   useEffect(() => {
@@ -57,7 +64,7 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
       setCityName(res.data.name);
       setCityImageUrl(res.data.imageUrl);
     } catch (error) {
-      console.error('Error fetching city name:', error);
+      console.error('שגיאה באחזור שם העיר:', error);
       setCityName('עיר לא ידועה');
       setCityImageUrl(null);
     } finally {
@@ -65,15 +72,30 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
     }
   };
 
-  const handleNavigate = (screen) => {
-    navigation.navigate(screen, { user: currentUser });
+  const handleNavigate = (screen, params = {}) => {
+    // עבור מסך EditCityProfileScreen, העבר פונקציית קריאה חוזרת שתפעיל רענון
+    if (screen === 'EditCityProfileScreen') {
+      navigation.navigate(screen, {
+        user: currentUser,
+        cityData: currentUser.city,
+        onGoBack: () => setShouldRefresh(true), // קריאה חוזרת שתגדיר את דגל הרענון
+      });
+    } else {
+      navigation.navigate(screen, { user: currentUser, ...params });
+    }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#4CAF50" />
-
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        {/* אייקון גלגל שיניים עבור "עריכת פרטי עיר" בפינה הימנית העליונה */}
+        <TouchableOpacity
+          style={styles.settingsIconContainer}
+          onPress={() => handleNavigate('EditCityProfileScreen')} // קרא ל-handleNavigate
+        >
+          <Icon name="settings" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           {loading ? (
             <ActivityIndicator size="large" color="#FFFFFF" />
@@ -93,83 +115,66 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
         </Text>
       </View>
 
-      <TouchableOpacity
-        style={styles.actionCard}
-        onPress={() => handleNavigate('ShopMenu')}
-      >
-        <Icon name="store" size={28} color="#4CAF50" style={styles.cardIcon} />
-        <Text style={styles.actionText}> צפה בחנות </Text>
-        <Icon name="arrow-forward-ios" size={20} color="#757575" />
-      </TouchableOpacity>
+      <View style={styles.cardsGrid}>
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => handleNavigate('ShopMenu')}
+        >
+          <Icon name="store" size={30} color="#4CAF50" />
+          <Text style={styles.actionText}> צפה בחנות </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.actionCard}
-        onPress={() => handleNavigate('ManageShopInfo')}
-      >
-        <Icon
-          name="category"
-          size={28}
-          color="#2196F3"
-          style={styles.cardIcon}
-        />
-        <Text style={styles.actionText}> ניהול פרטי חנות </Text>
-        <Icon name="arrow-forward-ios" size={20} color="#757575" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => handleNavigate('ManageShopInfo')}
+        >
+          <Icon name="category" size={30} color="#2196F3" />
+          <Text style={styles.actionText}> ניהול פרטי חנות </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.actionCard}
-        onPress={() =>
-          navigation.navigate('OrganizationManagerScreen', {
-            user: currentUser,
-            cityName,
-          })
-        }
-      >
-        <Icon name="groups" size={28} color="#FF9800" style={styles.cardIcon} />
-        <Text style={styles.actionText}> ניהול ארגונים </Text>
-        <Icon name="arrow-forward-ios" size={20} color="#757575" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() =>
+            handleNavigate('OrganizationManagerScreen', { cityName })
+          }
+        >
+          <Icon name="groups" size={30} color="#FF9800" />
+          <Text style={styles.actionText}> ניהול ארגונים </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.actionCard}
-        onPress={() =>
-          navigation.navigate('CommunityLeaderboardScreen', {
-            user: currentUser,
-            cityData: currentUser.city,
-          })
-        }
-      >
-        <Icon name="mail" size={28} color="#9C27B0" style={styles.cardIcon} />
-        <Text style={styles.actionText}>לוח מובילים</Text>
-        <Icon name="arrow-forward-ios" size={20} color="#757575" />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() =>
+            handleNavigate('CommunityLeaderboardScreen', {
+              cityData: currentUser.city,
+            })
+          }
+        >
+          <Icon name="leaderboard" size={30} color="#9C27B0" />
+          <Text style={styles.actionText}> לוח מובילים </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.actionCard}
-        onPress={() =>
-          navigation.navigate('SendCityMessage', {
-            user: currentUser,
-            cityData: currentUser.city,
-          })
-        }
-      >
-        <Icon name="mail" size={28} color="#9C27B0" style={styles.cardIcon} />
-        <Text style={styles.actionText}>שליחת הודעה למשתמשים</Text>
-        <Icon name="arrow-forward-ios" size={20} color="#757575" />
-      </TouchableOpacity>
+        {/* placeholder עבור כרטיס סטטיסטיקות עתידי */}
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => {
+            /* Placeholder for navigation to statistics screen */
+          }}
+        >
+          <Icon name="bar-chart" size={30} color="#E040FB" />
+          <Text style={styles.actionText}> סטטיסטיקות </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.secondaryCard}
-        onPress={() =>
-          navigation.navigate('EditCityProfileScreen', {
-            user: currentUser,
-            cityData: currentUser.city,
-          })
-        }
-      >
-        <Icon name="settings" size={24} color="#999" />
-        <Text style={styles.actionText}>עריכת פרטים</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() =>
+            handleNavigate('SendCityMessage', { cityData: currentUser.city })
+          }
+        >
+          <Icon name="mail" size={30} color="#E91E63" />
+          <Text style={styles.actionText}> שליחת הודעה </Text>
+        </TouchableOpacity>
+      </View>
 
       <Modal
         visible={modalVisible}
@@ -191,70 +196,83 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
           />
         </Pressable>
       </Modal>
-    </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    backgroundColor: '#F0F4F8', // רקע אפרפר-כחלחל בהיר מאוד
-    paddingBottom: 30, // רווח למטה
+    flex: 1,
+    backgroundColor: '#F0F4F8',
+    paddingBottom: 20,
   },
   header: {
-    backgroundColor: '#4CAF50', // ירוק מרגיע
+    backgroundColor: '#66BB6A',
     paddingVertical: 40,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     alignItems: 'center',
-    marginBottom: 30,
-    shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
-    elevation: 8,
+    marginBottom: 20,
+    shadowColor: 'rgba(0, 0, 0, 0.15)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 15,
+    elevation: 10,
+    position: 'relative',
+  },
+  settingsIconContainer: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    padding: 10,
   },
   cityImage: {
-    width: 120,
-    height: 120,
-    marginBottom: 12,
-    borderWidth: 3, // עובי מסגרת עדין
-    borderColor: '#FFFFFF', // מסגרת לבנה
-    resizeMode: 'cover', // נשאר מרובע, אבל מכסה את השטח
-    borderRadius: 10, // פינות מעוגלות קלות לתמונה מרובעת
+    width: 125,
+    height: 125,
+    marginBottom: 15,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    resizeMode: 'cover',
+    borderRadius: 12,
   },
   title: {
-    fontSize: 24, // מעט גדול יותר
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginTop: 8,
+    marginTop: 10,
     textAlign: 'center',
+    writingDirection: 'rtl',
+  },
+  cardsGrid: {
+    flexDirection: 'row-reverse',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
   actionCard: {
-    flexDirection: 'row-reverse', // כדי שהאייקון יהיה מימין
-    alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
-    marginHorizontal: 20,
-    padding: 18, // הגדלתי פדינג
-    marginBottom: 15, // מרווח בין כרטיסים
-    shadowColor: 'rgba(0, 0, 0, 0.08)',
+    padding: 20,
+    marginBottom: 20,
+    width: '45%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.8,
     shadowRadius: 8,
-    elevation: 5,
-  },
-  cardIcon: {
-    marginRight: 15, // מרווח מהטקסט אחרי יישור row-reverse
+    elevation: 6,
+    aspectRatio: 1,
   },
   actionText: {
-    flex: 1, // מאפשר לטקסט לתפוס את רוב השטח
-    fontSize: 18, // גודל קריא
-    fontWeight: '600', // מעט מודגש
-    color: '#333333', // צבע כהה לקריאות
-    textAlign: 'right', // יישור לימין
-    marginLeft: 10, // רווח מהחץ השמאלי
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginTop: 10,
+    textAlign: 'center',
+    writingDirection: 'rtl',
   },
   modalBackground: {
     flex: 1,
@@ -263,19 +281,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   enlargedImage: {
-    width: '95%',
-    height: '70%',
+    width: '90%',
+    height: '60%',
     resizeMode: 'contain',
-    borderWidth: 3,
+    borderWidth: 4,
     borderColor: '#FFFFFF',
-    borderRadius: 10, // פינות מעוגלות קלות לתמונה מוגדלת
-  },
-  secondaryCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    marginTop: 30,
-    padding: 12,
-    borderRadius: 10,
+    borderRadius: 15,
   },
 });
