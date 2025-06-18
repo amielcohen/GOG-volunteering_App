@@ -133,6 +133,20 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
       <TouchableOpacity
         style={styles.actionCard}
         onPress={() =>
+          navigation.navigate('CommunityLeaderboardScreen', {
+            user: currentUser,
+            cityData: currentUser.city,
+          })
+        }
+      >
+        <Icon name="mail" size={28} color="#9C27B0" style={styles.cardIcon} />
+        <Text style={styles.actionText}>לוח מובילים</Text>
+        <Icon name="arrow-forward-ios" size={20} color="#757575" />
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.actionCard}
+        onPress={() =>
           navigation.navigate('SendCityMessage', {
             user: currentUser,
             cityData: currentUser.city,
