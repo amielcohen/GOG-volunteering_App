@@ -13,6 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
+import BlockedModal from '../../components/BlockedModal';
 
 import CustomCoinIcon from '../../components/CustomCoinIcon';
 import axios from 'axios';
@@ -27,6 +28,8 @@ export default function UserHomeScreen({ route, navigation }) {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [levelUpModalVisible, setLevelUpModalVisible] = useState(false); // סטייט לנראות מודל עליית רמה
+  const [blockedVisible, setBlockedVisible] = useState(false);
+  const [blockedUntilDate, setBlockedUntilDate] = useState('');
 
   const fetchUser = async () => {
     try {
@@ -39,6 +42,20 @@ export default function UserHomeScreen({ route, navigation }) {
     } finally {
       setLoading(false); // חשוב לוודא שזה תמיד נקרא
     }
+  };
+
+  const isUserBlocked = (user) => {
+    const now = new Date();
+    if (user.blockedUntil && new Date(user.blockedUntil) > now) {
+      return true;
+    }
+
+    // ניקוי נקודות ישנות
+    const validBadPoints = user.badPoints?.filter(
+      (pointDate) => now - new Date(pointDate) <= 180 * 24 * 60 * 60 * 1000 // 180 יום
+    );
+
+    return (validBadPoints?.length || 0) >= 3;
   };
 
   // --- Logic for Messages ---
@@ -122,7 +139,6 @@ export default function UserHomeScreen({ route, navigation }) {
   return (
     <View style={styles.container}>
       <View style={styles.iconRow}>
-        {/* New Trophy Icon Button - now on the left of mail icon */}
         <TouchableOpacity
           style={styles.iconButton}
           onPress={() => navigation.navigate('UserLeaderboardScreen', { user })}
@@ -188,7 +204,17 @@ export default function UserHomeScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => navigation.navigate('SearchVolunteering', { user })}
+          onPress={() => {
+            if (user.blockedUntil && new Date(user.blockedUntil) > new Date()) {
+              const formatted = new Date(user.blockedUntil).toLocaleDateString(
+                'he-IL'
+              );
+              setBlockedUntilDate(formatted);
+              setBlockedVisible(true);
+            } else {
+              navigation.navigate('SearchVolunteering', { user });
+            }
+          }}
         >
           <Icon name="search" size={28} color="#007bff" />
           <Text style={styles.actionText}>מצא התנדבויות חדשות</Text>
@@ -250,6 +276,11 @@ export default function UserHomeScreen({ route, navigation }) {
         level={user.level}
         username={user.firstName}
         onClose={handleCloseLevelUpModal}
+      />
+      <BlockedModal
+        visible={blockedVisible}
+        onClose={() => setBlockedVisible(false)}
+        blockedUntilDate={blockedUntilDate}
       />
     </View>
   );
