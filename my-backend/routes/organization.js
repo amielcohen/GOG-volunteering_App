@@ -87,13 +87,12 @@ router.get('/', async (req, res) => {
   }
 });
 
-// שליפת עמותה אחת לפי ID עם ערים פעילות
+// שליפת עמותה אחת לפי ID עם ערים פעילות ומקושרות
 router.get('/:id', async (req, res) => {
   try {
-    const organization = await Organization.findById(req.params.id).populate(
-      'activeCities',
-      'name'
-    );
+    const organization = await Organization.findById(req.params.id)
+      .populate('activeCities', 'name')
+      .populate('linkedCities', 'name');
 
     if (!organization) {
       return res.status(404).json({ message: 'עמותה לא נמצאה' });
@@ -119,6 +118,35 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'העמותה והקישורים העירוניים נמחקו בהצלחה' });
   } catch (err) {
     res.status(500).json({ message: 'שגיאה במחיקת עמותה' });
+  }
+});
+
+// עדכון עמותה גלובלית (שם, תיאור, תמונה, אימייל, טלפון)
+router.put('/:id', async (req, res) => {
+  try {
+    const { name, description, imageUrl, contactEmail, phone } = req.body;
+
+    const updatedOrg = await Organization.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        description,
+        imageUrl,
+        contactEmail,
+        phone,
+        updatedAt: new Date(),
+      },
+      { new: true }
+    );
+
+    if (!updatedOrg) {
+      return res.status(404).json({ message: 'עמותה לא נמצאה' });
+    }
+
+    res.json(updatedOrg);
+  } catch (err) {
+    console.error('שגיאה בעדכון עמותה:', err);
+    res.status(500).json({ message: 'שגיאה בשרת בעדכון עמותה' });
   }
 });
 

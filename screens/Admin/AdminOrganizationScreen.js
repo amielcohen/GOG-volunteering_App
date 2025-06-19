@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+
 import axios from 'axios';
 import OrganizationCard from '../../components/OrganizationCard';
 import config from '../../config';
@@ -30,9 +32,11 @@ export default function AdminOrganizationScreen({ navigation }) {
   const [showConfirmModal, setShowConfirmModal] = useState(false); //delete model
   const [orgToDelete, setOrgToDelete] = useState(null);
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrganizations();
+    }, [])
+  );
 
   const fetchOrganizations = async () => {
     try {
@@ -73,9 +77,13 @@ export default function AdminOrganizationScreen({ navigation }) {
     <OrganizationCard
       organization={item}
       onPrimaryAction={() => requestDeleteOrg(item)} // לא רק id, אלא כל האובייקט
-      onViewDetails={() => {}} // כרגע ריק אם אתה לא רוצה להציג פרטים
+      onViewDetails={() =>
+        navigation.navigate('GlobalOrganizationDetailsScreen', {
+          organizationId: item._id,
+        })
+      }
       primaryButtonLabel="מחק"
-      viewDetailsLabel="פרטים"
+      viewDetailsLabel="פרטים ועריכה"
     />
   );
 
