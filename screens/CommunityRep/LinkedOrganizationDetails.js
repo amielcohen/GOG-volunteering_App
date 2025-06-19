@@ -287,9 +287,14 @@ const LinkedOrganizationDetails = ({ route }) => {
           />
           <View style={{ height: 10 }} />
           <Button
-            title="סטטיסטיקת מטבעות"
+            title="סטטיסטיקת עמותה"
             color="#4A90E2"
-            onPress={() => console.log('TODO: Navigate to Coins Stats')}
+            onPress={() =>
+              navigation.navigate('OrganizationStatsScreen', {
+                organization,
+                user,
+              })
+            }
           />
         </View>
       </View>

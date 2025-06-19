@@ -61,6 +61,7 @@ import EditCityProfileScreen from './screens/CommunityRep/EditCityProfileScreen'
 import SendCityMessage from './screens/CommunityRep/SendCityMessage';
 import CommunityLeaderboardScreen from './screens/CommunityRep/CommunityLeaderboardScreen';
 import CityMonthlyPrizesScreen from './screens/CommunityRep/CityMonthlyPrizesScreen';
+import OrganizationStatsScreen from './screens/CommunityRep/OrganizationStatsScreen';
 
 //OrganizationRep
 import OrganizationRepHomeScreen from './screens/OrganizationRep/OrganizationRepHomeScreen';
@@ -219,6 +220,32 @@ export default function App() {
               fontSize: 30,
               fontWeight: 'bold',
               color: '#FFE5EC',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+              paddingTop: 8,
+            },
+            headerTitleAlign: 'center',
+          }}
+        />
+
+        <Stack.Screen
+          name="OrganizationStatsScreen"
+          component={OrganizationStatsScreen}
+          options={{
+            headerShown: true,
+            title: 'סטטיסטיקה',
+            headerStyle: {
+              backgroundColor: '#4A90E2',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#FFF',
+            headerTitleStyle: {
+              fontSize: 30,
+              fontWeight: 'bold',
+              color: '#FFF',
               textAlign: Platform.OS === 'ios' ? 'center' : 'right',
               flex: 1,
               paddingRight: Platform.OS === 'android' ? 20 : 0,
