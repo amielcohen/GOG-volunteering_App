@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react'; // הוסף useCallback
 import {
   View,
   Text,
@@ -15,9 +15,13 @@ import FillProfileModal from '../../components/FillProfileModal';
 import axios from 'axios';
 import config from '../../config';
 import OrganizationRepHeader from '../../components/OrganizationRepHeader';
+import { useFocusEffect } from '@react-navigation/native'; // 💡 ייבוא חדש!
 
 export default function OrganizationRepHomeScreen({ route, navigation }) {
   const { user: initialUser } = route.params;
+  // אין צורך ב-shouldRefresh יותר
+  // const [shouldRefresh, setShouldRefresh] = useState(false);
+
   const [user, setUser] = useState(initialUser);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -42,43 +46,58 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
         ? [extractId(user.city)]
         : [];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(
-          `${config.SERVER_URL}/auth/profile/${initialUser._id}`
-        );
-        const fullUser = res.data;
-        setUser(fullUser);
-
-        if (!fullUser.firstName || !fullUser.lastName) {
-          setShowModal(true);
-        }
-
+  // 💡 שימוש ב-useFocusEffect במקום useEffect ותלות ב-shouldRefresh
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        setLoading(true); // הצג לודר בכל רענון
         try {
-          const vRes = await axios.get(
-            `${config.SERVER_URL}/volunteerings/by-org-rep/${initialUser._id}`
+          const res = await axios.get(
+            `${config.SERVER_URL}/auth/profile/${initialUser._id}`
           );
-          setVolunteeringList(vRes.data);
-        } catch {
-          console.warn('לא נמצאו התנדבויות או שהראוט לא קיים עדיין');
-        }
-      } catch (err) {
-        console.error('שגיאה בטעינת הנתונים:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+          const fullUser = res.data;
+          setUser(fullUser);
 
-    fetchData();
-  }, []);
+          if (!fullUser.firstName || !fullUser.lastName) {
+            setShowModal(true);
+          }
+
+          try {
+            const vRes = await axios.get(
+              `${config.SERVER_URL}/volunteerings/by-org-rep/${fullUser._id}` // השתמש ב-fullUser המעודכן
+            );
+            setVolunteeringList(vRes.data);
+          } catch (err) {
+            // לתפוס שגיאה ספציפית
+            console.warn('לא נמצאו התנדבויות או שהראוט לא קיים עדיין', err);
+            setVolunteeringList([]); // וודא שהרשימה ריקה במקרה של שגיאה
+          }
+        } catch (err) {
+          console.error('שגיאה בטעינת הנתונים:', err);
+          // ניתן להציג הודעת שגיאה למשתמש
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchData();
+
+      // פונקציית ניקוי (אופציונלי אך מומלץ)
+      return () => {
+        // ניתן לבצע כאן פעולות ניקוי אם נדרש
+      };
+    }, [initialUser._id]) // התלות היא ב-initialUser._id כדי לטעון נתוני המשתמש הנכונים
+  );
 
   useEffect(() => {
     const fetchCityNames = async () => {
       const validIds = cities.filter(
         (id) => typeof id === 'string' && id.length === 24
       );
-      if (validIds.length === 0) return;
+      if (validIds.length === 0) {
+        setCityNames([]); // וודא שהרשימה ריקה אם אין ID-ים
+        return;
+      }
 
       try {
         const res = await axios.get(
@@ -88,14 +107,29 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
         setCityNames(names);
       } catch (err) {
         console.error('שגיאה בשליפת שמות ערים:', err);
+        setCityNames([]); // וודא שהרשימה ריקה במקרה של שגיאה
       }
     };
 
-    fetchCityNames();
-  }, [cities]);
+    // קריאה לפונקציה רק אם יש שינויים ב-cities
+    if (cities && cities.length > 0) {
+      fetchCityNames();
+    } else {
+      setCityNames([]); // נקה את שמות הערים אם אין ערים
+    }
+  }, [cities]); // שים לב, עכשיו cities היא תלות
 
   const handleNavigate = (screen) => {
-    navigation.navigate(screen, { user });
+    if (screen === 'EditOrganizationRepProfileScreen') {
+      navigation.navigate(screen, {
+        user, // העבר את אובייקט המשתמש הנוכחי
+        organization: user.organization,
+        // onGoBack כבר לא נחוץ עם useFocusEffect
+        // onGoBack: () => setShouldRefresh(true),
+      });
+    } else {
+      navigation.navigate(screen, { user });
+    }
   };
 
   if (loading) {
@@ -156,7 +190,7 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.secondaryCard}
-          onPress={() => handleNavigate('EditOrganizationProfile')}
+          onPress={() => handleNavigate('EditOrganizationRepProfileScreen')}
         >
           <Icon name="settings" size={24} color="#999" />
           <Text style={styles.secondaryText}>עריכת פרטי עמותה</Text>

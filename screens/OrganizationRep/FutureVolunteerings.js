@@ -42,7 +42,7 @@ export default function FutureVolunteeringsScreen({ route }) {
 
   useEffect(() => {
     fetch(
-      `${config.SERVER_URL}/volunteerings/future/open/byCityOfRep/${user._id}`
+      `${config.SERVER_URL}/volunteerings/future/open/byCityAndOrganization/${user._id}`
     )
       .then((res) => res.json())
       .then((data) => {

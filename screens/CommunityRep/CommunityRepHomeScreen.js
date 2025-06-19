@@ -1,183 +1,202 @@
-import React, { useState, useEffect, useCallback } from 'react';
+// screens/OrganizationRep/OrganizationRepHomeScreen.js
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Modal,
   Pressable,
   Image,
-  StatusBar,
-  StyleSheet,
-  SafeAreaView, // שימוש ב-SafeAreaView עבור אזורים בטוחים
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import FillProfileModal from '../../components/FillProfileModal';
 import axios from 'axios';
 import config from '../../config';
+import OrganizationRepHeader from '../../components/OrganizationRepHeader';
 import { useFocusEffect } from '@react-navigation/native';
 
-export default function CommunityRepHomeScreen({ navigation, route }) {
-  const [currentUser, setCurrentUser] = useState(route.params.user);
-  const [cityName, setCityName] = useState('');
-  const [cityImageUrl, setCityImageUrl] = useState(null);
-  const [loading, setLoading] = useState(false);
+export default function OrganizationRepHomeScreen({ route, navigation }) {
+  const { user: initialUser } = route.params;
+  const [user, setUser] = useState(initialUser);
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [volunteeringList, setVolunteeringList] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  // מצב חדש לשליטה על רענון
+  const [cityNames, setCityNames] = useState([]);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+
+  const extractId = (val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return val;
+    if (val.$oid) return val.$oid;
+    if (val._id) return val._id.toString?.();
+    return val.toString?.() ?? null;
+  };
+
+  const cities =
+    Array.isArray(user.cities) && user.cities.length > 0
+      ? [extractId(user.cities[0])]
+      : user.city
+        ? [extractId(user.city)]
+        : [];
 
   useFocusEffect(
     useCallback(() => {
-      const fetchUser = async () => {
+      const fetchData = async () => {
         try {
           const res = await axios.get(
-            `${config.SERVER_URL}/auth/profile/${currentUser._id}`
+            `${config.SERVER_URL}/auth/profile/${initialUser._id}`
           );
-          if (res.data) setCurrentUser(res.data);
+          const fullUser = res.data;
+          setUser(fullUser);
+
+          if (!fullUser.firstName || !fullUser.lastName) {
+            setShowModal(true);
+          }
+
+          try {
+            const vRes = await axios.get(
+              `${config.SERVER_URL}/volunteerings/by-org-rep/${initialUser._id}`
+            );
+            setVolunteeringList(vRes.data);
+          } catch {
+            console.warn('לא נמצאו התנדבויות או שהראוט לא קיים עדיין');
+          }
         } catch (err) {
-          console.warn('שגיאה בטעינת המשתמש מחדש:', err.message);
+          console.error('שגיאה בטעינת הנתונים:', err);
+        } finally {
+          setLoading(false);
+          setShouldRefresh(false);
         }
       };
 
-      // רענן משתמש רק אם shouldRefresh הוא true או בטעינה ראשונית
-      // הוסף !cityName כדי לוודא טעינה ראשונית
-      if (shouldRefresh || !cityName) {
-        fetchUser();
-        setShouldRefresh(false); // אפס את הדגל לאחר הרענון
+      if (shouldRefresh || volunteeringList.length === 0) {
+        fetchData();
       }
-    }, [currentUser._id, shouldRefresh, cityName]) // הוסף את cityName לתלויות
+    }, [initialUser._id, shouldRefresh])
   );
 
   useEffect(() => {
-    if (currentUser.city) {
-      const cityId =
-        typeof currentUser.city === 'object'
-          ? currentUser.city._id
-          : currentUser.city;
-      fetchCityName(cityId);
-    }
-  }, [currentUser.city]);
+    const fetchCityNames = async () => {
+      const validIds = cities.filter(
+        (id) => typeof id === 'string' && id.length === 24
+      );
+      if (validIds.length === 0) return;
 
-  const fetchCityName = async (cityId) => {
-    try {
-      setLoading(true);
-      const res = await axios.get(`${config.SERVER_URL}/cities/${cityId}`);
-      setCityName(res.data.name);
-      setCityImageUrl(res.data.imageUrl);
-    } catch (error) {
-      console.error('שגיאה באחזור שם העיר:', error);
-      setCityName('עיר לא ידועה');
-      setCityImageUrl(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const res = await axios.get(
+          `${config.SERVER_URL}/cities/byIds?ids=${validIds.join(',')}`
+        );
+        const names = res.data.map((city) => city.name);
+        setCityNames(names);
+      } catch (err) {
+        console.error('שגיאה בשליפת שמות ערים:', err);
+      }
+    };
 
-  const handleNavigate = (screen, params = {}) => {
-    // עבור מסך EditCityProfileScreen, העבר פונקציית קריאה חוזרת שתפעיל רענון
-    if (screen === 'EditCityProfileScreen') {
-      navigation.navigate(screen, {
-        user: currentUser,
-        cityData: currentUser.city,
-        onGoBack: () => setShouldRefresh(true), // קריאה חוזרת שתגדיר את דגל הרענון
-      });
+    fetchCityNames();
+  }, [cities]);
+
+  const handleNavigate = async (screen) => {
+    if (screen === 'EditOrganizationRepProfileScreen') {
+      try {
+        const res = await axios.get(
+          `${config.SERVER_URL}/city-organizations/find-by-org-and-city`,
+          {
+            params: {
+              organizationId: user.organization,
+              cityId: user.city,
+            },
+          }
+        );
+
+        const cityOrg = res.data;
+
+        navigation.navigate(screen, {
+          user,
+          organization: cityOrg,
+          onGoBack: () => setShouldRefresh(true),
+        });
+      } catch (err) {
+        console.error('שגיאה בשליפת עמותה עירונית:', err);
+        setErrorText({
+          title: 'שגיאה',
+          message: 'אירעה שגיאה בטעינת העמותה העירונית',
+        });
+        setErrorVisible(true);
+      }
     } else {
-      navigation.navigate(screen, { user: currentUser, ...params });
+      navigation.navigate(screen, { user });
     }
   };
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#4CAF50" />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        {/* אייקון גלגל שיניים עבור "עריכת פרטי עיר" בפינה הימנית העליונה */}
-        <TouchableOpacity
-          style={styles.settingsIconContainer}
-          onPress={() => handleNavigate('EditCityProfileScreen')} // קרא ל-handleNavigate
-        >
-          <Icon name="settings" size={28} color="#FFFFFF" />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#FFFFFF" />
-          ) : (
-            <Image
-              source={
-                cityImageUrl
-                  ? { uri: cityImageUrl }
-                  : require('../../images/defaultProfile.png')
-              }
-              style={styles.cityImage}
-            />
-          )}
-        </TouchableOpacity>
-        <Text style={styles.title}>
-          שלום מנהל העיר {cityName || 'לא ידועה'}!
-        </Text>
-      </View>
-
-      <View style={styles.cardsGrid}>
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => handleNavigate('ShopMenu')}
-        >
-          <Icon name="store" size={30} color="#4CAF50" />
-          <Text style={styles.actionText}> צפה בחנות </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() => handleNavigate('ManageShopInfo')}
-        >
-          <Icon name="category" size={30} color="#2196F3" />
-          <Text style={styles.actionText}> ניהול פרטי חנות </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() =>
-            handleNavigate('OrganizationManagerScreen', { cityName })
+    <View style={styles.container}>
+      <ScrollView>
+        <OrganizationRepHeader
+          repName={user.firstName + ' ' + user.lastName}
+          organizationName={user.organization?.name}
+          organizationImage={
+            user.organization?.imageUrl
+              ? { uri: user.organization.imageUrl }
+              : require('../../images/noImageFound.webp')
           }
+          cities={cityNames}
+          backgroundColor="#e6f0ff"
+          onImagePress={() => setModalVisible(true)}
+        />
+
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => handleNavigate('CreateVolunteering')}
         >
-          <Icon name="groups" size={30} color="#FF9800" />
-          <Text style={styles.actionText}> ניהול ארגונים </Text>
+          <Icon name="add-circle" size={28} color="#007bff" />
+          <Text style={styles.actionText}>צור התנדבות חדשה</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() =>
-            handleNavigate('CommunityLeaderboardScreen', {
-              cityData: currentUser.city,
-            })
-          }
+          onPress={() => handleNavigate('FutureVolunteerings')}
         >
-          <Icon name="leaderboard" size={30} color="#9C27B0" />
-          <Text style={styles.actionText}> לוח מובילים </Text>
-        </TouchableOpacity>
-
-        {/* placeholder עבור כרטיס סטטיסטיקות עתידי */}
-        <TouchableOpacity
-          style={styles.actionCard}
-          onPress={() =>
-            handleNavigate('CityStatsScreen', {
-              cityId: currentUser.city._id,
-              cityName,
-            })
-          }
-        >
-          <Icon name="bar-chart" size={30} color="#E040FB" />
-          <Text style={styles.actionText}> סטטיסטיקות </Text>
+          <Icon name="event" size={28} color="#007bff" />
+          <Text style={styles.actionText}>התנדבויות פעילות ועתידיות</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() =>
-            handleNavigate('SendCityMessage', { cityData: currentUser.city })
-          }
+          onPress={() => handleNavigate('OpenVolunteerings')}
         >
-          <Icon name="mail" size={30} color="#E91E63" />
-          <Text style={styles.actionText}> שליחת הודעה </Text>
+          <Icon name="check-circle" size={28} color="#007bff" />
+          <Text style={styles.actionText}>סימון נוכחות</Text>
         </TouchableOpacity>
-      </View>
+
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => handleNavigate('VolunteeringsHistory')}
+        >
+          <Icon name="bar-chart" size={28} color="#007bff" />
+          <Text style={styles.actionText}>צפייה בדוחות</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryCard}
+          onPress={() => handleNavigate('EditOrganizationProfile')}
+        >
+          <Icon name="settings" size={24} color="#999" />
+          <Text style={styles.secondaryText}>עריכת פרטי עמותה</Text>
+        </TouchableOpacity>
+      </ScrollView>
 
       <Modal
         visible={modalVisible}
@@ -191,104 +210,73 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
         >
           <Image
             source={
-              cityImageUrl
-                ? { uri: cityImageUrl }
+              user.organization?.imageUrl
+                ? { uri: user.organization.imageUrl }
                 : require('../../images/defaultProfile.png')
             }
             style={styles.enlargedImage}
           />
         </Pressable>
       </Modal>
-    </SafeAreaView>
+
+      {showModal && (
+        <FillProfileModal
+          userId={user._id}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F0F4F8',
-    paddingBottom: 20,
-  },
-  header: {
-    backgroundColor: '#66BB6A',
-    paddingVertical: 40,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    alignItems: 'center',
-    marginBottom: 20,
-    shadowColor: 'rgba(0, 0, 0, 0.15)',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 1,
-    shadowRadius: 15,
-    elevation: 10,
-    position: 'relative',
-  },
-  settingsIconContainer: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    padding: 10,
-  },
-  cityImage: {
-    width: 125,
-    height: 125,
-    marginBottom: 15,
-    borderWidth: 3,
-    borderColor: '#FFFFFF',
-    resizeMode: 'cover',
-    borderRadius: 12,
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginTop: 10,
-    textAlign: 'center',
-    writingDirection: 'rtl',
-  },
-  cardsGrid: {
-    flexDirection: 'row-reverse',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   actionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 20,
-    marginBottom: 20,
-    width: '45%',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-    elevation: 6,
-    aspectRatio: 1,
+    backgroundColor: '#f9f9f9',
+    marginHorizontal: 20,
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   actionText: {
+    fontSize: 18,
+    marginRight: 12,
+    color: '#333',
+    textAlign: 'right',
+    flex: 1,
+  },
+  secondaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 30,
+    padding: 12,
+    borderRadius: 10,
+  },
+  secondaryText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#333333',
-    marginTop: 10,
-    textAlign: 'center',
-    writingDirection: 'rtl',
+    marginRight: 10,
+    color: '#666',
+    textAlign: 'right',
+    flex: 1,
   },
   modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   enlargedImage: {
     width: '90%',
-    height: '60%',
+    height: '70%',
     resizeMode: 'contain',
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
-    borderRadius: 15,
   },
 });

@@ -2,7 +2,11 @@ const mongoose = require('mongoose');
 
 const cityOrganizationSchema = new mongoose.Schema(
   {
-    city: { type: String, required: true }, // למשל "נתיבות"
+    city: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'City',
+      required: true,
+    },
     organizationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Organization',
