@@ -322,4 +322,14 @@ router.get('/by-city/:cityId', async (req, res) => {
   }
 });
 
+// שליפת מספר כל המשתמשים מסוג user
+router.get('/count-users', async (req, res) => {
+  try {
+    const count = await User.countDocuments({ role: 'user' });
+    res.status(200).json({ count });
+  } catch (error) {
+    console.error('שגיאה בשליפת כמות משתמשים:', error);
+    res.status(500).json({ message: 'שגיאה בשרת' });
+  }
+});
 module.exports = router;

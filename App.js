@@ -40,6 +40,7 @@ import AdminOrganizationScreen from './screens/Admin/AdminOrganizationScreen';
 import AddOrganizationScreen from './screens/Admin/AddOrganizationScreen';
 import AddCityScreen from './screens/Admin/AddCityScreen';
 import ManageCitiesScreen from './screens/Admin/ManageCitiesScreen';
+import AdminStatsScreen from './screens/Admin/AdminStatsScreen';
 
 //CommunityRep
 import CommunityRepHomeScreen from './screens/CommunityRep/CommunityRepHomeScreen';
@@ -281,7 +282,31 @@ export default function App() {
             headerTitleAlign: 'center',
           }}
         />
-
+        <Stack.Screen
+          name="AdminStatsScreen"
+          component={AdminStatsScreen}
+          options={{
+            headerShown: true,
+            title: 'סטטיסטיקה',
+            headerStyle: {
+              backgroundColor: '#4A90E2',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#FFF',
+            headerTitleStyle: {
+              fontSize: 30,
+              fontWeight: 'bold',
+              color: '#FFF',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+              paddingTop: 8,
+            },
+            headerTitleAlign: 'center',
+          }}
+        />
         <Stack.Screen
           name="UserLeaderboardScreen"
           component={UserLeaderboardScreen}

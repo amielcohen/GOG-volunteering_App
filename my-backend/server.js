@@ -74,6 +74,9 @@ app.use('/stats', organizationStatsRoutes);
 const cityStatsRoutes = require('./routes/stats/cityStats');
 app.use('/stats/city', cityStatsRoutes);
 
+const adminStatsRoutes = require('./routes/stats/adminStats');
+app.use('/stats/admin', adminStatsRoutes);
+
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {
   res.send('Server is running!');

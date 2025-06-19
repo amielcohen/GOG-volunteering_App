@@ -35,6 +35,17 @@ router.get('/unlinked/:cityId', async (req, res) => {
   }
 });
 
+// ראוט שמחזיר את מספר העמותות הגלובליות
+router.get('/count-global', async (req, res) => {
+  try {
+    const count = await Organization.countDocuments({ isGlobal: true });
+    res.status(200).json({ count });
+  } catch (err) {
+    console.error('שגיאה בספירת עמותות גלובליות:', err);
+    res.status(500).json({ message: 'שגיאה בשרת' });
+  }
+});
+
 // הוספת עמותה גלובלית
 router.post('/', async (req, res) => {
   const { name, description, type, imageUrl, contactEmail, phone, isGlobal } =
