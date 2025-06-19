@@ -4,110 +4,175 @@ import {
   Text,
   StyleSheet,
   Pressable,
-  Alert,
   Image,
-  ScrollView,
+  StatusBar, // אין צורך ב-ScrollView, אז נסיר אותו
 } from 'react-native';
 
 const AdminHomeScreen = ({ navigation }) => {
-  const handlePress = (action) => {
-    Alert.alert('Button Pressed!', `You pressed the "${action}" button.`);
-  };
-
-  const navigateToOrganizations = () => {
-    navigation.navigate('AdminOrganizationScreen');
-  };
-
-  const navigateToAddCity = () => {
-    navigation.navigate('AddCityScreen');
-  };
-
-  const navigateToCityManage = () => {
-    navigation.navigate('ManageCitiesScreen');
-  };
-
-  const navigateStat = () => {
-    navigation.navigate('AdminStatsScreen');
+  const navigateTo = (screenName) => {
+    navigation.navigate(screenName);
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    // השתמש ב-View במקום ScrollView כיוון שאין צורך בגלילה
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#4A3B8A" />
+
       <View style={styles.header}>
         <Image
-          source={require('../../images/adminBanner.png')}
+          source={require('../../images/adminBanner.png')} // וודא שהנתיב לתמונה נכון!
           style={styles.bannerImage}
         />
         <Text style={styles.welcomeText}>שלום, מנהל מערכת</Text>
       </View>
 
-      <Pressable style={[styles.card, styles.greenCard]} onPress={navigateStat}>
-        <Text style={styles.cardText}>צפה בסטטיסטיקה</Text>
-      </Pressable>
+      {/* הקונטיינר הראשי עבור כל הכפתורים */}
+      <View style={styles.buttonsGroupContainer}>
+        {/* כרטיס: צפה בסטטיסטיקה */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.cardOuterFrame, // המסגרת הלבנה של הכפתור הבודד
+            pressed && styles.cardPressedOuter, // אפקט לחיצה על המסגרת
+          ]}
+          onPress={() => navigateTo('AdminStatsScreen')}
+        >
+          <View
+            style={[styles.cardInnerBackground, styles.cardStatsBackground]}
+          >
+            <Text style={styles.cardText}>צפה בסטטיסטיקה</Text>
+          </View>
+        </Pressable>
 
-      <Pressable
-        style={[styles.card, styles.blueCard]}
-        onPress={navigateToOrganizations}
-      >
-        <Text style={styles.cardText}>ניהול ארגונים ועמותות</Text>
-      </Pressable>
+        {/* כרטיס: ניהול ארגונים ועמותות */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.cardOuterFrame,
+            pressed && styles.cardPressedOuter,
+          ]}
+          onPress={() => navigateTo('AdminOrganizationScreen')}
+        >
+          <View
+            style={[
+              styles.cardInnerBackground,
+              styles.cardOrganizationsBackground,
+            ]}
+          >
+            <Text style={styles.cardText}>ניהול ארגונים ועמותות</Text>
+          </View>
+        </Pressable>
 
-      <Pressable
-        style={[styles.card, styles.orangeCard]}
-        onPress={navigateToCityManage}
-      >
-        <Text style={styles.cardText}>ניהול ערים וישובים</Text>
-      </Pressable>
-    </ScrollView>
+        {/* כרטיס: ניהול ערים וישובים */}
+        <Pressable
+          style={({ pressed }) => [
+            styles.cardOuterFrame,
+            pressed && styles.cardPressedOuter,
+          ]}
+          onPress={() => navigateTo('ManageCitiesScreen')}
+        >
+          <View
+            style={[styles.cardInnerBackground, styles.cardCitiesBackground]}
+          >
+            <Text style={styles.cardText}>ניהול ערים וישובים</Text>
+          </View>
+        </Pressable>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1, // חשוב: flex: 1 כדי למלא את כל המסך ללא גלילה
     padding: 24,
-    backgroundColor: '#9f97d8',
-    flexGrow: 1,
+    backgroundColor: '#6A5ACD', // רקע סגול-כחול עמוק
+    alignItems: 'center',
+    justifyContent: 'space-between', // מרווח את התוכן באופן שווה
   },
   header: {
+    width: '100%',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 20, // הופחת כדי לפנות מקום, אם צריך
   },
   bannerImage: {
-    width: '100%',
-    height: 160,
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 4,
+    width: '95%',
+    height: 190,
+    borderRadius: 20,
+    marginBottom: 30,
+    resizeMode: 'cover',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 15,
+    elevation: 12,
+    borderWidth: 2,
+    borderColor: '#8A2BE2',
   },
   welcomeText: {
-    fontSize: 26,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#2c3e50',
+    color: '#E0E0FF',
+    textAlign: 'center',
+    letterSpacing: 1,
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
-
-  card: {
+  buttonsGroupContainer: {
+    width: '98%',
+    backgroundColor: '#776BCC', // רקע סגול-כחול מעט בהיר יותר
+    borderRadius: 25,
     padding: 20,
-    borderRadius: 14,
-    marginBottom: 18,
-    elevation: 3,
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 10,
+    alignItems: 'center',
+    marginBottom: 20, // הוסף מרווח תחתון אם יש צורך
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
-  greenCard: {
-    backgroundColor: '#e0f8e9',
+  cardOuterFrame: {
+    width: '100%',
+    borderRadius: 20,
+    marginBottom: 20, // רווח בין כפתורים
+    padding: 4,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 10,
   },
-  blueCard: {
-    backgroundColor: '#e0f0ff',
+  cardPressedOuter: {
+    transform: [{ scale: 0.96 }],
+    opacity: 0.8,
+    shadowOpacity: 0.1,
   },
-  orangeCard: {
-    backgroundColor: '#fff0e0',
+  cardInnerBackground: {
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardText: {
-    fontSize: 18,
-    color: '#2c3e50',
+    fontSize: 22,
     fontWeight: '600',
+    color: '#FFFFFF',
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 1,
+  },
+  cardStatsBackground: {
+    backgroundColor: '#87CEEB',
+  },
+  cardOrganizationsBackground: {
+    backgroundColor: '#66CDAA',
+  },
+  cardCitiesBackground: {
+    backgroundColor: '#FFA07A',
   },
 });
 
