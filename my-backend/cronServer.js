@@ -6,6 +6,10 @@ const Volunteering = require('./models/Volunteering');
 const UserMessage = require('./models/UserMessage');
 const MonthlyPrize = require('./models/MonthlyPrize');
 const MonthlyStats = require('./models/MonthlyStats');
+
+const OrganizationMonthlyStats = require('./models/OrganizationMonthlyStats');
+const CityOrganization = require('./models/CityOrganization');
+const { calculateRewardCoins } = require('../utils/rewardUtils');
 const User = require('./models/Users');
 
 // התחברות למסד הנתונים
@@ -193,5 +197,98 @@ cron.schedule('0 3 1 * *', async () => {
     console.log('✅ [REWARDS] סיום חלוקת פרסים');
   } catch (err) {
     console.error('❌ [REWARDS] שגיאה בחלוקת פרסים:', err);
+  }
+});
+
+cron.schedule('0 3 1 * *', async () => {
+  const now = new Date();
+  const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  const month = now.getMonth() === 0 ? 12 : now.getMonth();
+
+  console.log(
+    `📊 [ORGANIZATION_STATS] יוצרים סיכומים עבור חודש ${month}/${year} (${now.toLocaleString()})`
+  );
+
+  try {
+    const cityOrganizations = await CityOrganization.find({});
+    console.log(`🔍 נמצאו ${cityOrganizations.length} עמותות עירוניות`);
+
+    let totalProcessed = 0;
+
+    for (const cityOrg of cityOrganizations) {
+      const { organizationId, city } = cityOrg;
+      console.log(`🏷️ עמותה: ${organizationId}, עיר: ${city}`);
+
+      const startOfMonth = new Date(year, month - 1, 1);
+      const endOfMonth = new Date(year, month, 0, 23, 59, 59);
+
+      const volunteerings = await Volunteering.find({
+        organizationId,
+        isClosed: true,
+        date: { $gte: startOfMonth, $lte: endOfMonth },
+      });
+
+      console.log(
+        `📆 נמצאו ${volunteerings.length} התנדבויות סגורות לעמותה הזו`
+      );
+
+      let totalCoins = 0;
+      let totalMinutes = 0;
+      let totalVolunteers = 0;
+      let uniqueVolunteersSet = new Set();
+      let timestamps = [];
+      let relevantVolunteerings = 0;
+
+      for (const vol of volunteerings) {
+        const reward = calculateRewardCoins(vol, cityOrg);
+        let hasVolunteerFromCity = false;
+
+        for (const reg of vol.registeredVolunteers || []) {
+          if (reg.attended) {
+            const user = await User.findById(reg.userId);
+            if (user?.city?.toString() === city.toString()) {
+              totalCoins += reward;
+              totalMinutes += vol.durationMinutes;
+              totalVolunteers++;
+              uniqueVolunteersSet.add(String(reg.userId));
+              timestamps.push(vol.date);
+              hasVolunteerFromCity = true;
+            }
+          }
+        }
+
+        if (hasVolunteerFromCity) relevantVolunteerings++;
+      }
+
+      const statsDoc = {
+        organizationId,
+        city,
+        month,
+        year,
+        totalCoins,
+        totalVolunteerings: volunteerings.length,
+        relevantVolunteerings,
+        totalVolunteers,
+        uniqueVolunteers: uniqueVolunteersSet.size,
+        totalMinutes,
+        volunteeringTimestamps: timestamps,
+      };
+
+      await OrganizationMonthlyStats.findOneAndUpdate(
+        { organizationId, city, month, year },
+        statsDoc,
+        { upsert: true, new: true }
+      );
+
+      console.log(
+        `✅ סטטיסטיקות נשמרו לעמותה ${organizationId} בעיר ${city} (${volunteerings.length} התנדבויות)`
+      );
+
+      totalProcessed++;
+    }
+
+    console.log(`🎯 סיום עיבוד: ${totalProcessed} עמותות עודכנו`);
+  } catch (err) {
+    console.error('❌ שגיאה בהרצת סטטיסטיקת עמותות:', err);
   }
 });

@@ -1,36 +1,53 @@
-// services/authService.js
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import config from '../config';
 
-// שומר את מזהה המשתמש בזיכרון המקומי
+/**
+ * שמירת userId באחסון המקומי
+ */
 export const saveUserId = async (userId) => {
   try {
+    if (!userId) throw new Error('userId לא תקין');
     await AsyncStorage.setItem('userId', userId);
   } catch (err) {
-    console.error('שגיאה בשמירת userId:', err);
+    console.error('❌ שגיאה בשמירת userId:', err.message || err);
   }
 };
 
-// טוען את פרטי המשתמש מהשרת על בסיס ה-id שנשמר
+/**
+ * טוען את פרטי המשתמש על בסיס userId שנשמר.
+ * מחזיר null אם אין userId או אם הקריאה נכשלה.
+ */
 export const loadUserFromStorage = async () => {
   try {
     const userId = await AsyncStorage.getItem('userId');
-    if (!userId) return null;
+    if (!userId) {
+      console.warn('⚠️ לא נמצא userId באחסון');
+      return null;
+    }
 
     const res = await axios.get(`${config.SERVER_URL}/auth/profile/${userId}`);
     return res.data;
   } catch (err) {
-    console.error('שגיאה בטעינת משתמש מ-AsyncStorage:', err);
+    if (err?.response?.status === 404) {
+      console.warn('⚠️ המשתמש לא קיים בשרת');
+    } else {
+      console.error(
+        '❌ שגיאה בטעינת משתמש מ-AsyncStorage:',
+        err.message || err
+      );
+    }
     return null;
   }
 };
 
-// מסיר את המשתמש מהזיכרון המקומי
+/**
+ * מחיקת userId מהאחסון המקומי
+ */
 export const logout = async () => {
   try {
     await AsyncStorage.removeItem('userId');
   } catch (err) {
-    console.error('שגיאה במחיקת userId:', err);
+    console.error('❌ שגיאה במחיקת userId:', err.message || err);
   }
 };
