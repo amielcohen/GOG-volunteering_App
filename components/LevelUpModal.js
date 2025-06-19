@@ -1,4 +1,3 @@
-// components/LevelUpModal.js
 import React, { useEffect, useRef } from 'react';
 import {
   Modal,
@@ -7,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  Platform,
 } from 'react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
@@ -30,18 +30,18 @@ const LevelUpModal = ({ visible, level, username, onClose }) => {
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          {/* קונפטי מרכזי, עם אנימציה ארוכה במיוחד */}
+          {/* קונפטי בצבעי זהב, לבן וכחול יהלום */}
           {visible && (
             <ConfettiCannon
               ref={confettiCannonRef}
-              count={500} // כמות חלקיקים גבוהה מאוד
-              origin={{ x: width / 2, y: -20 }} // מוצא ממרכז החלק העליון
+              count={250} // הגדלה קלה של הכמות
+              origin={{ x: width / 2, y: -20 }}
               fadeOut={true}
               autoStart={false}
-              fallSpeed={5000} // נפילה איטית מאוד
-              explosionSpeed={1200} // פיצוץ ראשוני חזק
-              animationDuration={60000} // **60 שניות! (דקה שלמה של קונפטי!)**
-              colors={['#FFD700', '#00FFFF', '#FF00FF', '#00FF00', '#FFFF00']} // זהב, טורקיז, מג'נטה, ירוק ניאון, צהוב בוהק - זוהרים!
+              fallSpeed={3500} // קצת יותר איטי
+              explosionSpeed={900}
+              animationDuration={6000} // קצת יותר ארוך
+              colors={['#FFD700', '#B8860B', '#FFFFFF', '#A9D6E5', '#4CA1AF']} // זהב טהור, זהב עמוק, לבן, תכלת בהיר, כחול-טורקיז עמוק
             />
           )}
 
@@ -66,101 +66,102 @@ const LevelUpModal = ({ visible, level, username, onClose }) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)', // רקע שחור עמוק מאוד, למקסם את זוהר הצבעים
+    backgroundColor: 'rgba(0,0,0,0.8)', // רקע כהה יותר להבלטת הצבעים
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContainer: {
-    backgroundColor: '#1A1A2E', // כחול כהה מאוד / סגול כהה (כמו חלל)
+    backgroundColor: '#F8F8F8', // לבן-אוף-וויט רך
     padding: 30,
-    borderRadius: 25,
+    borderRadius: 25, // פינות מעוגלות יותר
     alignItems: 'center',
-    width: '88%',
-    maxWidth: 400,
-    shadowColor: '#4CAF50', // צל ירוק זוהר
+    width: '90%', // קצת יותר רחב
+    maxWidth: 420,
+    shadowColor: '#B8860B', // צל זהוב עשיר
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 1, // צל מלא ליצירת אפקט זוהר חזק
-    shadowRadius: 30,
-    elevation: 25,
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 15,
     borderWidth: 3,
-    borderColor: '#00FFFF', // מסגרת טורקיז זוהרת
+    borderColor: '#FFD700', // מסגרת זהב יוקרתית
     overflow: 'hidden',
   },
   modalTitle: {
-    fontSize: 30,
+    fontSize: 34, // קצת יותר גדול
     fontWeight: 'bold',
-    color: '#FFD700', // זהב בוהק
+    color: '#333333', // אפור כהה מאוד
     marginBottom: 10,
     textAlign: 'center',
-    textShadowColor: '#FF4500', // צל אדום-כתום זוהר לטקסט
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 10,
-    paddingHorizontal: 10,
+    fontFamily: Platform.OS === 'ios' ? 'BodoniSvtyTwoITCTT-Bold' : 'serif', // פונט יותר דרמטי ל-iOS
+    textShadowColor: 'rgba(0, 0, 0, 0.15)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 4,
   },
   subMessage: {
-    fontSize: 20,
-    color: '#9AFF9A', // ירוק בהיר זוהר
-    marginBottom: 35, // הגדלת רווח
+    fontSize: 20, // קצת יותר גדול
+    color: '#555555', // אפור בינוני
+    marginBottom: 35, // רווח גדול יותר
     fontStyle: 'italic',
     textAlign: 'center',
-    paddingHorizontal: 10,
-    textShadowColor: 'rgba(0, 255, 0, 0.4)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 5,
+    fontFamily: Platform.OS === 'ios' ? 'Cochin-Italic' : 'serif', // פונט קלאסי ורך
   },
   levelContainer: {
-    backgroundColor: 'transparent', // הרקע הכהה של המודל ישמש כרקע
-    borderWidth: 5, // גבול עבה וזוהר
-    borderColor: '#FF00FF', // מג'נטה זוהרת לגבול
-    borderRadius: 130, // עיגול גדול
-    width: 220,
-    height: 220,
+    backgroundColor: '#E0FFFF', // תכלת בהיר מאוד, בסיס "יהלום"
+    borderWidth: 4, // גבול עבה יותר
+    borderColor: '#4CA1AF', // כחול-טורקיז עמוק כצבע "יהלום" מסגרת
+    borderRadius: 130, // עיגול גדול יותר
+    width: 230,
+    height: 230,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 45, // הגדלת רווח
-    shadowColor: '#FFFF00', // צל צהוב זוהר
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 1,
-    shadowRadius: 25,
-    elevation: 20,
+    marginBottom: 45, // רווח גדול יותר
+    shadowColor: '#A9D6E5', // צל כחול בהיר
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.8,
+    shadowRadius: 18,
+    elevation: 12,
     position: 'relative',
-    overflow: 'hidden',
   },
   levelPrefix: {
-    fontSize: 35, // גודל פונט גדול יותר ל"רמה"
-    color: '#00FFFF', // טורקיז זוהר
+    fontSize: 38, // משמעותית יותר גדול
+    color: '#B8860B', // זהב עמוק וברור
     fontWeight: 'bold',
     position: 'absolute',
-    top: 30, // **התיקון כאן: הזזה למעלה ליצירת מרווח גדול יותר**
-    textShadowColor: 'rgba(0, 255, 255, 0.5)',
+    top: 30, // **הכי חשוב: מיקום גבוה יותר!**
+    fontFamily: Platform.OS === 'ios' ? 'Georgia-Bold' : 'serif', // פונט מודגש
+    textShadowColor: 'rgba(255, 215, 0, 0.4)', // צל זהוב עדין
     textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 8,
+    textShadowRadius: 6,
   },
   levelText: {
-    fontSize: 105, // מספר עצום ובולט יותר
+    fontSize: 110, // מספר עצום ובולט מאוד
     fontWeight: '900',
-    color: '#FFD700', // זהב בוהק למספר
-    textShadowColor: '#FF0000', // צל אדום עז
-    textShadowOffset: { width: 4, height: 4 },
-    textShadowRadius: 15,
-    marginTop: 40, // **התיקון כאן: הגדלת המרווח מהטקסט שלפניו**
+    color: '#DAA520', // גוון זהב בהיר יותר למספר
+    textShadowColor: 'rgba(0, 0, 0, 0.3)', // צל שחור עדין
+    textShadowOffset: { width: 3, height: 3 },
+    textShadowRadius: 8,
+    marginTop: 40, // מרווח מהטקסט שלפניו
+    fontFamily:
+      Platform.OS === 'ios' ? 'TimesNewRomanPS-BoldMT' : 'sans-serif-black', // פונט חזק מאוד
   },
   closeButton: {
-    backgroundColor: '#00FFFF', // טורקיז זוהר לכפתור
+    backgroundColor: '#4CA1AF', // כחול-טורקיז עמוק לכפתור
     paddingVertical: 20,
-    paddingHorizontal: 55,
-    borderRadius: 15,
-    marginTop: 25,
-    shadowColor: '#00FFFF',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
-    elevation: 15,
+    paddingHorizontal: 60,
+    borderRadius: 18, // פינות עגולות יותר
+    marginTop: 30,
+    shadowColor: '#A9D6E5', // צל כחול בהיר לכפתור
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.7,
+    shadowRadius: 15,
+    elevation: 10,
   },
   closeButtonText: {
-    color: '#1A1A2E', // צבע טקסט כהה לניגודיות על כפתור בהיר
-    fontSize: 24,
+    color: '#FFFFFF', // טקסט לבן נקי על כחול
+    fontSize: 25, // קצת יותר גדול
     fontWeight: 'bold',
+    fontFamily:
+      Platform.OS === 'ios' ? 'HelveticaNeue-Bold' : 'sans-serif-medium',
   },
 });
 
