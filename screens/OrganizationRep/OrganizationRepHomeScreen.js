@@ -193,7 +193,7 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
           onPress={() => handleNavigate('EditOrganizationRepProfileScreen')}
         >
           <Icon name="settings" size={24} color="#999" />
-          <Text style={styles.secondaryText}>עריכת פרטי עמותה</Text>
+          <Text style={styles.secondaryText}>עריכת פרטים</Text>
         </TouchableOpacity>
       </ScrollView>
 

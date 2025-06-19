@@ -512,18 +512,40 @@ router.put('/:id/close', async (req, res) => {
           `[CLOSE_ROUTE] ✅ ${user.username} קיבל ${GoGs} גוגואים ו-${addedExp} EXP. רמה חדשה: ${user.level}`
         );
       } else {
-        // הודעה על אי־השתתפות
+        const now = new Date();
+        const THRESHOLD_DAYS = 180;
+        const MAX_BAD_POINTS = 3;
+        const BLOCK_DAYS = 14;
+
+        // 1. ניקוי נקודות ישנות
+        user.badPoints = user.badPoints.filter(
+          (pointDate) =>
+            now - new Date(pointDate) <= THRESHOLD_DAYS * 24 * 60 * 60 * 1000
+        );
+
+        // 2. הוספת נקודה חדשה
+        user.badPoints.push(now);
+
+        // 3. בדיקת חסימה
+        if (user.badPoints.length >= MAX_BAD_POINTS) {
+          user.blockedUntil = new Date(
+            now.getTime() + BLOCK_DAYS * 24 * 60 * 60 * 1000
+          );
+        }
+
+        // 4. שמירה
+        await user.save();
+
+        // 5. שליחת הודעה עם מידע מלא
         await new UserMessage({
           userId: user._id,
           title: `לא נכחת בהתנדבות "${volunteering.title}"`,
-          message: `לא הגעת להתנדבות. לא נצברו נקודות.`,
+          message: `לא הגעת להתנדבות. לא נצברו נקודות.
+יש לך כעת ${user.badPoints.length} נקודות רעות מתוך ${MAX_BAD_POINTS} המותרות.
+צבירה של ${MAX_BAD_POINTS} נקודות רעות תוך ${THRESHOLD_DAYS} ימים תגרום לחסימה זמנית מהרשמה להתנדבויות חדשות.`,
           type: 'warning',
           source: organizationName,
         }).save();
-
-        console.log(
-          `[CLOSE_ROUTE] ⚠️ ${user.username} לא נכח בהתנדבות - נשלחה אזהרה`
-        );
       }
     }
 

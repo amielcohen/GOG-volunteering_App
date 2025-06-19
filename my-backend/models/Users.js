@@ -68,6 +68,14 @@ const UserSchema = new mongoose.Schema(
       ref: 'BusinessPartner',
       default: null,
     },
+    badPoints: {
+      type: [Date], // כל תאריך מייצג נקודה רעה
+      default: [],
+    },
+    blockedUntil: {
+      type: Date, // אם יש תאריך עתידי – המשתמש חסום
+      default: null,
+    },
 
     GoGs: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
