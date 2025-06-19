@@ -11,10 +11,6 @@ import {
 } from 'react-native';
 import config from '../../config';
 import { Picker } from '@react-native-picker/picker';
-// הערה: I18nManager.forceRTL(true) בדרך כלל צריך להיות מוגדר בקובץ הכניסה הראשי של האפליקציה (כמו App.js)
-// ולא כאן בכל קומפוננטה, כדי למנוע בעיות.
-// import { I18nManager } from 'react-native';
-// I18nManager.forceRTL(true);
 
 import { BarChart } from 'react-native-chart-kit';
 

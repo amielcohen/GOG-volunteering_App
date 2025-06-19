@@ -68,8 +68,11 @@ app.use('/monthly-stats', monthlyStatsRoutes);
 const monthlyPrizeRoutes = require('./routes/monthlyPrize');
 app.use('/monthly-prizes', monthlyPrizeRoutes);
 
-const organizationStatsRoutes = require('./routes/organizationStats');
+const organizationStatsRoutes = require('./routes/stats/organizationStats');
 app.use('/stats', organizationStatsRoutes);
+
+const cityStatsRoutes = require('./routes/stats/cityStats');
+app.use('/stats/city', cityStatsRoutes);
 
 // ראוט בדיקה בסיסי
 app.get('/', (req, res) => {

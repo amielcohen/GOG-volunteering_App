@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const OrganizationMonthlyStats = require('../models/OrganizationMonthlyStats');
-const Volunteering = require('../models/Volunteering');
-const CityOrganization = require('../models/CityOrganization');
-const User = require('../models/Users');
-const { calculateRewardCoins } = require('../../utils/rewardUtils');
+const OrganizationMonthlyStats = require('../../models/OrganizationMonthlyStats');
+const Volunteering = require('../../models/Volunteering');
+const CityOrganization = require('../../models/CityOrganization');
+const User = require('../../models/Users');
+const { calculateRewardCoins } = require('../../../utils/rewardUtils');
 
 router.get('/organization/:organizationId', async (req, res) => {
   const { organizationId } = req.params;
@@ -23,14 +23,19 @@ router.get('/organization/:organizationId', async (req, res) => {
 
   try {
     if (!isCurrentMonth) {
-      const stats = await OrganizationMonthlyStats.findOne({
-        organizationId,
-        city,
+      const filter = {
+        organizationId: new mongoose.Types.ObjectId(organizationId),
+        city: new mongoose.Types.ObjectId(city),
         month: monthNum,
         year: yearNum,
-      });
+      };
+
+      console.log('🔍 פילטר לחיפוש:', filter);
+
+      const stats = await OrganizationMonthlyStats.findOne(filter);
 
       if (!stats) {
+        console.warn('❌ לא נמצאו נתונים במסד בהתאם לפילטר');
         return res.status(404).json({ message: 'No stats found' });
       }
 
