@@ -21,8 +21,13 @@ const AdminHomeScreen = ({ navigation }) => {
   const navigateToAddCity = () => {
     navigation.navigate('AddCityScreen');
   };
+
   const navigateToCityManage = () => {
     navigation.navigate('ManageCitiesScreen');
+  };
+
+  const navigateStat = () => {
+    navigation.navigate('AdminStatsScreen');
   };
 
   return (
@@ -35,10 +40,7 @@ const AdminHomeScreen = ({ navigation }) => {
         <Text style={styles.welcomeText}>שלום, מנהל מערכת</Text>
       </View>
 
-      <Pressable
-        style={[styles.card, styles.greenCard]}
-        onPress={() => handlePress('צפה בסטטיסטיקה')}
-      >
+      <Pressable style={[styles.card, styles.greenCard]} onPress={navigateStat}>
         <Text style={styles.cardText}>צפה בסטטיסטיקה</Text>
       </Pressable>
 
