@@ -242,6 +242,48 @@ router.get('/forUser/:userId', async (req, res) => {
   }
 });
 
+//  שליפת התנדבויות פתוחות עתידיות שנוצרו ע״י אחראים מהעיר ומהארגון
+router.get('/future/open/byCityAndOrganization/:repId', async (req, res) => {
+  const { repId } = req.params;
+
+  try {
+    const now = new Date();
+    const rep = await User.findById(repId);
+
+    if (!rep || rep.role !== 'OrganizationRep') {
+      return res.status(404).json({ message: 'OrganizationRep not found' });
+    }
+
+    const cityId = rep.city;
+    const orgId = rep.organization;
+
+    // בדיקה האם העמותה באמת משויכת לעיר
+    const cityOrgEntry = await CityOrganization.findOne({
+      city: cityId,
+      organizationId: orgId,
+    });
+
+    if (!cityOrgEntry) {
+      return res.status(404).json({ message: 'העמותה אינה משויכת לעיר' });
+    }
+
+    // שליפת ההתנדבויות המתאימות
+    const volunteerings = await Volunteering.find({
+      organizationId: orgId,
+      cancelled: { $ne: true },
+      isClosed: { $ne: true },
+      date: { $gt: now },
+    })
+      .populate('registeredVolunteers.userId', 'firstName lastName')
+      .sort({ date: 1 });
+
+    res.status(200).json(volunteerings);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // שליפת התנדבויות פתוחות עתידיות שנוצרו ע״י אחראים מהעיר שלך
 router.get('/future/open/byCityOfRep/:repId', async (req, res) => {
   const { repId } = req.params;
@@ -303,18 +345,37 @@ router.get('/attendance/:repId', async (req, res) => {
   try {
     const now = new Date();
     const rep = await User.findById(repId);
+
     if (!rep || rep.role !== 'OrganizationRep') {
       return res.status(404).json({ message: 'OrganizationRep not found' });
     }
 
+    const cityId = rep.city;
+    const orgId = rep.organization;
+
+    // בדיקה האם העמותה של המשתמש משויכת לעיר שלו
+    const cityOrgEntry = await CityOrganization.findOne({
+      city: cityId,
+      organizationId: orgId,
+    });
+
+    if (!cityOrgEntry) {
+      return res
+        .status(404)
+        .json({ message: 'העמותה אינה משויכת לעיר של המשתמש' });
+    }
+
+    // כל האחראים באותה עיר
     const repsInCity = await User.find({
-      city: rep.city,
+      city: cityId,
       role: 'OrganizationRep',
     });
     const repIds = repsInCity.map((r) => r._id);
 
+    // שליפת התנדבויות שהתרחשו או קורות עכשיו ועדיין פתוחות
     const volunteerings = await Volunteering.find({
       createdBy: { $in: repIds },
+      organizationId: orgId,
       cancelled: { $ne: true },
       isClosed: { $ne: true },
       date: { $lte: now },
@@ -324,6 +385,7 @@ router.get('/attendance/:repId', async (req, res) => {
 
     res.status(200).json(volunteerings);
   } catch (err) {
+    console.error('[GET /attendance/:repId] שגיאה:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -479,18 +541,37 @@ router.get('/history/byCityOfRep/:repId', async (req, res) => {
   try {
     const now = new Date();
     const rep = await User.findById(repId);
+
     if (!rep || rep.role !== 'OrganizationRep') {
       return res.status(404).json({ message: 'OrganizationRep not found' });
     }
 
+    const cityId = rep.city;
+    const orgId = rep.organization;
+
+    // ודא שהעמותה אכן משויכת לעיר
+    const cityOrgEntry = await CityOrganization.findOne({
+      city: cityId,
+      organizationId: orgId,
+    });
+
+    if (!cityOrgEntry) {
+      return res
+        .status(404)
+        .json({ message: 'העמותה אינה משויכת לעיר של המשתמש' });
+    }
+
+    // שליפת כל אחראי העמותות בעיר
     const repsInCity = await User.find({
-      city: rep.city,
+      city: cityId,
       role: 'OrganizationRep',
     });
     const repIds = repsInCity.map((r) => r._id);
 
+    // שליפת היסטוריית ההתנדבויות שנסגרו
     const volunteerings = await Volunteering.find({
       createdBy: { $in: repIds },
+      organizationId: orgId,
       cancelled: { $ne: true },
       isClosed: true,
       date: { $lt: now },
@@ -500,6 +581,7 @@ router.get('/history/byCityOfRep/:repId', async (req, res) => {
 
     res.status(200).json(volunteerings);
   } catch (err) {
+    console.error('[GET /history/byCityOfRep] שגיאה:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -514,16 +596,31 @@ router.get('/recurring/byRep/:repId', async (req, res) => {
       return res.status(404).json({ message: 'OrganizationRep not found' });
     }
 
-    // שליפת כל אחראי העמותות באותה עיר
+    const cityId = rep.city;
+    const orgId = rep.organization;
+
+    // שלב 1: ודא שהעמותה של האחראי באמת משויכת לעיר
+    const cityOrgEntry = await CityOrganization.findOne({
+      city: cityId,
+      organizationId: orgId,
+    });
+
+    if (!cityOrgEntry) {
+      return res.status(404).json({ message: 'העמותה אינה משויכת לעיר' });
+    }
+
+    // שלב 2: שליפת כל אחראי העמותות באותה עיר
     const repsInCity = await User.find({
-      city: rep.city,
+      city: cityId,
       role: 'OrganizationRep',
     });
     const repIds = repsInCity.map((r) => r._id);
 
+    // שלב 3: שליפת התנדבויות חוזרות שקשורות גם לעיר וגם לעמותה
     const recurringTemplates = await Volunteering.find({
       isRecurring: true,
       createdBy: { $in: repIds },
+      organizationId: orgId,
       cancelled: { $ne: true },
     }).sort({ recurringDay: 1, title: 1 });
 
@@ -533,6 +630,7 @@ router.get('/recurring/byRep/:repId', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 // ביטול קביעות של התנדבות קבועה
 router.put('/:id/removeRecurring', async (req, res) => {
   try {

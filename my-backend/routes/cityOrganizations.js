@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose'); // ✅ הוספנו את זה
 const CityOrganization = require('../models/CityOrganization');
 const Organization = require('../models/Organization');
 
@@ -51,6 +52,54 @@ router.post('/link', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'שגיאה בקישור עמותה' });
+  }
+});
+
+router.get('/byId/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'מזהה לא חוקי' });
+    }
+
+    const organization = await CityOrganization.findById(id);
+    if (!organization) {
+      return res.status(404).json({ message: 'עמותה לא נמצאה' });
+    }
+
+    res.status(200).json(organization);
+  } catch (err) {
+    console.error('שגיאה בטעינת עמותה לפי מזהה:', err);
+    res.status(500).json({ message: 'שגיאה בטעינת העמותה' });
+  }
+});
+
+// Get CityOrganization by organizationId and cityId
+
+router.get('/by-org-and-city', async (req, res) => {
+  const { organizationId, cityId } = req.query;
+
+  if (
+    !mongoose.Types.ObjectId.isValid(organizationId) ||
+    !mongoose.Types.ObjectId.isValid(cityId)
+  ) {
+    return res.status(400).json({ message: 'מזהים לא חוקיים' });
+  }
+
+  try {
+    const result = await CityOrganization.findOne({
+      organizationId: new mongoose.Types.ObjectId(organizationId),
+      city: new mongoose.Types.ObjectId(cityId),
+    });
+
+    if (!result) {
+      return res.status(404).json({ message: 'לא נמצאה עמותה עירונית מתאימה' });
+    }
+
+    res.status(200).json(result);
+  } catch (err) {
+    res.status(500).json({ message: 'שגיאת שרת', error: err.message });
   }
 });
 
@@ -189,4 +238,29 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+router.get('/find-by-org-and-city', async (req, res) => {
+  const { organizationId, cityId } = req.query;
+
+  if (!organizationId || !cityId) {
+    return res
+      .status(400)
+      .json({ message: 'Missing organizationId or cityId' });
+  }
+
+  try {
+    const cityOrg = await CityOrganization.findOne({
+      organizationId,
+      city: cityId,
+    });
+
+    if (!cityOrg) {
+      return res.status(404).json({ message: 'CityOrganization not found' });
+    }
+
+    res.json(cityOrg);
+  } catch (err) {
+    console.error('Error finding city organization:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 module.exports = router;

@@ -19,7 +19,7 @@ export default function OrganizationRepHeader({
         <Image source={organizationImage} style={styles.image} />
       </TouchableOpacity>
 
-      <Text style={styles.repText}>שלום {repName} 👋</Text>
+      <Text style={styles.repText}>שלום {repName} </Text>
       <Text style={styles.orgName}>{organizationName}</Text>
       <Text style={styles.cityText}>{cityText}</Text>
     </View>
