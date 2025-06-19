@@ -157,9 +157,12 @@ export default function CommunityRepHomeScreen({ navigation, route }) {
         {/* placeholder עבור כרטיס סטטיסטיקות עתידי */}
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => {
-            /* Placeholder for navigation to statistics screen */
-          }}
+          onPress={() =>
+            handleNavigate('CityStatsScreen', {
+              cityId: currentUser.city._id,
+              cityName,
+            })
+          }
         >
           <Icon name="bar-chart" size={30} color="#E040FB" />
           <Text style={styles.actionText}> סטטיסטיקות </Text>

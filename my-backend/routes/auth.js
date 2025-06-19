@@ -301,4 +301,25 @@ router.patch('/profile/:id/reset-level-up-modal', async (req, res) => {
   }
 });
 
+// שליפת כל המשתמשים בעיר מסוימת
+router.get('/by-city/:cityId', async (req, res) => {
+  const { cityId } = req.params;
+  const { role } = req.query;
+
+  console.log('🔍 cityId:', cityId);
+  console.log('🔍 role:', role);
+
+  try {
+    const query = { city: cityId };
+    if (role) query.role = role;
+
+    const totalRegisteredUsers = await User.countDocuments(query);
+
+    res.status(200).json({ totalRegisteredUsers });
+  } catch (err) {
+    console.error('❌ שגיאה בשליפת מספר משתמשים לפי עיר:', err);
+    res.status(500).json({ message: 'שגיאה בשרת' });
+  }
+});
+
 module.exports = router;
