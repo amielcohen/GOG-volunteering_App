@@ -1,3 +1,4 @@
+// ... [ייבוא קיים ללא שינוי]
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -6,16 +7,20 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   StatusBar,
+  Dimensions, // חשוב! נוסיף את Dimensions
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
 import config from '../../config';
 import ConfirmModal from '../../components/ConfirmModal';
-import MessageDetailsModal from '../../components/MessageDetailsModal'; // ייבוא המודל החדש
+import MessageDetailsModal from '../../components/MessageDetailsModal';
 
-export default function UserMessagesScreen({ route, navigation }) {
+// נקבל את רוחב המסך עבור חישוב רוחב הכפתורים
+const { width } = Dimensions.get('window');
+const BUTTON_WIDTH = (width - 15 * 2 - 10) / 2; // רוחב המסך - (marginHorizontal לכפתורים * 2) - רווח בין כפתורים / 2 כפתורים
+
+export default function UserMessagesScreen({ route }) {
   const { user } = route.params;
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +28,8 @@ export default function UserMessagesScreen({ route, navigation }) {
   const [messageToDelete, setMessageToDelete] = useState(null);
   const [messageDetailsVisible, setMessageDetailsVisible] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
+  const [bulkActionModalVisible, setBulkActionModalVisible] = useState(false);
+  const [bulkActionType, setBulkActionType] = useState(null); // 'deleteAll' | 'markAllAsRead'
 
   useEffect(() => {
     fetchMessages();
@@ -34,15 +41,13 @@ export default function UserMessagesScreen({ route, navigation }) {
         `${config.SERVER_URL}/user-messages/${user._id}`
       );
       const sortedMessages = res.data.sort((a, b) => {
-        if (a.read === b.read) {
+        if (a.read === b.read)
           return new Date(b.createdAt) - new Date(a.createdAt);
-        }
         return a.read ? 1 : -1;
       });
       setMessages(sortedMessages);
     } catch (err) {
       console.error('שגיאה בשליפת הודעות:', err);
-      Alert.alert('שגיאה', 'אירעה שגיאה בעת טעינת ההודעות');
     } finally {
       setLoading(false);
     }
@@ -55,9 +60,8 @@ export default function UserMessagesScreen({ route, navigation }) {
         prev
           .map((msg) => (msg._id === id ? { ...msg, read: true } : msg))
           .sort((a, b) => {
-            if (a.read === b.read) {
+            if (a.read === b.read)
               return new Date(b.createdAt) - new Date(a.createdAt);
-            }
             return a.read ? 1 : -1;
           })
       );
@@ -82,7 +86,6 @@ export default function UserMessagesScreen({ route, navigation }) {
       );
     } catch (err) {
       console.error('שגיאה במחיקת ההודעה:', err);
-      Alert.alert('שגיאה', 'לא ניתן היה למחוק את ההודעה');
     } finally {
       setConfirmVisible(false);
       setMessageToDelete(null);
@@ -92,9 +95,7 @@ export default function UserMessagesScreen({ route, navigation }) {
   const openMessageDetails = (message) => {
     setSelectedMessage(message);
     setMessageDetailsVisible(true);
-    if (!message.read) {
-      markAsRead(message._id);
-    }
+    if (!message.read) markAsRead(message._id);
   };
 
   const closeMessageDetails = () => {
@@ -102,40 +103,60 @@ export default function UserMessagesScreen({ route, navigation }) {
     setSelectedMessage(null);
   };
 
-  // מעודכן: שינויים בצבעים ובאייקונים ל-warning ו-alert
   const getMessageTypeStyles = (type, source = '') => {
     switch (type) {
       case 'info':
-        return { icon: 'info', color: '#00E0FF', borderColor: '#00E0FF' }; // Light blue/cyan
+        return { icon: 'info', color: '#00E0FF', borderColor: '#00E0FF' };
       case 'warning':
-        return { icon: 'error', color: '#FF4500', borderColor: '#FF4500' }; // Orange-red for Warning (as per your request for red with exclamation)
+        return { icon: 'error', color: '#FF4500', borderColor: '#FF4500' };
       case 'success':
         return {
           icon: 'check-circle',
           color: '#00FF7F',
           borderColor: '#00FF7F',
-        }; // Spring green
+        };
       case 'alert':
-        // For Alert, based on context like 'level up', I suggest 'star' or 'whatshot'
-        // If it's a general 'alert', 'warning' is fine.
-        const alertIcon = source === 'level_up' ? 'star' : 'warning'; // Example: conditional icon
-        return { icon: alertIcon, color: '#FFD700', borderColor: '#FFD700' }; // Gold/Yellow for Alert (as per your request)
+        const alertIcon = source === 'level_up' ? 'star' : 'warning';
+        return { icon: alertIcon, color: '#FFD700', borderColor: '#FFD700' };
       default:
-        return { icon: 'message', color: '#B0C4DE', borderColor: '#B0C4DE' }; // Default light blue-gray
+        return { icon: 'message', color: '#B0C4DE', borderColor: '#B0C4DE' };
     }
+  };
+
+  const handleBulkAction = async () => {
+    if (bulkActionType === 'deleteAll') {
+      try {
+        await axios.delete(
+          `${config.SERVER_URL}/user-messages/all/${user._id}`
+        );
+        setMessages([]);
+      } catch (err) {
+        console.error('שגיאה במחיקת כל ההודעות:', err);
+      }
+    } else if (bulkActionType === 'markAllAsRead') {
+      try {
+        await axios.patch(
+          `${config.SERVER_URL}/user-messages/all/${user._id}/read`
+        );
+        setMessages((prev) => prev.map((msg) => ({ ...msg, read: true })));
+      } catch (err) {
+        console.error('שגיאה בסימון כל ההודעות כנקראו:', err);
+      }
+    }
+    setBulkActionModalVisible(false);
+    setBulkActionType(null);
   };
 
   const renderItem = ({ item }) => {
     const { icon, color, borderColor } = getMessageTypeStyles(
       item.type,
       item.source
-    ); // Pass item.source
-
+    );
     return (
       <TouchableOpacity
         style={[
           styles.messageCard,
-          { borderColor: borderColor },
+          { borderColor },
           !item.read && styles.unreadCard,
         ]}
         onPress={() => openMessageDetails(item)}
@@ -153,9 +174,7 @@ export default function UserMessagesScreen({ route, navigation }) {
             {item.message}
           </Text>
           <View style={styles.metaContainer}>
-            <Text style={styles.meta}>
-              <Text>מקור:</Text> {item.source || <Text>לא ידוע</Text>}
-            </Text>
+            <Text style={styles.meta}>מקור: {item.source || 'לא ידוע'}</Text>
             <Text style={styles.meta}>
               {new Date(item.createdAt).toLocaleDateString('he-IL')}
             </Text>
@@ -166,7 +185,7 @@ export default function UserMessagesScreen({ route, navigation }) {
           onPress={() => confirmDelete(item)}
           style={styles.deleteButton}
         >
-          <Icon name="delete-forever" size={24} color="#FF6347" />
+          <Icon name="delete" size={24} color="#FF6B6B" />
         </TouchableOpacity>
       </TouchableOpacity>
     );
@@ -177,10 +196,44 @@ export default function UserMessagesScreen({ route, navigation }) {
       <StatusBar barStyle="light-content" backgroundColor="#1A2B42" />
 
       <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>
-          <Text>תיבת ההודעות שלך</Text>
-        </Text>
+        <Text style={styles.headerTitle}>תיבת ההודעות שלך</Text>
       </View>
+
+      {/* כפתורי פעולה */}
+      {!loading && messages.length > 0 && (
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={styles.actionButtonPrimary}
+            onPress={() => {
+              setBulkActionType('markAllAsRead');
+              setBulkActionModalVisible(true);
+            }}
+          >
+            <Icon
+              name="done-all"
+              size={20}
+              color="#FFFFFF"
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.actionText}>סמן הכל כנקראו</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButtonDanger}
+            onPress={() => {
+              setBulkActionType('deleteAll');
+              setBulkActionModalVisible(true);
+            }}
+          >
+            <Icon
+              name="delete-sweep"
+              size={20}
+              color="#FFFFFF"
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.actionText}>מחק הכל</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -200,14 +253,14 @@ export default function UserMessagesScreen({ route, navigation }) {
 
       <ConfirmModal
         visible={confirmVisible}
-        title={<Text>מחיקת הודעה</Text>}
+        title="מחיקת הודעה"
         message={
           <Text>
-            <Text>האם למחוק את ההודעה</Text>{' '}
-            <Text style={{ fontWeight: 'bold' }}>
-              "{messageToDelete?.title}"
-            </Text>
-            <Text>?</Text>
+            האם למחוק את ההודעה{' '}
+            <Text
+              style={{ fontWeight: 'bold' }}
+            >{`"${messageToDelete?.title}"`}</Text>
+            ?
           </Text>
         }
         onConfirm={handleDelete}
@@ -217,7 +270,30 @@ export default function UserMessagesScreen({ route, navigation }) {
         }}
         confirmText="מחק"
         cancelText="בטל"
-        confirmColor="#FF4500"
+        confirmColor="#FF6B6B"
+        cancelColor="#6A7B9B"
+      />
+
+      <ConfirmModal
+        visible={bulkActionModalVisible}
+        title={
+          bulkActionType === 'deleteAll'
+            ? 'מחיקת כל ההודעות'
+            : 'סימון כל ההודעות'
+        }
+        message={
+          bulkActionType === 'deleteAll'
+            ? 'האם אתה בטוח שברצונך למחוק את כל ההודעות?'
+            : 'האם לסמן את כל ההודעות כנקראו?'
+        }
+        onConfirm={handleBulkAction}
+        onCancel={() => {
+          setBulkActionModalVisible(false);
+          setBulkActionType(null);
+        }}
+        confirmText={bulkActionType === 'deleteAll' ? 'מחק הכל' : 'סמן הכל'}
+        cancelText="בטל"
+        confirmColor={bulkActionType === 'deleteAll' ? '#FF6B6B' : '#4CAF50'}
         cancelColor="#6A7B9B"
       />
 
@@ -231,10 +307,7 @@ export default function UserMessagesScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1E3A52',
-  },
+  container: { flex: 1, backgroundColor: '#1E3A52' },
   headerContainer: {
     backgroundColor: '#1A2B42',
     paddingVertical: 35,
@@ -258,6 +331,50 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 224, 255, 0.4)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
+  },
+  actionsRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between', // שינוי ל-space-between כדי לתת לכפתורים למלא את המרווח
+    marginHorizontal: 15, // שומר על מרווחים מהצדדים
+    marginBottom: 20,
+  },
+  actionButtonPrimary: {
+    backgroundColor: '#4CAF50',
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderRadius: 25,
+    shadowColor: '#388E3C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
+    width: BUTTON_WIDTH, // **התיקון העיקרי: רוחב קבוע מחושב**
+    justifyContent: 'center',
+  },
+  actionButtonDanger: {
+    backgroundColor: '#FF6B6B',
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    paddingVertical: 12,
+    // paddingHorizontal: 20, // נוריד את זה
+    borderRadius: 25,
+    shadowColor: '#D32F2F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
+    width: BUTTON_WIDTH, // **התיקון העיקרי: רוחב קבוע מחושב**
+    justifyContent: 'center',
+  },
+  actionText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   loadingContainer: {
     flex: 1,
@@ -365,8 +482,10 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   deleteButton: {
-    padding: 5,
+    padding: 8,
     marginLeft: 10,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderRadius: 15,
   },
 });
