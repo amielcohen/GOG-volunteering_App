@@ -130,4 +130,26 @@ router.post('/send', async (req, res) => {
   }
 });
 
+// מחיקת כל ההודעות של משתמש
+router.delete('/all/:userId', async (req, res) => {
+  try {
+    await UserMessage.deleteMany({ userId: req.params.userId });
+    res.json({ message: 'כל ההודעות נמחקו' });
+  } catch (err) {
+    console.error('שגיאה במחיקת כל ההודעות:', err.message);
+    res.status(500).json({ error: 'שגיאה במחיקת כל ההודעות' });
+  }
+});
+
+// סימון כל ההודעות כנקראו
+router.patch('/all/:userId/read', async (req, res) => {
+  try {
+    await UserMessage.updateMany({ userId: req.params.userId }, { read: true });
+    res.json({ message: 'כל ההודעות סומנו כנקראו' });
+  } catch (err) {
+    console.error('שגיאה בסימון כל ההודעות כנקראו:', err.message);
+    res.status(500).json({ error: 'שגיאה בסימון ההודעות' });
+  }
+});
+
 module.exports = router;

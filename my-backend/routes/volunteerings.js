@@ -324,16 +324,47 @@ router.put('/:id/cancel', async (req, res) => {
       id,
       { cancelled: true },
       { new: true }
-    );
+    )
+      .populate('registeredVolunteers.userId')
+      .populate('organizationId'); // כדי לשלוף את שם העמותה
+
     if (!updated) {
       return res.status(404).json({ message: 'Volunteering not found' });
     }
 
+    const participants = updated.registeredVolunteers
+      .map((r) => r.userId)
+      .filter(Boolean);
+    const volunteeringDate = new Date(updated.date);
+
+    // פירוק לתאריך ושעה
+    const dateStr = volunteeringDate.toLocaleDateString('he-IL');
+    const timeStr = volunteeringDate.toLocaleTimeString('he-IL', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const organizationName = updated.organizationId?.name || 'מערכת';
+
+    const sendMessages = participants.map((user) => {
+      const message = new UserMessage({
+        userId: user._id,
+        title: '📢 ביטול התנדבות',
+        message: `התנדבות שתוכננה לתאריך ${dateStr} בשעה ${timeStr} בוטלה.`,
+        type: 'alert',
+        source: organizationName,
+      });
+      return message.save();
+    });
+
+    await Promise.all(sendMessages);
+
     res.status(200).json({
-      message: 'Volunteering cancelled successfully',
+      message: 'Volunteering cancelled and notifications sent.',
       volunteering: updated,
     });
   } catch (err) {
+    console.error('שגיאה בביטול התנדבות:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
