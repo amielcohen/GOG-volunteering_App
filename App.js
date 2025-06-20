@@ -77,6 +77,7 @@ import EditOrganizationRepProfileScreen from './screens/OrganizationRep/EditOrga
 //Business
 import BusinessPartnerHomeScreen from './screens/Business/BusinessPartnerHomeScreen';
 import RedeemHistory from './screens/Business/RedeemHistory';
+import EditBusinessScreen from './screens/Business/EditBusinessScreen';
 
 const Stack = createStackNavigator();
 
@@ -402,6 +403,31 @@ export default function App() {
             headerTitleAlign: 'center',
           }}
         />
+        <Stack.Screen
+          name="EditBusinessScreen"
+          component={EditBusinessScreen}
+          options={{
+            headerShown: true,
+            title: '',
+            headerStyle: {
+              backgroundColor: '#1A2B42',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#87CEEB',
+            headerTitleStyle: {
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#1A2B42',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+            },
+            headerTitleAlign: 'center',
+          }}
+        />
+
         <Stack.Screen
           name="BusinessPartnerHomeScreen"
           component={BusinessPartnerHomeScreen}
