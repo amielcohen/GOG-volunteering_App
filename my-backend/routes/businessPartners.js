@@ -55,4 +55,30 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// עדכון פרטי עסק
+router.put('/:id', async (req, res) => {
+  try {
+    const { businessName, address } = req.body;
+    const { id } = req.params;
+
+    const updatedBusiness = await BusinessPartner.findByIdAndUpdate(
+      id,
+      { businessName, address },
+      { new: true }
+    );
+
+    if (!updatedBusiness) {
+      return res.status(404).json({ message: 'Business not found' });
+    }
+
+    res.status(200).json({
+      message: 'Business updated successfully',
+      business: updatedBusiness,
+    });
+  } catch (err) {
+    console.error('שגיאה בעדכון עסק:', err);
+    res.status(500).json({ message: 'שגיאה בעדכון העסק' });
+  }
+});
+
 module.exports = router;
