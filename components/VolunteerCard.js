@@ -17,7 +17,7 @@ export default function VolunteerCard({ volunteering, onPress }) {
 
   const isLocked = volunteering.isLockedByLevel;
   const lockMessage = `🔒 דרוש רמה ${volunteering.minLevel || ''} להצטרפות`;
-
+  console.log('isLocked', isLocked);
   return (
     <View style={[styles.card, isLocked && styles.lockedCard]}>
       {isLocked && (

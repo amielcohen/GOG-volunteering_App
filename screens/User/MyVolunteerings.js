@@ -50,6 +50,7 @@ export default function MyVolunteeringsScreen({ route, navigation }) {
 
           const adaptedVol = adaptVolunteeringForCard(v, {
             cityOrganizationEntry: matchingOrg,
+            user,
           });
           adaptedVol.originalDate = v.date;
           return adaptedVol;

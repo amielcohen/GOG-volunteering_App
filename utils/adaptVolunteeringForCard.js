@@ -18,7 +18,7 @@ export function adaptVolunteeringForCard(
   const minLevel = volunteering.minlevel || 0;
   const userLevel = user?.level || 0;
   const isLockedByLevel = userLevel < minLevel;
-
+  console.log('volunterr', volunteering, user);
   return {
     title: volunteering.title,
     description: volunteering.description,
