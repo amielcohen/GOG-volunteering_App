@@ -39,6 +39,8 @@ export function adaptVolunteeringForCard(
     _id: volunteering._id || '',
     minLevel,
     isLockedByLevel,
+    phone: cityOrganizationEntry.phone,
+    contactEmail: cityOrganizationEntry.contactEmail,
   };
 }
 
