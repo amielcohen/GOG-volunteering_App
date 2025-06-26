@@ -261,7 +261,7 @@ const LinkedOrganizationDetails = ({ route }) => {
 
         {isGlobal && (
           <>
-            <Text style={styles.label}>התנדבות בעיר בלבד</Text>
+            <Text style={styles.label}>אפשר התנדבות בכל הארץ</Text>
             <Switch
               value={isLocalOnly}
               onValueChange={setIsLocalOnly}

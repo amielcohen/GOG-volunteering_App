@@ -14,7 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Icon2 from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
 import BlockedModal from '../../components/BlockedModal';
-
+import ErrorModal from '../../components/ErrorModal';
 import CustomCoinIcon from '../../components/CustomCoinIcon';
 import axios from 'axios';
 import config from '../../config';
@@ -30,6 +30,11 @@ export default function UserHomeScreen({ route, navigation }) {
   const [levelUpModalVisible, setLevelUpModalVisible] = useState(false); // סטייט לנראות מודל עליית רמה
   const [blockedVisible, setBlockedVisible] = useState(false);
   const [blockedUntilDate, setBlockedUntilDate] = useState('');
+
+  const [representativeEmail, setRepresentativeEmail] = useState(null);
+
+  const [errorVisible, setErrorVisible] = useState(false);
+  const [errorText, setErrorText] = useState('');
 
   const fetchUser = async () => {
     try {
@@ -109,6 +114,53 @@ export default function UserHomeScreen({ route, navigation }) {
     }
   }, [user?.showLevelUpModal]); // Watch for changes in showLevelUpModal
 
+  const handleGiftshopPress = async () => {
+    if (user.city.isActive) {
+      navigation.navigate('giftshop', { user });
+    } else {
+      if (!representativeEmail) {
+        try {
+          const res = await fetch(
+            `${config.SERVER_URL}/auth/community-rep-email-by-city?cityId=${user.city._id || user.city}`
+          );
+          const data = await res.json();
+
+          if (res.ok && data.email) {
+            setRepresentativeEmail(data.email);
+            setErrorText({
+              title: 'לא פעיל',
+              message:
+                'העיר שאתה משוויך אליה אינה פעילה, לא ניתן להיכנס לחנות. לפרטים פנה אל הנציג העירוני. כתובת עדכנית אחרונה במערכת: ' +
+                data.email,
+            });
+          } else {
+            setErrorText({
+              title: 'לא פעיל',
+              message:
+                'העיר שאתה משוויך אליה אינה פעילה, לא ניתן להיכנס לחנות. לפרטים פנה אל הנציג העירוני.',
+            });
+          }
+        } catch (err) {
+          console.error('שגיאה בשליפת אימייל:', err);
+          setErrorText({
+            title: 'שגיאה',
+            message:
+              'אירעה שגיאה בעת ניסיון לבדוק את סטטוס העיר. נסה שוב מאוחר יותר.',
+          });
+        }
+      } else {
+        setErrorText({
+          title: 'לא פעיל',
+          message:
+            'העיר שאתה משוויך אליה אינה פעילה, לא ניתן להיכנס לחנות. לפרטים פנה אל הנציג העירוני. כתובת עדכנית אחרונה במערכת: ' +
+            representativeEmail,
+        });
+      }
+
+      setErrorVisible(true);
+    }
+  };
+
   const handleCloseLevelUpModal = async () => {
     setLevelUpModalVisible(false);
     try {
@@ -135,6 +187,7 @@ export default function UserHomeScreen({ route, navigation }) {
 
   const nextLevelXP = levelTable[user.level]?.requiredExp || 100;
   const progress = Math.min((user.exp / nextLevelXP) * 100, 100);
+  const fullname = user.firstName + ' ' + user.lastName;
 
   return (
     <View style={styles.container}>
@@ -181,7 +234,7 @@ export default function UserHomeScreen({ route, navigation }) {
               style={styles.profileImage}
             />
           </TouchableOpacity>
-          <Text style={styles.greeting}>שלום {user.firstName} </Text>
+          <Text style={styles.greeting}>שלום {fullname} </Text>
           <Text style={styles.level}>
             רמה {user.level} | {user.exp}/{nextLevelXP} נק&quot;נ
           </Text>
@@ -222,7 +275,7 @@ export default function UserHomeScreen({ route, navigation }) {
 
         <TouchableOpacity
           style={styles.actionCard}
-          onPress={() => navigation.navigate('giftshop', { user })}
+          onPress={handleGiftshopPress}
         >
           <Icon name="shopping-cart" size={28} color="#007bff" />
           <Text style={styles.actionText}>חנות התגמולים</Text>
@@ -281,6 +334,12 @@ export default function UserHomeScreen({ route, navigation }) {
         visible={blockedVisible}
         onClose={() => setBlockedVisible(false)}
         blockedUntilDate={blockedUntilDate}
+      />
+      <ErrorModal
+        visible={errorVisible}
+        title={errorText.title}
+        message={errorText.message}
+        onClose={() => setErrorVisible(false)}
       />
     </View>
   );

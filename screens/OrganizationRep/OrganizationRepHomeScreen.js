@@ -144,7 +144,11 @@ export default function OrganizationRepHomeScreen({ route, navigation }) {
     <View style={styles.container}>
       <ScrollView>
         <OrganizationRepHeader
-          repName={user.firstName + ' ' + user.lastName}
+          repName={
+            user.firstName && user.lastName
+              ? `${user.firstName} ${user.lastName}`
+              : 'אחראי עמותה'
+          }
           organizationName={user.organization?.name}
           organizationImage={
             user.organization?.imageUrl

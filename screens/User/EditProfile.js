@@ -385,9 +385,16 @@ export default function EditProfile({ navigation, route }) {
             style={styles.picker}
             itemStyle={{ textAlign: 'right' }}
           >
-            {citiesList.map((city) => (
-              <Picker.Item key={city._id} label={city.name} value={city._id} />
-            ))}
+            {citiesList
+              .slice() // מונע שינוי של המערך המקורי
+              .sort((a, b) => a.name.localeCompare(b.name, 'he')) // מיון לפי עברית
+              .map((city) => (
+                <Picker.Item
+                  key={city._id}
+                  label={city.name}
+                  value={city._id}
+                />
+              ))}
           </Picker>
         </View>
 
