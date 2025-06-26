@@ -546,7 +546,7 @@ router.put('/:id/close', async (req, res) => {
         await new UserMessage({
           userId: user._id,
           title: `לא נכחת בהתנדבות "${volunteering.title}"`,
-          message: `לא הגעת להתנדבות. לא נצברו נקודות.
+          message: `לא הגעת להתנדבות. לא נצברו גוגואים ונק"ז.
 יש לך כעת ${user.badPoints.length} נקודות רעות מתוך ${MAX_BAD_POINTS} המותרות.
 צבירה של ${MAX_BAD_POINTS} נקודות רעות תוך ${THRESHOLD_DAYS} ימים תגרום לחסימה זמנית מהרשמה להתנדבויות חדשות.`,
           type: 'warning',

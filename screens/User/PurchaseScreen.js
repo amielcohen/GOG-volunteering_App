@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import CustomCoinIcon from '../../components/CustomCoinIcon';
-import ErrorModal from '../../components/ErrorModal';
+import ErrorModal from '../../components/ErrorModal'; // ✔ משתמש גם להצלחה
 import config from '../../config';
 
 if (!I18nManager.isRTL) {
@@ -26,6 +26,7 @@ export default function PurchaseScreen({ route, navigation }) {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorTitle, setErrorTitle] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorBtnColor, setErrorBtnColor] = useState('#6200EE');
 
   const currentUserGogs = user?.GoGs || 0;
   const canAfford = currentUserGogs >= item.price;
@@ -58,15 +59,20 @@ export default function PurchaseScreen({ route, navigation }) {
         throw new Error(data.error || 'שגיאה לא ידועה');
       }
 
-      // רכישה הצליחה - חזור למסך הבית עם ריסט למחסנית
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'UserHomeScreen', params: { user, refresh: true } }],
-      });
+      const successMessage =
+        item.deliveryType === 'donation'
+          ? 'תרומתך נרשמה בהצלחה.\nהתיעוד יופיע במסך "ההזמנות שלי".'
+          : 'הרכישה בוצעה בהצלחה!\nקוד המימוש ממתין לך במסך "ההזמנות שלי".';
+
+      setErrorTitle('הצלחה');
+      setErrorMessage(successMessage);
+      setErrorBtnColor('#4CAF50'); // ✅ ירוק להצלחה
+      setErrorModalVisible(true);
     } catch (err) {
       console.error('שגיאה ברכישה:', err);
       setErrorTitle('שגיאה');
       setErrorMessage(err.message || 'אירעה שגיאה בעת הרכישה');
+      setErrorBtnColor('#e53935'); // ❌ אדום לשגיאה
       setErrorModalVisible(true);
     } finally {
       setLoading(false);
@@ -128,8 +134,8 @@ export default function PurchaseScreen({ route, navigation }) {
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>פרטי תרומה</Text>
             <Text style={styles.description}>
-              פריט זה הוא תרומה על סך **{item.donationAmount || item.price} ₪**
-              לכבוד ארגון **{item.donationTarget || 'הארגון הנבחר'}**.
+              פריט זה הוא תרומה על סך {item.donationAmount || item.price} ₪
+              לכבוד ארגון {item.donationTarget || 'הארגון הנבחר'}.
               <Text style={styles.donationText}>
                 {'\n'}תרומתך תועבר ישירות לארגון ותסייע רבות.
               </Text>
@@ -148,7 +154,7 @@ export default function PurchaseScreen({ route, navigation }) {
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>מידע חשוב</Text>
             <Text style={styles.description}>
-              לאחר הרכישה ייווצר עבורך **קוד מימוש חד פעמי** תקף ל-30 יום. הקוד
+              לאחר הרכישה ייווצר עבורך קוד מימוש חד פעמי תקף ל-30 יום. הקוד
               יישלח אליך ויופיע במסך "ההזמנות שלי".
             </Text>
           </View>
@@ -158,10 +164,10 @@ export default function PurchaseScreen({ route, navigation }) {
           <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>הערה חשובה</Text>
             <Text style={styles.description}>
-              **תודה רבה על תרומתך!**
-              {'\n'}מכיוון שמדובר בתרומה, **לא יישלח קוד מימוש**. תרומתך עברה
-              בהצלחה לארגון **{item.donationTarget || 'הארגון הנבחר'}** ותופיע
-              במסך "ההזמנות שלי" כתיעוד.
+              תודה רבה על תרומתך!
+              {'\n'}מכיוון שמדובר בתרומה, לא יישלח קוד מימוש. תרומתך עברה בהצלחה
+              לארגון {item.donationTarget || 'הארגון הנבחר'} ותופיע במסך
+              "ההזמנות שלי" כתיעוד.
             </Text>
           </View>
         )}
@@ -179,7 +185,18 @@ export default function PurchaseScreen({ route, navigation }) {
         visible={errorModalVisible}
         title={errorTitle}
         message={errorMessage}
-        onClose={() => setErrorModalVisible(false)}
+        btnColor={errorBtnColor}
+        onClose={() => {
+          setErrorModalVisible(false);
+          if (errorTitle === 'הצלחה') {
+            navigation.reset({
+              index: 0,
+              routes: [
+                { name: 'UserHomeScreen', params: { user, refresh: true } },
+              ],
+            });
+          }
+        }}
       />
     </SafeAreaView>
   );
@@ -194,13 +211,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     backgroundColor: '#282828',
-    borderRadius: 15,
-    margin: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 10,
   },
   title: {
     fontSize: 28,
@@ -208,26 +218,16 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     marginBottom: 20,
     textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
   },
   imageContainer: {
     width: '100%',
     height: 220,
     borderRadius: 15,
-    borderWidth: 3,
-    borderColor: '#FFD700',
     overflow: 'hidden',
     marginBottom: 25,
     backgroundColor: '#3E3E3E',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 15,
   },
   image: {
     width: '100%',
@@ -252,11 +252,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 12,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 7,
   },
   priceGroup: {
     flexDirection: 'row-reverse',
@@ -310,11 +305,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 15,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 7,
   },
   sectionTitle: {
     fontSize: 18,
@@ -348,24 +338,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 30,
     alignItems: 'center',
-    shadowColor: '#4CAF50',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 12,
   },
   buttonDisabled: {
     backgroundColor: '#607D8B',
-    shadowColor: '#607D8B',
-    shadowOpacity: 0.3,
-    elevation: 5,
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 18,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 1,
   },
 });

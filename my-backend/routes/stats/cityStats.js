@@ -103,6 +103,7 @@ router.get('/:cityId', async (req, res) => {
         }
 
         if (hasVolunteerFromCity) {
+          totalVolunteerings++;
           const orgId = vol.organizationId.toString();
           organizationVolunteerMap[orgId] =
             (organizationVolunteerMap[orgId] || 0) + 1;

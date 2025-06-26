@@ -42,7 +42,7 @@ export default function BusinessPartnerHomeScreen({ route, navigation }) {
   );
 
   const displayFormattedCode = (text) => {
-    const cleaned = text.replace(/[^a-zA-Z0-9]/g, '');
+    const cleaned = text.replace(/[^a-zA-Z0-9!?@#$%^&*]/g, ''); // אפשר להתאים את הסימנים
     let formatted = '';
     for (let i = 0; i < cleaned.length; i++) {
       formatted += cleaned[i];
@@ -77,7 +77,14 @@ export default function BusinessPartnerHomeScreen({ route, navigation }) {
       );
       const text = await res.text();
       if (!res.ok) {
-        throw new Error('קוד לא נמצא או שאינו שייך לעסק שלך');
+        let errorMessage = 'אירעה שגיאה';
+        try {
+          const json = JSON.parse(text);
+          errorMessage = json.message || errorMessage;
+        } catch {
+          errorMessage = text; // אם לא פורמט JSON, פשוט טקסט רגיל
+        }
+        throw new Error(errorMessage);
       }
 
       let data;
@@ -182,7 +189,7 @@ export default function BusinessPartnerHomeScreen({ route, navigation }) {
             value={displayFormattedCode(rawCode)}
             onChangeText={handleChangeText}
             textAlign="center"
-            keyboardType="default"
+            keyboardType="visible-password" // במקום default
             autoCapitalize="characters"
             maxLength={14}
             selectionColor="#00E0FF"

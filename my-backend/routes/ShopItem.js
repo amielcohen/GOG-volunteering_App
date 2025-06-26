@@ -244,7 +244,7 @@ router.get('/by-city/:cityId/raw-items', async (req, res) => {
 });
 
 const generateCode = () => {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789!?';
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ123456789!';
   let code = '';
   for (let i = 0; i < 12; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));

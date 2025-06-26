@@ -94,8 +94,25 @@ export default function App() {
           name="giftshop"
           component={GiftShop}
           options={{
+            headerShown: true,
+            title: 'חנות המתנות',
+            headerStyle: {
+              backgroundColor: '#222',
+              shadowColor: 'transparent',
+              elevation: 0,
+              borderBottomWidth: 0,
+            },
+            headerTintColor: '#FFE5EC',
+            headerTitleStyle: {
+              fontSize: 20,
+              fontWeight: 'bold',
+              color: '#FFE5EC',
+              textAlign: Platform.OS === 'ios' ? 'center' : 'right',
+              flex: 1,
+              paddingRight: Platform.OS === 'android' ? 20 : 0,
+              paddingTop: 20,
+            },
             headerTitleAlign: 'center',
-            headerTitle: 'חנות המתנות',
           }}
         />
 

@@ -264,17 +264,16 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 10,
     overflow: 'hidden',
-    height: 45,
+    height: 50, // Increased height to prevent cutoff
     justifyContent: 'center',
   },
   picker: {
-    color: '#FFE066',
-    fontSize: 14,
-    height: '100%',
+    color: '#FFE066', // Remove fixed height here, let it be controlled by wrapper or content
+    fontSize: 16, // Slightly increased font size for better readability
     width: '100%',
   },
   pickerItem: {
-    fontSize: 15,
+    fontSize: 16, // Consistent font size with the picker
     backgroundColor: '#3E3E3E',
     color: '#FFE066',
   },

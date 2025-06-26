@@ -7,7 +7,7 @@ const BusinessPartner = require('../models/BusinessPartner');
 
 const generateUniqueCode = async () => {
   const allowedCharacters =
-    'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!?';
+    'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!';
   const length = 12;
   let code;
 
@@ -212,6 +212,10 @@ router.get('/by-code-for-business/:code', async (req, res) => {
   try {
     const { code } = req.params;
     const { businessName, address } = req.query;
+
+    console.log('code:', code);
+    console.log('addred:', address);
+    console.log('businessName:', businessName);
 
     if (!businessName || !address) {
       return res.status(400).json({ message: 'חסר שם עסק או כתובת' });

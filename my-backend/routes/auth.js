@@ -332,4 +332,30 @@ router.get('/count-users', async (req, res) => {
     res.status(500).json({ message: 'שגיאה בשרת' });
   }
 });
+
+// החזרת כתובת האימייל של אחראי עמותה לפי מזהה עיר
+router.get('/community-rep-email-by-city', async (req, res) => {
+  const { cityId } = req.query;
+
+  if (!cityId) {
+    return res.status(400).json({ message: 'נדרש להעביר cityId בשאילתה' });
+  }
+
+  try {
+    const user = await User.findOne({
+      city: cityId,
+      role: 'CommunityRep',
+    }).select('email');
+
+    if (!user) {
+      return res.status(404).json({ message: 'לא נמצא אחראי עמותה לעיר זו' });
+    }
+
+    res.status(200).json({ email: user.email });
+  } catch (error) {
+    console.error('❌ שגיאה בשליפת אימייל אחראי עמותה לפי עיר:', error);
+    res.status(500).json({ message: 'שגיאה בשרת' });
+  }
+});
+
 module.exports = router;
